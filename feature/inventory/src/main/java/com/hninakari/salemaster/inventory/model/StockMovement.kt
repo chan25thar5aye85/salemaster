@@ -22,5 +22,6 @@ enum class StockMovementType {
 
 enum class StockMovementSourceType {
     PURCHASE,
-    SALE
+    SALE,
+    RETURN
 }
