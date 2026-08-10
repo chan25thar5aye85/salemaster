@@ -8,15 +8,22 @@ android {
     namespace = "com.hninakari.salemaster.inventory"
 
     compileSdk = 35
+    
+    defaultConfig {
+		multiDexEnabled = true
+	}
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
+
+        isCoreLibraryDesugaringEnabled = true
     }
 
     buildFeatures {
         compose = true
     }
+    
 }
 
 kotlin {
@@ -32,4 +39,5 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
 
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }

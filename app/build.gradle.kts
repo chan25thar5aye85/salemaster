@@ -19,29 +19,32 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
+
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
         jvmTarget = "21"
     }
+
     buildFeatures {
         compose = true
     }
 }
 
 dependencies {
-    dependencies {
-        implementation(project(":core"))
-        implementation(project(":feature:inventory"))
+    implementation(project(":core"))
+    implementation(project(":feature:inventory"))
 
-        implementation("androidx.activity:activity-compose:1.10.0")
+    implementation("androidx.activity:activity-compose:1.10.0")
 
-        implementation(platform("androidx.compose:compose-bom:2025.01.00"))
+    implementation(platform("androidx.compose:compose-bom:2025.01.00"))
 
-        implementation("androidx.compose.ui:ui")
-        implementation("androidx.compose.material3:material3")
-        implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.ui:ui-tooling-preview")
 
-        debugImplementation("androidx.compose.ui:ui-tooling")
-    }
+    debugImplementation("androidx.compose.ui:ui-tooling")
+
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
