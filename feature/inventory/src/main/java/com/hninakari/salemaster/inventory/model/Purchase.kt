@@ -6,5 +6,12 @@ data class Purchase(
     val id: Long,
     val supplierId: Long,
     val reference: String?,
-    val purchasedAt: Instant
+    val purchasedAt: Instant,
+    val status: PurchaseStatus
 )
+
+enum class PurchaseStatus {
+    DRAFT,
+    COMPLETED,
+    CANCELLED
+}
