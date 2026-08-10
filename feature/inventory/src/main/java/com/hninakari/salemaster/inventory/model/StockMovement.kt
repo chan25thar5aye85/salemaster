@@ -7,6 +7,8 @@ data class StockMovement(
     val productId: Long,
     val quantity: Int,
     val type: StockMovementType,
+    val sourceType: StockMovementSourceType?,
+    val sourceId: Long?,
     val occurredAt: Instant
 )
 
@@ -16,4 +18,9 @@ enum class StockMovementType {
     RETURN,
     DAMAGE,
     ADJUSTMENT
+}
+
+enum class StockMovementSourceType {
+    PURCHASE,
+    SALE
 }
