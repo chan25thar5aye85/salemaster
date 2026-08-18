@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sales Screen -->
+    <string name="sales_title">အရောင်းခြေရာခံ</string>
+    <string name="sales_no_sales">မှတ်တမ်းမရှိသေးပါ</string>
+    <string name="sales_add_first">ပထမဆုံးအရောင်းထည့်ရန် + ခလုတ်ကိုနှိပ်ပါ</string>
+    <string name="sales_summary">အရောင်းအကျဉ်းချုပ်</string>
+    <string name="sales_total">စုစုပေါင်းအရောင်း</string>
+    <string name="sales_transactions">အရောင်းအရေအတွက်</string>
+    <string name="sales_delete">ဖျက်ရန်</string>
+
+    <!-- Add Sale Screen -->
+    <string name="add_sale_title">အရောင်းအသစ်ထည့်ရန်</string>
+    <string name="add_sale_amount">ပမာဏ</string>
+    <string name="add_sale_enter_amount">ပမာဏထည့်ပါ</string>
+    <string name="add_sale_payment">ငွေပေးချေမှု</string>
+    <string name="add_sale_cash">ငွေသား</string>
+    <string name="add_sale_kpay">Kpay</string>
+    <string name="add_sale_wave">Wave</string>
+    <string name="add_sale_clear">ရှင်းလင်းရန်</string>
+    <string name="add_sale_submit">အရောင်းထည့်ရန်</string>
+    <string name="add_sale_success">✓ အရောင်းထည့်ပြီးပါပြီ</string>
+    <string name="add_sale_error_amount">ပမာဏအမှန်ထည့်ပါ</string>
+    <string name="add_sale_error_amount_zero">ပမာဏသည် ၀ ထက်ကြီးရပါမည်</string>
+    <string name="nav_view_sales">အရောင်းများကြည့်ရန်</string>
+
+    <!-- Recent Sales -->
+    <string name="recent_sales_title">မကြာသေးမီအရောင်းများ</string>
+    <string name="recent_sales_empty">အရောင်းမရှိသေးပါ။ ပထမဆုံးအရောင်းထည့်ပါ</string>
+    <string name="recent_sales_amount">ပမာဏ</string>
+    <string name="recent_sales_payment">ငွေပေးချေမှု</string>
+    <string name="recent_sales_date">နေ့စွဲ</string>
+
+    <!-- Sale Detail Screen -->
+    <string name="sale_detail_title">အရောင်းအသေးစိတ်</string>
+    <string name="sale_detail_not_found">အရောင်းမတွေ့ပါ</string>
+    <string name="sale_detail_back">အရောင်းများသို့ပြန်သွားရန်</string>
+
+    <!-- Navigation -->
+    <string name="nav_back">ပြန်သွားရန်</string>
+
+    <!-- Menu -->
+    <string name="menu_sales">အရောင်းများ</string>
+    <string name="menu_settings">ဆက်တင်များ</string>
+
+    <!-- Settings -->
+    <string name="settings_title">ဆက်တင်များ</string>
+    <string name="settings_language">ဘာသာစကား</string>
+    <string name="settings_english">အင်္ဂလိပ်</string>
+    <string name="settings_myanmar">မြန်မာ</string>
+    <string name="settings_about">အကြောင်း</string>
+    <string name="settings_version">ဗားရှင်း</string>
+</resources>

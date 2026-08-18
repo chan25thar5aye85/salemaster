@@ -9,6 +9,7 @@ import androidx.navigation.navArgument
 import com.hninakari.saletracker.sales.presentation.screens.SalesScreen
 import com.hninakari.saletracker.sales.presentation.screens.AddSaleScreen
 import com.hninakari.saletracker.sales.presentation.screens.SaleDetailScreen
+import com.hninakari.saletracker.sales.presentation.screens.SettingsScreen
 import com.hninakari.saletracker.sales.presentation.viewmodels.SaleViewModel
 
 @Composable
@@ -16,7 +17,7 @@ fun SaleNavHost(
     navController: NavHostController,
     viewModel: SaleViewModel,
     modifier: Modifier = Modifier,
-    startDestination: String = SaleNavRoute.AddSale.route  // Now starts at AddSale
+    startDestination: String = SaleNavRoute.AddSale.route
 ) {
     NavHost(
         navController = navController,
@@ -31,6 +32,9 @@ fun SaleNavHost(
                 },
                 onNavigateToSales = {
                     navController.navigate(SaleNavRoute.Sales.route)
+                },
+                onNavigateToSettings = {
+                    navController.navigate(SaleNavRoute.Settings.route)
                 }
             )
         }
@@ -39,10 +43,18 @@ fun SaleNavHost(
             SalesScreen(
                 viewModel = viewModel,
                 onNavigateToAddSale = {
-                    navController.popBackStack()  // Go back to AddSale
+                    navController.popBackStack()
                 },
                 onNavigateToDetail = { saleId ->
                     navController.navigate(SaleNavRoute.SaleDetail.passId(saleId))
+                }
+            )
+        }
+        
+        composable(route = SaleNavRoute.Settings.route) {
+            SettingsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }

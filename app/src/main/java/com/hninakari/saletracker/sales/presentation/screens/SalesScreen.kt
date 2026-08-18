@@ -11,7 +11,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.hninakari.saletracker.R
 import com.hninakari.saletracker.core.utils.formatCurrency
 import com.hninakari.saletracker.sales.data.models.Sales
 import com.hninakari.saletracker.sales.presentation.viewmodels.SaleViewModel
@@ -29,10 +31,10 @@ fun SalesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("All Sales") },
+                title = { Text(stringResource(R.string.sales_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateToAddSale) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.nav_back))
                     }
                 }
             )
@@ -68,7 +70,7 @@ fun SalesScreen(
                         Button(
                             onClick = { viewModel.clearError() }
                         ) {
-                            Text("Dismiss")
+                            Text(stringResource(R.string.ok))
                         }
                     }
                 }
@@ -82,11 +84,11 @@ fun SalesScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "No sales recorded yet",
+                            text = stringResource(R.string.sales_no_sales),
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
-                            text = "Go back to add your first sale",
+                            text = stringResource(R.string.sales_add_first),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -138,11 +140,11 @@ fun SalesList(
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     SummaryItem(
-                        label = "Total Sales",
+                        label = stringResource(R.string.sales_total),
                         value = formatCurrency(totalSales)
                     )
                     SummaryItem(
-                        label = "Transactions",
+                        label = stringResource(R.string.sales_transactions),
                         value = saleCount.toString()
                     )
                 }
@@ -223,7 +225,7 @@ fun SaleCard(
             IconButton(onClick = onDelete) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "Delete",
+                    contentDescription = stringResource(R.string.sales_delete),
                     tint = MaterialTheme.colorScheme.error
                 )
             }

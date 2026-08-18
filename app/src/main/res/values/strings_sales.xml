@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sales Screen -->
+    <string name="sales_title">Sales Tracker</string>
+    <string name="sales_no_sales">No sales recorded yet</string>
+    <string name="sales_add_first">Tap the + button to add your first sale</string>
+    <string name="sales_summary">Sales Summary</string>
+    <string name="sales_total">Total Sales</string>
+    <string name="sales_transactions">Transactions</string>
+    <string name="sales_delete">Delete</string>
+
+    <!-- Add Sale Screen -->
+    <string name="add_sale_title">Add New Sale</string>
+    <string name="add_sale_amount">Amount</string>
+    <string name="add_sale_enter_amount">Enter amount</string>
+    <string name="add_sale_payment">Payment</string>
+    <string name="add_sale_cash">Cash</string>
+    <string name="add_sale_kpay">Kpay</string>
+    <string name="add_sale_wave">Wave</string>
+    <string name="add_sale_clear">Clear</string>
+    <string name="add_sale_submit">Add Sale</string>
+    <string name="add_sale_success">✓ Sale added successfully!</string>
+    <string name="add_sale_error_amount">Please enter a valid amount</string>
+    <string name="add_sale_error_amount_zero">Amount must be greater than 0</string>
+    <string name="nav_view_sales">View Sales</string>
+
+    <!-- Recent Sales -->
+    <string name="recent_sales_title">Recent Sales</string>
+    <string name="recent_sales_empty">No sales yet. Add your first sale!</string>
+    <string name="recent_sales_amount">Amount</string>
+    <string name="recent_sales_payment">Payment</string>
+    <string name="recent_sales_date">Date</string>
+
+    <!-- Sale Detail Screen -->
+    <string name="sale_detail_title">Sale Details</string>
+    <string name="sale_detail_not_found">Sale not found</string>
+    <string name="sale_detail_back">Back to Sales</string>
+
+    <!-- Navigation -->
+    <string name="nav_back">Back</string>
+
+    <!-- Menu -->
+    <string name="menu_sales">Sales</string>
+    <string name="menu_settings">Settings</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_english">English</string>
+    <string name="settings_myanmar">Myanmar</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version</string>
+</resources>

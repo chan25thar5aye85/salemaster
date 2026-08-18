@@ -9,10 +9,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import com.hninakari.saletracker.R
+import com.hninakari.saletracker.core.ui.components.FloatingMenu
 import com.hninakari.saletracker.core.utils.formatCurrency
 import com.hninakari.saletracker.sales.data.models.PaymentMethod
 import com.hninakari.saletracker.sales.data.models.Sales
@@ -23,7 +26,8 @@ import java.time.format.DateTimeFormatter
 fun AddSaleScreen(
     viewModel: SaleViewModel,
     onNavigateBack: () -> Unit,
-    onNavigateToSales: () -> Unit
+    onNavigateToSales: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val formState = uiState.saleFormState
@@ -32,6 +36,11 @@ fun AddSaleScreen(
     val coroutineScope = rememberCoroutineScope()
     
     var amountError by remember { mutableStateOf<String?>(null) }
+    
+    // Get string resources
+    val errorAmount = stringResource(R.string.add_sale_error_amount)
+    val errorAmountZero = stringResource(R.string.add_sale_error_amount_zero)
+    val successMessage = stringResource(R.string.add_sale_success)
     
     // Clear form function
     fun clearForm() {
@@ -51,9 +60,9 @@ fun AddSaleScreen(
         val amount = formState.amount.toDoubleOrNull()
         
         if (amount == null) {
-            amountError = "Please enter a valid amount"
+            amountError = errorAmount
         } else if (amount <= 0.0) {
-            amountError = "Amount must be greater than 0"
+            amountError = errorAmountZero
         } else {
             amountError = null
             keyboardController?.hide()
@@ -64,7 +73,7 @@ fun AddSaleScreen(
                 viewModel.clearError()
                 coroutineScope.launch {
                     snackbarHostState.showSnackbar(
-                        message = "✓ Sale added successfully!",
+                        message = successMessage,
                         duration = SnackbarDuration.Short
                     )
                 }
@@ -75,303 +84,313 @@ fun AddSaleScreen(
     // Get recent 5 sales
     val recentSales = uiState.sales.take(5)
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp)
-            .imePadding()
-            .navigationBarsPadding()
-            .systemBarsPadding(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
-        // Header Row with Title and View Sales button
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // Main Content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp)
+                .imePadding()
+                .navigationBarsPadding()
+                .systemBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Add New Sale",
-                fontSize = 22.sp,
-                style = MaterialTheme.typography.headlineSmall
-            )
-            
-            TextButton(
-                onClick = onNavigateToSales,
-                modifier = Modifier.height(36.dp)
+            // Header Row with Title and View Sales button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("View Sales", fontSize = 13.sp)
+                Text(
+                    text = stringResource(R.string.add_sale_title),
+                    fontSize = 22.sp,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                
+                TextButton(
+                    onClick = onNavigateToSales,
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Text(stringResource(R.string.nav_view_sales), fontSize = 13.sp)
+                }
             }
-        }
-        
-        // Form Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+            
+            // Form Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                // Amount Field with floating label
-                Column {
-                    OutlinedTextField(
-                        value = formState.amount,
-                        onValueChange = { 
-                            if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d*$"))) {
-                                viewModel.updateFormField(amount = it)
-                                if (it.isNotEmpty()) {
-                                    val amount = it.toDoubleOrNull()
-                                    if (amount != null && amount > 0.0) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    // Amount Field with floating label
+                    Column {
+                        OutlinedTextField(
+                            value = formState.amount,
+                            onValueChange = { 
+                                if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d*$"))) {
+                                    viewModel.updateFormField(amount = it)
+                                    if (it.isNotEmpty()) {
+                                        val amount = it.toDoubleOrNull()
+                                        if (amount != null && amount > 0.0) {
+                                            amountError = null
+                                        }
+                                    } else {
                                         amountError = null
                                     }
-                                } else {
-                                    amountError = null
                                 }
+                            },
+                            label = { Text(stringResource(R.string.add_sale_amount)) },
+                            placeholder = { Text(stringResource(R.string.add_sale_enter_amount), fontSize = 16.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Decimal,
+                                imeAction = androidx.compose.ui.text.input.ImeAction.Done
+                            ),
+                            singleLine = true,
+                            isError = amountError != null,
+                            textStyle = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp),
+                            leadingIcon = {
+                                Text(
+                                    text = "$",
+                                    fontSize = 20.sp,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
-                        },
-                        label = { Text("Amount *") },
-                        placeholder = { Text("Enter amount", fontSize = 16.sp) },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Decimal,
-                            imeAction = androidx.compose.ui.text.input.ImeAction.Done
-                        ),
-                        singleLine = true,
-                        isError = amountError != null,
-                        textStyle = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp),
-                        leadingIcon = {
+                        )
+                        if (amountError != null) {
                             Text(
-                                text = "$",
-                                fontSize = 20.sp,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = amountError ?: "",
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 11.sp,
+                                modifier = Modifier.padding(start = 4.dp, top = 4.dp)
                             )
                         }
-                    )
-                    if (amountError != null) {
-                        Text(
-                            text = amountError ?: "",
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 11.sp,
-                            modifier = Modifier.padding(start = 4.dp, top = 4.dp)
-                        )
-                    }
-                }
-                
-                // Payment - Label and Selector in a Row
-                Column {
-                    Text(
-                        text = "Payment",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Button(
-                                onClick = {
-                                    viewModel.updateFormField(paymentMethod = PaymentMethod.CASH)
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(34.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (formState.paymentMethod == PaymentMethod.CASH) 
-                                        MaterialTheme.colorScheme.primary 
-                                    else 
-                                        MaterialTheme.colorScheme.surfaceVariant,
-                                    contentColor = if (formState.paymentMethod == PaymentMethod.CASH)
-                                        MaterialTheme.colorScheme.onPrimary
-                                    else
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                ),
-                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
-                            ) {
-                                Text("Cash", fontSize = 11.sp)
-                            }
-                            
-                            Button(
-                                onClick = {
-                                    viewModel.updateFormField(paymentMethod = PaymentMethod.KPAY)
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(34.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (formState.paymentMethod == PaymentMethod.KPAY) 
-                                        MaterialTheme.colorScheme.primary 
-                                    else 
-                                        MaterialTheme.colorScheme.surfaceVariant,
-                                    contentColor = if (formState.paymentMethod == PaymentMethod.KPAY)
-                                        MaterialTheme.colorScheme.onPrimary
-                                    else
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                ),
-                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
-                            ) {
-                                Text("Kpay", fontSize = 11.sp)
-                            }
-                            
-                            Button(
-                                onClick = {
-                                    viewModel.updateFormField(paymentMethod = PaymentMethod.WAVE_PAY)
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(34.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (formState.paymentMethod == PaymentMethod.WAVE_PAY) 
-                                        MaterialTheme.colorScheme.primary 
-                                    else 
-                                        MaterialTheme.colorScheme.surfaceVariant,
-                                    contentColor = if (formState.paymentMethod == PaymentMethod.WAVE_PAY)
-                                        MaterialTheme.colorScheme.onPrimary
-                                    else
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                ),
-                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
-                            ) {
-                                Text("Wave", fontSize = 11.sp)
-                            }
-                        }
-                    }
-                }
-                
-                Divider()
-                
-                // Action Buttons inside Card
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = { clearForm() },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(38.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                    ) {
-                        Text("Clear", fontSize = 13.sp)
                     }
                     
-                    Button(
-                        onClick = { validateAndSubmit() },
-                        modifier = Modifier
-                            .weight(2f)
-                            .height(38.dp),
-                        enabled = isFormValid() && !uiState.isLoading,
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                    ) {
-                        if (uiState.isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        } else {
-                            Text("Add Sale", fontSize = 13.sp)
+                    // Payment - Label and Selector in a Row
+                    Column {
+                        Text(
+                            text = stringResource(R.string.add_sale_payment),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Button(
+                                    onClick = {
+                                        viewModel.updateFormField(paymentMethod = PaymentMethod.CASH)
+                                    },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(34.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (formState.paymentMethod == PaymentMethod.CASH) 
+                                            MaterialTheme.colorScheme.primary 
+                                        else 
+                                            MaterialTheme.colorScheme.surfaceVariant,
+                                        contentColor = if (formState.paymentMethod == PaymentMethod.CASH)
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                                ) {
+                                    Text(stringResource(R.string.add_sale_cash), fontSize = 11.sp)
+                                }
+                                
+                                Button(
+                                    onClick = {
+                                        viewModel.updateFormField(paymentMethod = PaymentMethod.KPAY)
+                                    },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(34.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (formState.paymentMethod == PaymentMethod.KPAY) 
+                                            MaterialTheme.colorScheme.primary 
+                                        else 
+                                            MaterialTheme.colorScheme.surfaceVariant,
+                                        contentColor = if (formState.paymentMethod == PaymentMethod.KPAY)
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                                ) {
+                                    Text(stringResource(R.string.add_sale_kpay), fontSize = 11.sp)
+                                }
+                                
+                                Button(
+                                    onClick = {
+                                        viewModel.updateFormField(paymentMethod = PaymentMethod.WAVE_PAY)
+                                    },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(34.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (formState.paymentMethod == PaymentMethod.WAVE_PAY) 
+                                            MaterialTheme.colorScheme.primary 
+                                        else 
+                                            MaterialTheme.colorScheme.surfaceVariant,
+                                        contentColor = if (formState.paymentMethod == PaymentMethod.WAVE_PAY)
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                                ) {
+                                    Text(stringResource(R.string.add_sale_wave), fontSize = 11.sp)
+                                }
+                            }
                         }
                     }
-                }
-            }
-        }
-        
-        // Recent Sales Section
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Recent Sales",
-                fontSize = 18.sp,
-                style = MaterialTheme.typography.titleMedium
-            )
-            
-            if (recentSales.isEmpty()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Text(
-                        text = "No sales yet. Add your first sale!",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            } else {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth()
+                    
+                    Divider()
+                    
+                    // Action Buttons inside Card
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Header Row
-                        Row(
+                        OutlinedButton(
+                            onClick = { clearForm() },
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                                .weight(1f)
+                                .height(38.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                         ) {
-                            Text(
-                                text = "Amount",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.labelMedium,
-                                modifier = Modifier.weight(2f)
-                            )
-                            Text(
-                                text = "Payment",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.labelMedium,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Text(
-                                text = "Date",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.labelMedium,
-                                modifier = Modifier.weight(1f)
-                            )
+                            Text(stringResource(R.string.add_sale_clear), fontSize = 13.sp)
                         }
                         
-                        Divider()
-                        
-                        // Recent Sales List
-                        recentSales.forEach { sale ->
-                            RecentSaleRow(sale = sale)
-                            if (sale != recentSales.last()) {
-                                Divider()
+                        Button(
+                            onClick = { validateAndSubmit() },
+                            modifier = Modifier
+                                .weight(2f)
+                                .height(38.dp),
+                            enabled = isFormValid() && !uiState.isLoading,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                        ) {
+                            if (uiState.isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            } else {
+                                Text(stringResource(R.string.add_sale_submit), fontSize = 13.sp)
                             }
                         }
                     }
                 }
             }
+            
+            // Recent Sales Section
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.recent_sales_title),
+                    fontSize = 18.sp,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                
+                if (recentSales.isEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Text(
+                            text = stringResource(R.string.recent_sales_empty),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                } else {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            // Header Row
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.recent_sales_amount),
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    modifier = Modifier.weight(2f)
+                                )
+                                Text(
+                                    text = stringResource(R.string.recent_sales_payment),
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = stringResource(R.string.recent_sales_date),
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            
+                            Divider()
+                            
+                            // Recent Sales List
+                            recentSales.forEach { sale ->
+                                RecentSaleRow(sale = sale)
+                                if (sale != recentSales.last()) {
+                                    Divider()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Add bottom padding for the floating menu
+            Spacer(modifier = Modifier.height(80.dp))
         }
         
-        // Snackbar at bottom of screen
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+        // Floating Menu
+        FloatingMenu(
+            onItemClick = { screen ->
+                when (screen) {
+                    "sales" -> onNavigateToSales()
+                    "settings" -> onNavigateToSettings()
+                }
+            }
         )
     }
 }

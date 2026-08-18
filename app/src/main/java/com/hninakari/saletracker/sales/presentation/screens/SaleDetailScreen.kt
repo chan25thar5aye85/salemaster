@@ -8,7 +8,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.hninakari.saletracker.R
 import com.hninakari.saletracker.core.utils.formatCurrency
 import com.hninakari.saletracker.sales.presentation.viewmodels.SaleViewModel
 import java.time.format.DateTimeFormatter
@@ -26,10 +28,10 @@ fun SaleDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Sale Details") },
+                title = { Text(stringResource(R.string.sale_detail_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.nav_back))
                     }
                 },
                 actions = {
@@ -40,7 +42,7 @@ fun SaleDetailScreen(
                         }) {
                             Icon(
                                 Icons.Default.Delete,
-                                contentDescription = "Delete",
+                                contentDescription = stringResource(R.string.sales_delete),
                                 tint = MaterialTheme.colorScheme.error
                             )
                         }
@@ -57,7 +59,7 @@ fun SaleDetailScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Sale not found",
+                    text = stringResource(R.string.sale_detail_not_found),
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -79,21 +81,21 @@ fun SaleDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "Sale Details",
+                            text = stringResource(R.string.sale_detail_title),
                             style = MaterialTheme.typography.headlineSmall
                         )
                         Divider()
                         DetailRow(
-                            label = "Amount",
+                            label = stringResource(R.string.add_sale_amount),
                             value = formatCurrency(sale.amount),
                             isHighlighted = true
                         )
                         DetailRow(
-                            label = "Payment Method",
+                            label = stringResource(R.string.add_sale_payment),
                             value = sale.paymentMethod.name
                         )
                         DetailRow(
-                            label = "Date",
+                            label = stringResource(R.string.recent_sales_date),
                             value = sale.saleDate.format(
                                 DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")
                             )
@@ -105,7 +107,7 @@ fun SaleDetailScreen(
                     onClick = onNavigateBack,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Back to Sales")
+                    Text(stringResource(R.string.sale_detail_back))
                 }
             }
         }
