@@ -22,7 +22,8 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun AddSaleScreen(
     viewModel: SaleViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToSales: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val formState = uiState.saleFormState
@@ -85,11 +86,25 @@ fun AddSaleScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Add New Sale",
-            fontSize = 22.sp,
-            style = MaterialTheme.typography.headlineSmall
-        )
+        // Header Row with Title and View Sales button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Add New Sale",
+                fontSize = 22.sp,
+                style = MaterialTheme.typography.headlineSmall
+            )
+            
+            TextButton(
+                onClick = onNavigateToSales,
+                modifier = Modifier.height(36.dp)
+            ) {
+                Text("View Sales", fontSize = 13.sp)
+            }
+        }
         
         // Form Card
         Card(
@@ -100,15 +115,10 @@ fun AddSaleScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)  // Increased spacing between fields
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                // Amount Field
+                // Amount Field with floating label
                 Column {
-                    Text(
-                        text = "Amount *",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(bottom = 4.dp)  // Added more space below label
-                    )
                     OutlinedTextField(
                         value = formState.amount,
                         onValueChange = { 
@@ -124,6 +134,7 @@ fun AddSaleScreen(
                                 }
                             }
                         },
+                        label = { Text("Amount *") },
                         placeholder = { Text("Enter amount", fontSize = 16.sp) },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(
@@ -147,7 +158,7 @@ fun AddSaleScreen(
                             text = amountError ?: "",
                             color = MaterialTheme.colorScheme.error,
                             fontSize = 11.sp,
-                            modifier = Modifier.padding(start = 4.dp, top = 4.dp)  // More space above error
+                            modifier = Modifier.padding(start = 4.dp, top = 4.dp)
                         )
                     }
                 }
@@ -157,7 +168,7 @@ fun AddSaleScreen(
                     Text(
                         text = "Payment",
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(bottom = 4.dp)  // Added space below label
+                        modifier = Modifier.padding(bottom = 4.dp)
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),

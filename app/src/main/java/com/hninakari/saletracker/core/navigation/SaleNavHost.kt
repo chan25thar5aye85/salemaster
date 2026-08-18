@@ -16,30 +16,33 @@ fun SaleNavHost(
     navController: NavHostController,
     viewModel: SaleViewModel,
     modifier: Modifier = Modifier,
-    startDestination: String = SaleNavRoute.Sales.route
+    startDestination: String = SaleNavRoute.AddSale.route  // Now starts at AddSale
 ) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
         modifier = modifier
     ) {
-        composable(route = SaleNavRoute.Sales.route) {
-            SalesScreen(
-                viewModel = viewModel,
-                onNavigateToAddSale = {
-                    navController.navigate(SaleNavRoute.AddSale.route)
-                },
-                onNavigateToDetail = { saleId ->
-                    navController.navigate(SaleNavRoute.SaleDetail.passId(saleId))
-                }
-            )
-        }
-        
         composable(route = SaleNavRoute.AddSale.route) {
             AddSaleScreen(
                 viewModel = viewModel,
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onNavigateToSales = {
+                    navController.navigate(SaleNavRoute.Sales.route)
+                }
+            )
+        }
+        
+        composable(route = SaleNavRoute.Sales.route) {
+            SalesScreen(
+                viewModel = viewModel,
+                onNavigateToAddSale = {
+                    navController.popBackStack()  // Go back to AddSale
+                },
+                onNavigateToDetail = { saleId ->
+                    navController.navigate(SaleNavRoute.SaleDetail.passId(saleId))
                 }
             )
         }
