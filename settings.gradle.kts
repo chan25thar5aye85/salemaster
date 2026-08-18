@@ -14,8 +14,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SaleMaster"
+rootProject.name = "Saletracker"
 
 include(":app")
-include(":core")
-include(":feature:inventory")
