@@ -1,17 +1,55 @@
 # Gradle
 .gradle/
-**/build/
+build/
+*/build/
+!gradle/wrapper/gradle-wrapper.jar
 
-# Local configuration
-local.properties
+# Android
+*.apk
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+release/
+debug/
 
-# Android Studio
+# IntelliJ IDEA
 .idea/
 *.iml
+*.iws
+*.ipr
+*.swp
+*.swo
 
-# Build outputs
-*.apk
-*.aab
-
-# OS files
+# Android Studio
+*.iml
+.gradle
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+/.idea/caches
+/.idea/modules.xml
+/.idea/assetWizardSettings.xml
 .DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+
+# Keystore
+*.jks
+*.keystore
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Backup files
+*.backup
+*.tmp
