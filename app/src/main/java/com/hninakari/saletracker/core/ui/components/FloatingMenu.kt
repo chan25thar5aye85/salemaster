@@ -4,9 +4,9 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -14,8 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -43,57 +43,57 @@ fun FloatingMenu(
     var isExpanded by remember { mutableStateOf(false) }
     var isDragging by remember { mutableStateOf(false) }
     
-    // Animated offsets for smooth snapping animations
+    // Track the dynamic height of the menu after layout passes
+    var measuredMenuHeightPx by remember { mutableStateOf(0f) }
+    
+    // Animated offsets
     val animOffsetX = remember { Animatable(0f) }
     val animOffsetY = remember { Animatable(0f) }
     
     // Constants
     val buttonSize = 56.dp
-    val menuWidth = 140.dp
-    val menuHeight = 130.dp  
+    val menuWidth = 130.dp // Added slight breathing room for text widths
     val gapBetweenMenuAndButton = 12.dp  
     val padding = 16.dp
     
-    // Get navigation bar height securely
+    // Get navigation bar height
     val navBarHeight = with(density) {
         val resourceId = view.resources.getIdentifier("navigation_bar_height", "dimen", "android")
         if (resourceId > 0) view.resources.getDimensionPixelSize(resourceId).toFloat().toDp() else 0.dp
     }
     
-    // Position button on the LEFT side of the screen initially
+    // Position button on the LEFT side initially
     val buttonStartX = padding
     val buttonStartY = screenHeight - buttonSize - padding - navBarHeight - 16.dp
     
-    // Convert starting positions to pixels to reference during spring reset
     val startXIdPx = with(density) { buttonStartX.toPx() }
     val startYIdPx = with(density) { buttonStartY.toPx() }
     
-    // Initialize starting position
     LaunchedEffect(Unit) {
         animOffsetX.snapTo(startXIdPx)
         animOffsetY.snapTo(startYIdPx)
     }
     
-    // Convert current DP boundaries to Pixels for calculations
     val paddingPx = with(density) { padding.toPx() }
     val screenWidthPx = with(density) { screenWidth.toPx() }
     val screenHeightPx = with(density) { screenHeight.toPx() }
     val buttonSizePx = with(density) { buttonSize.toPx() }
     val menuWidthPx = with(density) { menuWidth.toPx() }
-    val menuHeightPx = with(density) { menuHeight.toPx() }
     val gapPx = with(density) { gapBetweenMenuAndButton.toPx() }
     val navBarHeightPx = with(density) { navBarHeight.toPx() }
 
-    // Current real-time positions
     val currentButtonX = animOffsetX.value
     val currentButtonY = animOffsetY.value
     
-    // Calculate menu position dynamically above the button, but force it to stay completely on-screen
+    // Use fallback pixel measurement until runtime box renders
+    val effectiveMenuHeightPx = if (measuredMenuHeightPx > 0f) measuredMenuHeightPx else with(density) { 110.dp.toPx() }
+
+    // Position menu dynamically above the button, safe from left edge clipping
     val menuX = (currentButtonX + (buttonSizePx / 2) - (menuWidthPx / 2)).coerceIn(
         paddingPx,
         screenWidthPx - menuWidthPx - paddingPx
     )
-    val menuY = currentButtonY - menuHeightPx - gapPx
+    val menuY = currentButtonY - effectiveMenuHeightPx - gapPx
     
     Box(
         modifier = modifier
@@ -108,18 +108,21 @@ fun FloatingMenu(
                     .shadow(elevation = 8.dp, shape = RoundedCornerShape(12.dp))
                     .background(color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(12.dp))
                     .width(menuWidth)
-                    .height(menuHeight)
+                    .wrapContentHeight() // Expands naturally around its rows completely
+                    .onGloballyPositioned { coordinates ->
+                        // Dynamically update height measurements to prevent clipping or button collisions
+                        measuredMenuHeightPx = coordinates.size.height.toFloat()
+                    }
                     .zIndex(101f)
             ) {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                        .wrapContentHeight()
+                        .padding(vertical = 6.dp, horizontal = 4.dp),
+                    verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     MenuItem(
-                        icon = Icons.Default.List,
                         label = stringResource(R.string.menu_sales),
                         onClick = {
                             isExpanded = false
@@ -131,7 +134,6 @@ fun FloatingMenu(
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
                     
                     MenuItem(
-                        icon = Icons.Default.Settings,
                         label = stringResource(R.string.menu_settings),
                         onClick = {
                             isExpanded = false
@@ -143,7 +145,7 @@ fun FloatingMenu(
             }
         }
         
-        // Draggable FAB Button
+        // FAB Button
         FloatingActionButton(
             onClick = {
                 if (!isDragging) {
@@ -160,13 +162,12 @@ fun FloatingMenu(
                         onDrag = { change, dragAmount ->
                             change.consume()
                             coroutineScope.launch {
-                                // Real-time drag tracking with boundary safety
                                 val targetX = (animOffsetX.value + dragAmount.x).coerceIn(
                                     paddingPx, 
                                     screenWidthPx - buttonSizePx - paddingPx
                                 )
                                 val targetY = (animOffsetY.value + dragAmount.y).coerceIn(
-                                    paddingPx + if (isExpanded) menuHeightPx + gapPx else 0f, 
+                                    paddingPx + effectiveMenuHeightPx + gapPx, 
                                     screenHeightPx - buttonSizePx - paddingPx - navBarHeightPx
                                 )
                                 animOffsetX.snapTo(targetX)
@@ -175,7 +176,6 @@ fun FloatingMenu(
                         },
                         onDragEnd = {
                             isDragging = false
-                            // Spring back to the exact initial left-side layout positions
                             coroutineScope.launch {
                                 animOffsetX.animateTo(startXIdPx, spring())
                             }
@@ -196,7 +196,6 @@ fun FloatingMenu(
 
 @Composable
 fun MenuItem(
-    icon: ImageVector,
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -205,19 +204,14 @@ fun MenuItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(vertical = 8.dp, horizontal = 12.dp),
+            .padding(vertical = 12.dp, horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
-        )
         Text(
             text = label,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.bodyLarge
         )
     }
 }
