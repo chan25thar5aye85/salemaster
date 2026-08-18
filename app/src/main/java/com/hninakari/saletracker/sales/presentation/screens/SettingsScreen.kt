@@ -1,5 +1,7 @@
 package com.hninakari.saletracker.sales.presentation.screens
 
+import android.content.Context
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,16 +12,29 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hninakari.saletracker.R
+import com.hninakari.saletracker.core.utils.LanguageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    var showRestartDialog by remember { mutableStateOf(false) }
+    var selectedLanguage by remember { 
+        mutableStateOf(LanguageManager.getCurrentLanguage(context))
+    }
+    
+    // Handle system back press
+    BackHandler {
+        onNavigateBack()
+    }
+    
     Scaffold(
         topBar = {
             TopAppBar(
@@ -49,19 +64,31 @@ fun SettingsScreen(
                 )
             }
             
+            // English Option
             item {
-                SettingsItem(
+                SettingsLanguageItem(
                     title = stringResource(R.string.settings_english),
-                    isSelected = true,
-                    onClick = { /* Switch to English */ }
+                    languageCode = "en",
+                    isSelected = selectedLanguage == "en",
+                    onClick = { 
+                        selectedLanguage = "en"
+                        LanguageManager.setLanguage(context, "en")
+                        showRestartDialog = true
+                    }
                 )
             }
             
+            // Myanmar Option
             item {
-                SettingsItem(
+                SettingsLanguageItem(
                     title = stringResource(R.string.settings_myanmar),
-                    isSelected = false,
-                    onClick = { /* Switch to Myanmar */ }
+                    languageCode = "my",
+                    isSelected = selectedLanguage == "my",
+                    onClick = { 
+                        selectedLanguage = "my"
+                        LanguageManager.setLanguage(context, "my")
+                        showRestartDialog = true
+                    }
                 )
             }
             
@@ -99,11 +126,45 @@ fun SettingsScreen(
             }
         }
     }
+    
+    // Restart Dialog
+    if (showRestartDialog) {
+        AlertDialog(
+            onDismissRequest = { showRestartDialog = false },
+            title = { Text("Language Changed") },
+            text = { 
+                Text("Language has been changed. The app needs to restart to apply the changes.") 
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showRestartDialog = false
+                        // Restart the activity
+                        (context as? android.app.Activity)?.recreate()
+                    }
+                ) {
+                    Text("Restart Now")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { 
+                        showRestartDialog = false
+                        // Still restart to apply changes
+                        (context as? android.app.Activity)?.recreate()
+                    }
+                ) {
+                    Text("Later")
+                }
+            }
+        )
+    }
 }
 
 @Composable
-fun SettingsItem(
+fun SettingsLanguageItem(
     title: String,
+    languageCode: String,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {

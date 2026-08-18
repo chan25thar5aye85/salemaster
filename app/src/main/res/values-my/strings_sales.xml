@@ -50,4 +50,10 @@
     <string name="settings_myanmar">မြန်မာ</string>
     <string name="settings_about">အကြောင်း</string>
     <string name="settings_version">ဗားရှင်း</string>
+
+    <!-- Settings Dialog -->
+    <string name="settings_language_changed">ဘာသာစကားပြောင်းပြီး</string>
+    <string name="settings_language_changed_message">ဘာသာစကားပြောင်းပြီးပါပြီ။ ပြောင်းလဲမှုများကိုအသုံးပြုရန်အက်ပ်ကိုပြန်လည်စတင်ရန်လိုအပ်သည်။</string>
+    <string name="settings_restart_now">ယခုပြန်လည်စတင်ရန်</string>
+    <string name="settings_later">နောက်မှ</string>
 </resources>

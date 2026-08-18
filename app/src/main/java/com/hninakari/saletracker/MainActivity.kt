@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.hninakari.saletracker.core.navigation.AppNavGraph
 import com.hninakari.saletracker.core.ui.theme.AppTheme
+import com.hninakari.saletracker.core.utils.LanguageManager
 import com.hninakari.saletracker.sales.presentation.viewmodels.SaleViewModel
 
 class MainActivity : ComponentActivity() {
@@ -26,5 +27,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+    
+    // Apply language when activity is created
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(LanguageManager.applyLanguage(newBase))
     }
 }

@@ -50,4 +50,10 @@
     <string name="settings_myanmar">Myanmar</string>
     <string name="settings_about">About</string>
     <string name="settings_version">Version</string>
+
+    <!-- Settings Dialog -->
+    <string name="settings_language_changed">Language Changed</string>
+    <string name="settings_language_changed_message">Language has been changed. The app needs to restart to apply the changes.</string>
+    <string name="settings_restart_now">Restart Now</string>
+    <string name="settings_later">Later</string>
 </resources>
