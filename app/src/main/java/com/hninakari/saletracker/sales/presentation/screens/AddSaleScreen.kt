@@ -13,8 +13,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import com.hninakari.saletracker.core.utils.formatCurrency
 import com.hninakari.saletracker.sales.data.models.PaymentMethod
+import com.hninakari.saletracker.sales.data.models.Sales
 import com.hninakari.saletracker.sales.presentation.viewmodels.SaleViewModel
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun AddSaleScreen(
@@ -54,13 +57,10 @@ fun AddSaleScreen(
             amountError = null
             keyboardController?.hide()
             viewModel.submitSale()
-            // Clear form and show snackbar on success
             if (uiState.error == null) {
-                // Clear form
                 viewModel.updateFormField(amount = "")
                 viewModel.updateFormField(paymentMethod = PaymentMethod.CASH)
                 viewModel.clearError()
-                // Show snackbar
                 coroutineScope.launch {
                     snackbarHostState.showSnackbar(
                         message = "✓ Sale added successfully!",
@@ -70,6 +70,9 @@ fun AddSaleScreen(
             }
         }
     }
+    
+    // Get recent 5 sales
+    val recentSales = uiState.sales.take(5)
     
     Column(
         modifier = Modifier
@@ -88,6 +91,7 @@ fun AddSaleScreen(
             style = MaterialTheme.typography.headlineSmall
         )
         
+        // Form Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -95,15 +99,15 @@ fun AddSaleScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)  // Increased spacing between fields
             ) {
                 // Amount Field
                 Column {
                     Text(
                         text = "Amount *",
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(bottom = 2.dp)
+                        modifier = Modifier.padding(bottom = 4.dp)  // Added more space below label
                     )
                     OutlinedTextField(
                         value = formState.amount,
@@ -120,7 +124,7 @@ fun AddSaleScreen(
                                 }
                             }
                         },
-                        placeholder = { Text("Enter amount", fontSize = 13.sp) },
+                        placeholder = { Text("Enter amount", fontSize = 16.sp) },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Decimal,
@@ -128,11 +132,12 @@ fun AddSaleScreen(
                         ),
                         singleLine = true,
                         isError = amountError != null,
-                        textStyle = MaterialTheme.typography.bodyMedium,
+                        textStyle = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp),
                         leadingIcon = {
                             Text(
                                 text = "$",
-                                style = MaterialTheme.typography.bodyMedium,
+                                fontSize = 20.sp,
+                                style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -142,91 +147,92 @@ fun AddSaleScreen(
                             text = amountError ?: "",
                             color = MaterialTheme.colorScheme.error,
                             fontSize = 11.sp,
-                            modifier = Modifier.padding(start = 4.dp, top = 2.dp)
+                            modifier = Modifier.padding(start = 4.dp, top = 4.dp)  // More space above error
                         )
                     }
                 }
                 
                 // Payment - Label and Selector in a Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Column {
                     Text(
                         text = "Payment",
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.width(65.dp)
+                        modifier = Modifier.padding(bottom = 4.dp)  // Added space below label
                     )
-                    
                     Row(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Button(
-                            onClick = {
-                                viewModel.updateFormField(paymentMethod = PaymentMethod.CASH)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(34.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (formState.paymentMethod == PaymentMethod.CASH) 
-                                    MaterialTheme.colorScheme.primary 
-                                else 
-                                    MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = if (formState.paymentMethod == PaymentMethod.CASH)
-                                    MaterialTheme.colorScheme.onPrimary
-                                else
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Text("Cash", fontSize = 11.sp)
-                        }
-                        
-                        Button(
-                            onClick = {
-                                viewModel.updateFormField(paymentMethod = PaymentMethod.KPAY)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(34.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (formState.paymentMethod == PaymentMethod.KPAY) 
-                                    MaterialTheme.colorScheme.primary 
-                                else 
-                                    MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = if (formState.paymentMethod == PaymentMethod.KPAY)
-                                    MaterialTheme.colorScheme.onPrimary
-                                else
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
-                        ) {
-                            Text("Kpay", fontSize = 11.sp)
-                        }
-                        
-                        Button(
-                            onClick = {
-                                viewModel.updateFormField(paymentMethod = PaymentMethod.WAVE_PAY)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(34.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (formState.paymentMethod == PaymentMethod.WAVE_PAY) 
-                                    MaterialTheme.colorScheme.primary 
-                                else 
-                                    MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = if (formState.paymentMethod == PaymentMethod.WAVE_PAY)
-                                    MaterialTheme.colorScheme.onPrimary
-                                else
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
-                        ) {
-                            Text("Wave", fontSize = 11.sp)
+                            Button(
+                                onClick = {
+                                    viewModel.updateFormField(paymentMethod = PaymentMethod.CASH)
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(34.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (formState.paymentMethod == PaymentMethod.CASH) 
+                                        MaterialTheme.colorScheme.primary 
+                                    else 
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = if (formState.paymentMethod == PaymentMethod.CASH)
+                                        MaterialTheme.colorScheme.onPrimary
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                            ) {
+                                Text("Cash", fontSize = 11.sp)
+                            }
+                            
+                            Button(
+                                onClick = {
+                                    viewModel.updateFormField(paymentMethod = PaymentMethod.KPAY)
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(34.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (formState.paymentMethod == PaymentMethod.KPAY) 
+                                        MaterialTheme.colorScheme.primary 
+                                    else 
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = if (formState.paymentMethod == PaymentMethod.KPAY)
+                                        MaterialTheme.colorScheme.onPrimary
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                            ) {
+                                Text("Kpay", fontSize = 11.sp)
+                            }
+                            
+                            Button(
+                                onClick = {
+                                    viewModel.updateFormField(paymentMethod = PaymentMethod.WAVE_PAY)
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(34.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (formState.paymentMethod == PaymentMethod.WAVE_PAY) 
+                                        MaterialTheme.colorScheme.primary 
+                                    else 
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = if (formState.paymentMethod == PaymentMethod.WAVE_PAY)
+                                        MaterialTheme.colorScheme.onPrimary
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                            ) {
+                                Text("Wave", fontSize = 11.sp)
+                            }
                         }
                     }
                 }
@@ -269,12 +275,129 @@ fun AddSaleScreen(
             }
         }
         
+        // Recent Sales Section
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Recent Sales",
+                fontSize = 18.sp,
+                style = MaterialTheme.typography.titleMedium
+            )
+            
+            if (recentSales.isEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        text = "No sales yet. Add your first sale!",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            } else {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Header Row
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Amount",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.weight(2f)
+                            )
+                            Text(
+                                text = "Payment",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = "Date",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        
+                        Divider()
+                        
+                        // Recent Sales List
+                        recentSales.forEach { sale ->
+                            RecentSaleRow(sale = sale)
+                            if (sale != recentSales.last()) {
+                                Divider()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
         // Snackbar at bottom of screen
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
+        )
+    }
+}
+
+@Composable
+fun RecentSaleRow(sale: Sales) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = formatCurrency(sale.amount),
+            fontSize = 14.sp,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.weight(2f)
+        )
+        
+        Text(
+            text = sale.paymentMethod.name,
+            fontSize = 13.sp,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        
+        Text(
+            text = sale.saleDate.format(
+                DateTimeFormatter.ofPattern("MMM dd, HH:mm")
+            ),
+            fontSize = 12.sp,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
         )
     }
 }
