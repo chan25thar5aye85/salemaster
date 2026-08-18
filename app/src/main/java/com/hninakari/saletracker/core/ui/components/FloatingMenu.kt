@@ -4,9 +4,9 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -39,30 +39,23 @@ fun FloatingMenu(
     val view = LocalView.current
     val coroutineScope = rememberCoroutineScope()
     
-    // Menu state
     var isExpanded by remember { mutableStateOf(false) }
     var isDragging by remember { mutableStateOf(false) }
-    
-    // Track the dynamic height of the menu after layout passes
     var measuredMenuHeightPx by remember { mutableStateOf(0f) }
     
-    // Animated offsets
     val animOffsetX = remember { Animatable(0f) }
     val animOffsetY = remember { Animatable(0f) }
     
-    // Constants
     val buttonSize = 56.dp
-    val menuWidth = 130.dp // Added slight breathing room for text widths
+    val menuWidth = 130.dp
     val gapBetweenMenuAndButton = 12.dp  
     val padding = 16.dp
     
-    // Get navigation bar height
     val navBarHeight = with(density) {
         val resourceId = view.resources.getIdentifier("navigation_bar_height", "dimen", "android")
         if (resourceId > 0) view.resources.getDimensionPixelSize(resourceId).toFloat().toDp() else 0.dp
     }
     
-    // Position button on the LEFT side initially
     val buttonStartX = padding
     val buttonStartY = screenHeight - buttonSize - padding - navBarHeight - 16.dp
     
@@ -85,10 +78,8 @@ fun FloatingMenu(
     val currentButtonX = animOffsetX.value
     val currentButtonY = animOffsetY.value
     
-    // Use fallback pixel measurement until runtime box renders
     val effectiveMenuHeightPx = if (measuredMenuHeightPx > 0f) measuredMenuHeightPx else with(density) { 110.dp.toPx() }
 
-    // Position menu dynamically above the button, safe from left edge clipping
     val menuX = (currentButtonX + (buttonSizePx / 2) - (menuWidthPx / 2)).coerceIn(
         paddingPx,
         screenWidthPx - menuWidthPx - paddingPx
@@ -100,7 +91,6 @@ fun FloatingMenu(
             .fillMaxSize()
             .zIndex(100f)
     ) {
-        // Menu Items Card
         if (isExpanded) {
             Box(
                 modifier = Modifier
@@ -108,9 +98,8 @@ fun FloatingMenu(
                     .shadow(elevation = 8.dp, shape = RoundedCornerShape(12.dp))
                     .background(color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(12.dp))
                     .width(menuWidth)
-                    .wrapContentHeight() // Expands naturally around its rows completely
+                    .wrapContentHeight()
                     .onGloballyPositioned { coordinates ->
-                        // Dynamically update height measurements to prevent clipping or button collisions
                         measuredMenuHeightPx = coordinates.size.height.toFloat()
                     }
                     .zIndex(101f)
@@ -145,7 +134,7 @@ fun FloatingMenu(
             }
         }
         
-        // FAB Button
+        // FAB Button - Using theme colors with contrast
         FloatingActionButton(
             onClick = {
                 if (!isDragging) {
@@ -184,7 +173,13 @@ fun FloatingMenu(
                             }
                         }
                     )
-                }
+                },
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            elevation = FloatingActionButtonDefaults.elevation(
+                defaultElevation = 8.dp,
+                pressedElevation = 12.dp
+            )
         ) {
             Icon(
                 imageVector = if (isExpanded) Icons.Default.Close else Icons.Default.Add,

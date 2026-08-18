@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.hninakari.saletracker.R
 import com.hninakari.saletracker.core.utils.LanguageManager
 
@@ -25,12 +25,10 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
-    var showRestartDialog by remember { mutableStateOf(false) }
     var selectedLanguage by remember { 
         mutableStateOf(LanguageManager.getCurrentLanguage(context))
     }
     
-    // Handle system back press
     BackHandler {
         onNavigateBack()
     }
@@ -52,69 +50,97 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(paddingValues),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Language Section
             item {
-                Text(
-                    text = stringResource(R.string.settings_language),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
-            
-            // English Option
-            item {
-                SettingsLanguageItem(
-                    title = stringResource(R.string.settings_english),
-                    languageCode = "en",
-                    isSelected = selectedLanguage == "en",
-                    onClick = { 
-                        selectedLanguage = "en"
-                        LanguageManager.setLanguage(context, "en")
-                        showRestartDialog = true
+                SettingsCard(
+                    icon = Icons.Default.Translate,
+                    title = stringResource(R.string.settings_language),
+                    content = {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { 
+                                        selectedLanguage = "en"
+                                        LanguageManager.setLanguage(context, "en")
+                                        (context as? android.app.Activity)?.recreate()
+                                    }
+                                    .padding(vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.settings_english),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (selectedLanguage == "en") 
+                                        MaterialTheme.colorScheme.primary 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                                if (selectedLanguage == "en") {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                            
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { 
+                                        selectedLanguage = "my"
+                                        LanguageManager.setLanguage(context, "my")
+                                        (context as? android.app.Activity)?.recreate()
+                                    }
+                                    .padding(vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.settings_myanmar),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (selectedLanguage == "my") 
+                                        MaterialTheme.colorScheme.primary 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                                if (selectedLanguage == "my") {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
                     }
-                )
-            }
-            
-            // Myanmar Option
-            item {
-                SettingsLanguageItem(
-                    title = stringResource(R.string.settings_myanmar),
-                    languageCode = "my",
-                    isSelected = selectedLanguage == "my",
-                    onClick = { 
-                        selectedLanguage = "my"
-                        LanguageManager.setLanguage(context, "my")
-                        showRestartDialog = true
-                    }
-                )
-            }
-            
-            // About Section
-            item {
-                Text(
-                    text = stringResource(R.string.settings_about),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                 )
             }
             
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = stringResource(R.string.settings_version),
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "1.0.0",
@@ -126,81 +152,46 @@ fun SettingsScreen(
             }
         }
     }
-    
-    // Restart Dialog
-    if (showRestartDialog) {
-        AlertDialog(
-            onDismissRequest = { showRestartDialog = false },
-            title = { Text("Language Changed") },
-            text = { 
-                Text("Language has been changed. The app needs to restart to apply the changes.") 
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showRestartDialog = false
-                        // Restart the activity
-                        (context as? android.app.Activity)?.recreate()
-                    }
-                ) {
-                    Text("Restart Now")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { 
-                        showRestartDialog = false
-                        // Still restart to apply changes
-                        (context as? android.app.Activity)?.recreate()
-                    }
-                ) {
-                    Text("Later")
-                }
-            }
-        )
-    }
 }
 
 @Composable
-fun SettingsLanguageItem(
+fun SettingsCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
-    languageCode: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
+    content: @Composable () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) 
-                MaterialTheme.colorScheme.primaryContainer 
-            else 
-                MaterialTheme.colorScheme.surface
-        )
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onClick() }
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isSelected) 
-                    MaterialTheme.colorScheme.primary 
-                else 
-                    MaterialTheme.colorScheme.onSurface
-            )
-            
-            if (isSelected) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Icon(
-                    Icons.Default.Check,
-                    contentDescription = "Selected",
+                    imageVector = icon,
+                    contentDescription = title,
                     tint = MaterialTheme.colorScheme.primary
                 )
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
+            
+            Divider()
+            
+            content()
         }
     }
 }
