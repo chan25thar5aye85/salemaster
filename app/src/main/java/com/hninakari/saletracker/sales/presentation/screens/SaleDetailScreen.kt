@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.hninakari.saletracker.R
-import com.hninakari.saletracker.core.utils.formatCurrency
+import com.hninakari.saletracker.core.utils.formatAmount
 import com.hninakari.saletracker.sales.presentation.viewmodels.SaleViewModel
 import java.time.format.DateTimeFormatter
 
@@ -87,7 +87,7 @@ fun SaleDetailScreen(
                         Divider()
                         DetailRow(
                             label = stringResource(R.string.add_sale_amount),
-                            value = formatCurrency(sale.amount),
+                            value = formatAmount(sale.amount),
                             isHighlighted = true
                         )
                         DetailRow(

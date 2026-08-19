@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.hninakari.saletracker.R
-import com.hninakari.saletracker.core.utils.formatCurrency
+import com.hninakari.saletracker.core.utils.formatAmount
 import com.hninakari.saletracker.sales.data.models.Sales
 import com.hninakari.saletracker.sales.presentation.viewmodels.SaleViewModel
 import java.time.format.DateTimeFormatter
@@ -141,7 +141,7 @@ fun SalesList(
                 ) {
                     SummaryItem(
                         label = stringResource(R.string.sales_total),
-                        value = formatCurrency(totalSales)
+                        value = formatAmount(totalSales)
                     )
                     SummaryItem(
                         label = stringResource(R.string.sales_transactions),
@@ -204,7 +204,7 @@ fun SaleCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = formatCurrency(sale.amount),
+                    text = formatAmount(sale.amount),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
