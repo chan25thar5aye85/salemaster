@@ -55,8 +55,8 @@ fun SupplierListScreen(
                 showDeleteDialog = false
                 pendingDeleteId = null
             },
-            title = { Text("Delete Supplier") },
-            text = { Text("Are you sure you want to delete this supplier?") },
+            title = { Text(stringResource(R.string.delete_supplier)) },
+            text = { Text(stringResource(R.string.delete_supplier_confirmation)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -68,7 +68,7 @@ fun SupplierListScreen(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
@@ -83,7 +83,7 @@ fun SupplierListScreen(
     }
 
     AppScreen(
-        title = "Suppliers",
+        title = stringResource(R.string.suppliers),
         showBackButton = true,
         onBackClick = onBack,
         showSearchButton = true,
@@ -101,8 +101,7 @@ fun SupplierListScreen(
                         viewModel.handleEvent(SupplierListEvent.SearchQueryChanged(it))
                     },
                     onSearch = {},
-                    placeholder = "Search by name or phone...",
-                    modifier = Modifier.padding(bottom = Spacing.medium)
+                    placeholder = stringResource(R.string.search_suppliers)
                 )
             }
 
@@ -114,7 +113,7 @@ fun SupplierListScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
                         Text(
-                            text = "Loading suppliers...",
+                            text = stringResource(R.string.loading_suppliers),
                             style = AppTypography.body,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
@@ -144,7 +143,7 @@ fun SupplierListScreen(
                                 viewModel.handleEvent(SupplierListEvent.LoadSuppliers)
                             }
                         ) {
-                            Text("Retry")
+                            Text(stringResource(R.string.retry))
                         }
                     }
                 }
@@ -162,12 +161,18 @@ fun SupplierListScreen(
                             fontSize = 48.sp
                         )
                         Text(
-                            text = if (state.searchQuery.isNotEmpty()) "No suppliers found for '${state.searchQuery}'" else "No suppliers yet",
+                            text = if (state.searchQuery.isNotEmpty()) 
+                                "${stringResource(R.string.no_suppliers_found)} '${state.searchQuery}'"
+                            else 
+                                stringResource(R.string.no_suppliers_yet),
                             style = AppTypography.header,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
                         Text(
-                            text = if (state.searchQuery.isNotEmpty()) "Try a different search" else "Tap + to add your first supplier",
+                            text = if (state.searchQuery.isNotEmpty()) 
+                                stringResource(R.string.try_different_search)
+                            else 
+                                stringResource(R.string.tap_add_supplier),
                             style = AppTypography.body,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -185,9 +190,9 @@ fun SupplierListScreen(
             ) {
                 Text(
                     text = if (state.searchQuery.isNotEmpty()) 
-                        "${state.suppliers.size} results for '${state.searchQuery}'" 
+                        "${state.suppliers.size} ${stringResource(R.string.results_for)} '${state.searchQuery}'" 
                     else 
-                        "${state.suppliers.size} suppliers",
+                        "${state.suppliers.size} ${stringResource(R.string.suppliers)}",
                     style = AppTypography.label,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
@@ -198,7 +203,7 @@ fun SupplierListScreen(
                             showSearch = false
                         }
                     ) {
-                        Text("Clear")
+                        Text(stringResource(R.string.clear))
                     }
                 }
             }
@@ -280,13 +285,13 @@ fun SupplierCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Total: ${supplier.totalPurchased}",
+                        text = "${stringResource(R.string.total_purchased)}: ${supplier.totalPurchased}",
                         style = AppTypography.small,
                         color = MaterialTheme.colorScheme.primary
                     )
                     if (supplier.products.isNotEmpty()) {
                         Text(
-                            text = "${supplier.products.size} products",
+                            text = "${supplier.products.size} ${stringResource(R.string.products)}",
                             style = AppTypography.small,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -297,7 +302,7 @@ fun SupplierCard(
             IconButton(onClick = onDelete) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "Delete",
+                    contentDescription = stringResource(R.string.delete),
                     tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
                 )
             }

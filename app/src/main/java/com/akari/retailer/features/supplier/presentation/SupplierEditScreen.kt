@@ -8,8 +8,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
@@ -38,7 +40,7 @@ fun SupplierEditScreen(
     val state by viewModel.state.collectAsState()
 
     AppScreen(
-        title = "Edit Supplier",
+        title = stringResource(R.string.edit_supplier),
         showBackButton = true,
         onBackClick = onBack
     ) {
@@ -74,7 +76,7 @@ fun SupplierEditScreen(
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
                         AppPrimaryButton(
-                            text = "Retry",
+                            text = stringResource(R.string.retry),
                             onClick = {
                                 viewModel.handleEvent(SupplierEditEvent.LoadSupplier)
                             }
@@ -87,7 +89,7 @@ fun SupplierEditScreen(
             OutlinedTextField(
                 value = state.name,
                 onValueChange = { viewModel.handleEvent(SupplierEditEvent.NameChanged(it)) },
-                label = { Text("Name *") },
+                label = { Text(stringResource(R.string.name)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -97,7 +99,7 @@ fun SupplierEditScreen(
             OutlinedTextField(
                 value = state.company,
                 onValueChange = { viewModel.handleEvent(SupplierEditEvent.CompanyChanged(it)) },
-                label = { Text("Company") },
+                label = { Text(stringResource(R.string.company)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -107,7 +109,7 @@ fun SupplierEditScreen(
             OutlinedTextField(
                 value = state.phone,
                 onValueChange = { viewModel.handleEvent(SupplierEditEvent.PhoneChanged(it)) },
-                label = { Text("Phone") },
+                label = { Text(stringResource(R.string.phone)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -117,7 +119,7 @@ fun SupplierEditScreen(
             OutlinedTextField(
                 value = state.email,
                 onValueChange = { viewModel.handleEvent(SupplierEditEvent.EmailChanged(it)) },
-                label = { Text("Email") },
+                label = { Text(stringResource(R.string.email)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -127,7 +129,7 @@ fun SupplierEditScreen(
             OutlinedTextField(
                 value = state.address,
                 onValueChange = { viewModel.handleEvent(SupplierEditEvent.AddressChanged(it)) },
-                label = { Text("Address") },
+                label = { Text(stringResource(R.string.address)) },
                 modifier = Modifier.fillMaxWidth()
             )
             
@@ -136,7 +138,7 @@ fun SupplierEditScreen(
             OutlinedTextField(
                 value = state.notes,
                 onValueChange = { viewModel.handleEvent(SupplierEditEvent.NotesChanged(it)) },
-                label = { Text("Notes") },
+                label = { Text(stringResource(R.string.notes)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
@@ -154,7 +156,7 @@ fun SupplierEditScreen(
             }
             
             AppPrimaryButton(
-                text = if (state.isSaving) "Updating..." else "Update Supplier",
+                text = if (state.isSaving) stringResource(R.string.updating) else stringResource(R.string.update_supplier),
                 onClick = {
                     viewModel.handleEvent(SupplierEditEvent.SaveSupplier)
                 },

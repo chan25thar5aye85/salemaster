@@ -9,10 +9,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
 import com.akari.retailer.core.ui.components.AppScreen
@@ -41,13 +43,12 @@ fun TrendsScreen(
     )
     
     val state by viewModel.state.collectAsState()
+    val salesLabel = stringResource(R.string.sales)
 
     AppScreen(
-        title = "Monthly Sales Trend",
+        title = stringResource(R.string.monthly_sales_trend),
         showBackButton = true,
-        onBackClick = onBack,
-        showDateFilter = true,
-        onDateFilterClick = { /* TODO: Implement date filter */ }
+        onBackClick = onBack
     ) {
         Column(
             modifier = Modifier
@@ -62,7 +63,7 @@ fun TrendsScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
                         Text(
-                            text = "Loading sales data...",
+                            text = stringResource(R.string.loading_sales_data),
                             style = AppTypography.body,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
@@ -97,13 +98,13 @@ fun TrendsScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = "📊", fontSize = 40.sp)
                         Text(
-                            text = "No sales data for ${state.monthYear}",
+                            text = stringResource(R.string.no_sales_data_for) + " ${state.monthYear}",
                             style = AppTypography.body,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
                         Text(
-                            text = "Start recording sales to see trends!",
+                            text = stringResource(R.string.start_recording_sales),
                             style = AppTypography.small,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                         )
@@ -112,7 +113,6 @@ fun TrendsScreen(
                 return@Column
             }
 
-            // Summary stats using AppCard
             AppCard {
                 Row(
                     modifier = Modifier
@@ -134,7 +134,7 @@ fun TrendsScreen(
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "Avg/Day",
+                            text = stringResource(R.string.avg_day),
                             style = AppTypography.label,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
@@ -146,7 +146,7 @@ fun TrendsScreen(
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "Highest",
+                            text = stringResource(R.string.highest),
                             style = AppTypography.label,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
@@ -161,13 +161,12 @@ fun TrendsScreen(
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
-            // Chart using AppCard
             AppCard {
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "${state.monthYear} Sales",
+                        text = "${state.monthYear} ${stringResource(R.string.sales)}",
                         style = AppTypography.title,
                         modifier = Modifier.padding(bottom = Spacing.small)
                     )
@@ -206,7 +205,7 @@ fun TrendsScreen(
                                 BarEntry(index.toFloat(), value.toFloat())
                             }
                             
-                            val dataSet = BarDataSet(entries, "Sales").apply {
+                            val dataSet = BarDataSet(entries, salesLabel).apply {
                                 color = Color.parseColor("#1976D2")
                                 valueTextColor = Color.DKGRAY
                                 valueTextSize = 10f

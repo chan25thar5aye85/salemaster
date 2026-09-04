@@ -8,9 +8,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
 import com.akari.retailer.core.ui.components.AppPrimaryButton
@@ -44,7 +46,7 @@ fun ExpenseDetailScreen(
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
     AppScreen(
-        title = "Expense Details",
+        title = stringResource(R.string.expense_details),
         showBackButton = true,
         onBackClick = onBack
     ) {
@@ -61,7 +63,7 @@ fun ExpenseDetailScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
                         Text(
-                            text = "Loading expense...",
+                            text = stringResource(R.string.loading_expenses),
                             style = AppTypography.body,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
@@ -87,7 +89,7 @@ fun ExpenseDetailScreen(
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
                         AppPrimaryButton(
-                            text = "Retry",
+                            text = stringResource(R.string.retry),
                             onClick = {
                                 viewModel.handleEvent(ExpenseDetailEvent.LoadExpense)
                             }
@@ -114,7 +116,7 @@ fun ExpenseDetailScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Amount",
+                                text = stringResource(R.string.amount),
                                 style = AppTypography.body,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
@@ -132,7 +134,7 @@ fun ExpenseDetailScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Category",
+                                text = stringResource(R.string.category),
                                 style = AppTypography.body,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
@@ -149,7 +151,7 @@ fun ExpenseDetailScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Date",
+                                text = stringResource(R.string.date),
                                 style = AppTypography.body,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
@@ -167,7 +169,7 @@ fun ExpenseDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Description",
+                                    text = stringResource(R.string.description),
                                     style = AppTypography.body,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -183,7 +185,7 @@ fun ExpenseDetailScreen(
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
                 AppPrimaryButton(
-                    text = "Edit Expense",
+                    text = stringResource(R.string.edit_expense),
                     onClick = {
                         onEdit(expense)
                     }

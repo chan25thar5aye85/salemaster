@@ -55,8 +55,8 @@ fun CustomerListScreen(
                 showDeleteDialog = false
                 pendingDeleteId = null
             },
-            title = { Text("Delete Customer") },
-            text = { Text("Are you sure you want to delete this customer?") },
+            title = { Text(stringResource(R.string.delete_customer)) },
+            text = { Text(stringResource(R.string.delete_customer_confirmation)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -68,7 +68,7 @@ fun CustomerListScreen(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
@@ -83,19 +83,17 @@ fun CustomerListScreen(
     }
 
     AppScreen(
-        title = "Customers",
+        title = stringResource(R.string.customers),
         showBackButton = true,
         onBackClick = onBack,
         showSearchButton = true,
         onSearchClick = { showSearch = !showSearch },
         showAddButton = true,
-        onAddClick = { navController.navigate(Routes.CUSTOMER_ADD) },
-        showDateFilter = false
+        onAddClick = { navController.navigate(Routes.CUSTOMER_ADD) }
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Inline Search Box
             if (showSearch) {
                 SearchBox(
                     query = state.searchQuery,
@@ -103,7 +101,7 @@ fun CustomerListScreen(
                         viewModel.handleEvent(CustomerListEvent.SearchQueryChanged(it))
                     },
                     onSearch = {},
-                    placeholder = "Search by name or phone...",
+                    placeholder = stringResource(R.string.search_customers),
                     modifier = Modifier.padding(bottom = Spacing.medium)
                 )
             }
@@ -116,7 +114,7 @@ fun CustomerListScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
                         Text(
-                            text = "Loading customers...",
+                            text = stringResource(R.string.loading_customers),
                             style = AppTypography.body,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
@@ -146,7 +144,7 @@ fun CustomerListScreen(
                                 viewModel.handleEvent(CustomerListEvent.LoadCustomers)
                             }
                         ) {
-                            Text("Retry")
+                            Text(stringResource(R.string.retry))
                         }
                     }
                 }
@@ -164,12 +162,18 @@ fun CustomerListScreen(
                             fontSize = 48.sp
                         )
                         Text(
-                            text = if (state.searchQuery.isNotEmpty()) "No customers found for '${state.searchQuery}'" else "No customers yet",
+                            text = if (state.searchQuery.isNotEmpty()) 
+                                "${stringResource(R.string.no_customers_found)} '${state.searchQuery}'"
+                            else 
+                                stringResource(R.string.no_customers_yet),
                             style = AppTypography.header,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
                         Text(
-                            text = if (state.searchQuery.isNotEmpty()) "Try a different search" else "Tap + to add your first customer",
+                            text = if (state.searchQuery.isNotEmpty()) 
+                                stringResource(R.string.try_different_search)
+                            else 
+                                stringResource(R.string.tap_add_customer),
                             style = AppTypography.body,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -178,7 +182,6 @@ fun CustomerListScreen(
                 return@Column
             }
 
-            // Search indicator and count
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -188,9 +191,9 @@ fun CustomerListScreen(
             ) {
                 Text(
                     text = if (state.searchQuery.isNotEmpty()) 
-                        "${state.customers.size} results for '${state.searchQuery}'" 
+                        "${state.customers.size} ${stringResource(R.string.results_for)} '${state.searchQuery}'" 
                     else 
-                        "${state.customers.size} customers",
+                        "${state.customers.size} ${stringResource(R.string.customers_count)}",
                     style = AppTypography.label,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
@@ -201,7 +204,7 @@ fun CustomerListScreen(
                             showSearch = false
                         }
                     ) {
-                        Text("Clear")
+                        Text(stringResource(R.string.clear))
                     }
                 }
             }
@@ -275,12 +278,12 @@ fun CustomerCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Total Spent: ${customer.totalSpent}",
+                        text = "${stringResource(R.string.total_spent)}: ${customer.totalSpent}",
                         style = AppTypography.small,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "Orders: ${customer.totalOrders}",
+                        text = "${stringResource(R.string.total_orders)}: ${customer.totalOrders}",
                         style = AppTypography.small,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -290,7 +293,7 @@ fun CustomerCard(
             IconButton(onClick = onDelete) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "Delete",
+                    contentDescription = stringResource(R.string.delete),
                     tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
                 )
             }

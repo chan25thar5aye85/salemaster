@@ -26,12 +26,10 @@ import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.expense.data.repository.FirestoreExpenseRepository
 import com.akari.retailer.features.expense.data.remote.FirestoreExpenseService
 import com.akari.retailer.features.expense.domain.models.Expense
-import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 import com.akari.retailer.navigation.Routes
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpenseListScreen(
     navController: NavController,
@@ -59,8 +57,8 @@ fun ExpenseListScreen(
                 showDeleteDialog = false
                 pendingDeleteId = null
             },
-            title = { Text("Delete Expense") },
-            text = { Text("Are you sure you want to delete this expense?") },
+            title = { Text(stringResource(R.string.delete_expense)) },
+            text = { Text(stringResource(R.string.delete_expense_confirmation)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -72,7 +70,7 @@ fun ExpenseListScreen(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
@@ -87,7 +85,7 @@ fun ExpenseListScreen(
     }
 
     AppScreen(
-        title = "Expenses",
+        title = stringResource(R.string.expenses),
         showBackButton = true,
         onBackClick = onBack,
         showSearchButton = true,
@@ -105,11 +103,10 @@ fun ExpenseListScreen(
                         viewModel.handleEvent(ExpenseListEvent.SearchQueryChanged(it))
                     },
                     onSearch = {},
-                    placeholder = "Search expenses..."
+                    placeholder = stringResource(R.string.search_expenses)
                 )
             }
 
-            // Total summary card
             if (state.allExpenses.isNotEmpty()) {
                 AppCard {
                     Row(
@@ -117,7 +114,7 @@ fun ExpenseListScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Total Expenses",
+                            text = stringResource(R.string.total_expenses),
                             style = AppTypography.body,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -138,7 +135,7 @@ fun ExpenseListScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
                         Text(
-                            text = "Loading expenses...",
+                            text = stringResource(R.string.loading_expenses),
                             style = AppTypography.body,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
@@ -168,7 +165,7 @@ fun ExpenseListScreen(
                                 viewModel.handleEvent(ExpenseListEvent.LoadExpenses)
                             }
                         ) {
-                            Text("Retry")
+                            Text(stringResource(R.string.retry))
                         }
                     }
                 }
@@ -186,12 +183,18 @@ fun ExpenseListScreen(
                             fontSize = 48.sp
                         )
                         Text(
-                            text = if (state.searchQuery.isNotEmpty()) "No expenses found for '${state.searchQuery}'" else "No expenses yet",
+                            text = if (state.searchQuery.isNotEmpty()) 
+                                "${stringResource(R.string.no_expenses_found)} '${state.searchQuery}'"
+                            else 
+                                stringResource(R.string.no_expenses_yet),
                             style = AppTypography.header,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
                         Text(
-                            text = if (state.searchQuery.isNotEmpty()) "Try a different search" else "Tap + to add your first expense",
+                            text = if (state.searchQuery.isNotEmpty()) 
+                                stringResource(R.string.try_different_search)
+                            else 
+                                stringResource(R.string.tap_add_expense),
                             style = AppTypography.body,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -209,9 +212,9 @@ fun ExpenseListScreen(
             ) {
                 Text(
                     text = if (state.searchQuery.isNotEmpty()) 
-                        "${state.expenses.size} results" 
+                        "${state.expenses.size} ${stringResource(R.string.results)}" 
                     else 
-                        "${state.expenses.size} expenses",
+                        "${state.expenses.size} ${stringResource(R.string.expenses)}",
                     style = AppTypography.label,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
@@ -222,7 +225,7 @@ fun ExpenseListScreen(
                             showSearch = false
                         }
                     ) {
-                        Text("Clear")
+                        Text(stringResource(R.string.clear))
                     }
                 }
             }
@@ -310,7 +313,7 @@ fun ExpenseCard(
             IconButton(onClick = onDelete) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "Delete",
+                    contentDescription = stringResource(R.string.delete),
                     tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
                 )
             }

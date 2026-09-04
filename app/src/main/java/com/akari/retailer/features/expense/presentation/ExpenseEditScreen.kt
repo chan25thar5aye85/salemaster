@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -26,9 +28,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
@@ -58,7 +62,7 @@ fun ExpenseEditScreen(
     val state by viewModel.state.collectAsState()
 
     AppScreen(
-        title = "Edit Expense",
+        title = stringResource(R.string.edit_expense),
         showBackButton = true,
         onBackClick = onBack
     ) {
@@ -72,7 +76,7 @@ fun ExpenseEditScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    androidx.compose.material3.CircularProgressIndicator()
+                    CircularProgressIndicator()
                 }
                 return@Column
             }
@@ -94,7 +98,7 @@ fun ExpenseEditScreen(
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
                         AppPrimaryButton(
-                            text = "Retry",
+                            text = stringResource(R.string.retry),
                             onClick = {
                                 viewModel.handleEvent(ExpenseEditEvent.LoadExpense)
                             }
@@ -107,7 +111,7 @@ fun ExpenseEditScreen(
             OutlinedTextField(
                 value = state.title,
                 onValueChange = { viewModel.handleEvent(ExpenseEditEvent.TitleChanged(it)) },
-                label = { Text("Title *") },
+                label = { Text(stringResource(R.string.title)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -117,7 +121,7 @@ fun ExpenseEditScreen(
             OutlinedTextField(
                 value = state.amount,
                 onValueChange = { viewModel.handleEvent(ExpenseEditEvent.AmountChanged(it)) },
-                label = { Text("Amount *") },
+                label = { Text(stringResource(R.string.amount)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -134,7 +138,7 @@ fun ExpenseEditScreen(
                     value = state.category.name,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Category") },
+                    label = { Text(stringResource(R.string.category)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
@@ -145,7 +149,7 @@ fun ExpenseEditScreen(
                     onDismissRequest = { expanded = false }
                 ) {
                     ExpenseCategory.values().forEach { category ->
-                        androidx.compose.material3.DropdownMenuItem(
+                        DropdownMenuItem(
                             text = { Text(category.name) },
                             onClick = {
                                 viewModel.handleEvent(ExpenseEditEvent.CategoryChanged(category))
@@ -161,7 +165,7 @@ fun ExpenseEditScreen(
             OutlinedTextField(
                 value = state.description,
                 onValueChange = { viewModel.handleEvent(ExpenseEditEvent.DescriptionChanged(it)) },
-                label = { Text("Description") },
+                label = { Text(stringResource(R.string.description)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
@@ -179,7 +183,7 @@ fun ExpenseEditScreen(
             }
             
             AppPrimaryButton(
-                text = if (state.isSaving) "Updating..." else "Update Expense",
+                text = if (state.isSaving) stringResource(R.string.updating) else stringResource(R.string.update_expense),
                 onClick = {
                     viewModel.handleEvent(ExpenseEditEvent.SaveExpense)
                 },

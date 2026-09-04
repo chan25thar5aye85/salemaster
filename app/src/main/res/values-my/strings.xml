@@ -17,7 +17,7 @@
     <string name="enter_amount">ပမာဏထည့်ပါ</string>
     <string name="history">မှတ်တမ်း</string>
     <string name="reports">အစီရင်ခံစာ</string>
-    <string name="expenses">အသုံးစရိတ်</string>
+    <string name="expenses">အသုံးစရိတ်များ</string>
     <string name="inventory">ပစ္စည်းစာရင်း</string>
     <string name="settings">ပြင်ဆင်ချက်များ</string>
     <string name="coming_soon">မကြာမီရှိမည်</string>
@@ -51,4 +51,102 @@
     <string name="recent_sales">မကြာသေးမီအရောင်းများ</string>
     <string name="view_all">အားလုံးကြည့်ရန်</string>
     <string name="filter_by_date">ရက်စွဲအလိုက် စစ်ထုတ်ရန်</string>
+
+    <!-- Common -->
+    <string name="retry">ပြန်ကြိုးစားမည်</string>
+    <string name="clear">ရှင်းမည်</string>
+    <string name="results">ရလဒ်များ</string>
+    <string name="stats">စာရင်းအင်း</string>
+    <string name="products">ပစ္စည်းများ</string>
+    <string name="company">ကုမ္ပဏီ</string>
+    <string name="date">ရက်စွဲ</string>
+    <string name="description">အကြောင်းအရာ</string>
+    <string name="category">အမျိုးအစား</string>
+    <string name="amount">ပမာဏ</string>
+    <string name="title">ခေါင်းစဉ်</string>
+
+    <!-- Customers -->
+    <string name="customers">ဖောက်သည်များ</string>
+    <string name="delete_customer">ဖောက်သည်ဖျက်မည်</string>
+    <string name="delete_customer_confirmation">ဤဖောက်သည်ကို ဖျက်ရန် သေချာပါသလား?</string>
+    <string name="no_customers_yet">ဖောက်သည်မရှိသေးပါ</string>
+    <string name="tap_add_customer">ပထမဆုံးဖောက်သည်ထည့်ရန် + ကိုနှိပ်ပါ</string>
+    <string name="no_customers_found">တွေ့ရှိသည့်ဖောက်သည်မရှိပါ</string>
+    <string name="try_different_search">မတူညီသော ရှာဖွေမှုကို စမ်းကြည့်ပါ</string>
+    <string name="search_customers">အမည် သို့မဟုတ် ဖုန်းဖြင့် ရှာဖွေရန်...</string>
+    <string name="results_for">အတွက် ရလဒ်များ</string>
+    <string name="customers_count">ဖောက်သည်များ</string>
+    <string name="customer_name_required">ဖောက်သည်အမည် လိုအပ်သည်</string>
+    <string name="add_customer">ဖောက်သည်ထည့်ရန်</string>
+    <string name="customer_details">ဖောက်သည်အသေးစိတ်</string>
+    <string name="edit_customer">ဖောက်သည်ပြင်ရန်</string>
+    <string name="loading_customers">ဖောက်သည်များဖွင့်နေသည်...</string>
+    <string name="name">အမည် *</string>
+    <string name="phone">ဖုန်း</string>
+    <string name="email">အီးမေးလ်</string>
+    <string name="address">လိပ်စာ</string>
+    <string name="notes">မှတ်ချက်</string>
+    <string name="save_customer">ဖောက်သည်သိမ်းမည်</string>
+    <string name="update_customer">ဖောက်သည်ပြင်မည်</string>
+    <string name="updating">ပြင်နေသည်...</string>
+    <string name="customer_not_found">ဖောက်သည်မတွေ့ပါ</string>
+    <string name="failed_to_load_customer">ဖောက်သည်ဖွင့်ရန် မအောင်မြင်ပါ</string>
+    <string name="failed_to_save_customer">ဖောက်သည်သိမ်းရန် မအောင်မြင်ပါ</string>
+    <string name="failed_to_update_customer">ဖောက်သည်ပြင်ရန် မအောင်မြင်ပါ</string>
+    <string name="total_orders">စုစုပေါင်းအော်ဒါ</string>
+    <string name="total_spent">စုစုပေါင်းသုံးစွဲမှု</string>
+    <string name="last_order">နောက်ဆုံးအော်ဒါ</string>
+    <string name="no_phone">ဖုန်းမရှိပါ</string>
+
+    <!-- Suppliers -->
+    <string name="suppliers">ပေးသွင်းသူများ</string>
+    <string name="delete_supplier">ပေးသွင်းသူဖျက်မည်</string>
+    <string name="delete_supplier_confirmation">ဤပေးသွင်းသူကို ဖျက်ရန် သေချာပါသလား?</string>
+    <string name="no_suppliers_yet">ပေးသွင်းသူမရှိသေးပါ</string>
+    <string name="tap_add_supplier">ပထမဆုံးပေးသွင်းသူထည့်ရန် + ကိုနှိပ်ပါ</string>
+    <string name="no_suppliers_found">တွေ့ရှိသည့်ပေးသွင်းသူမရှိပါ</string>
+    <string name="search_suppliers">အမည် သို့မဟုတ် ဖုန်းဖြင့် ရှာဖွေရန်...</string>
+    <string name="add_supplier">ပေးသွင်းသူထည့်ရန်</string>
+    <string name="supplier_details">ပေးသွင်းသူအသေးစိတ်</string>
+    <string name="edit_supplier">ပေးသွင်းသူပြင်ရန်</string>
+    <string name="loading_suppliers">ပေးသွင်းသူများဖွင့်နေသည်...</string>
+    <string name="save_supplier">ပေးသွင်းသူသိမ်းမည်</string>
+    <string name="supplier_name_required">ပေးသွင်းသူအမည် လိုအပ်သည်</string>
+    <string name="failed_to_save_supplier">ပေးသွင်းသူသိမ်းရန် မအောင်မြင်ပါ</string>
+    <string name="update_supplier">ပေးသွင်းသူပြင်မည်</string>
+    <string name="supplier_not_found">ပေးသွင်းသူမတွေ့ပါ</string>
+    <string name="failed_to_load_supplier">ပေးသွင်းသူဖွင့်ရန် မအောင်မြင်ပါ</string>
+    <string name="failed_to_update_supplier">ပေးသွင်းသူပြင်ရန် မအောင်မြင်ပါ</string>
+    <string name="total_purchased">စုစုပေါင်းဝယ်ယူမှု</string>
+
+    <!-- Expenses -->
+    <string name="delete_expense">အသုံးစရိတ်ဖျက်မည်</string>
+    <string name="delete_expense_confirmation">ဤအသုံးစရိတ်ကို ဖျက်ရန် သေချာပါသလား?</string>
+    <string name="no_expenses_yet">အသုံးစရိတ်မရှိသေးပါ</string>
+    <string name="tap_add_expense">ပထမဆုံးအသုံးစရိတ်ထည့်ရန် + ကိုနှိပ်ပါ</string>
+    <string name="no_expenses_found">တွေ့ရှိသည့်အသုံးစရိတ်မရှိပါ</string>
+    <string name="search_expenses">အသုံးစရိတ်ရှာဖွေရန်...</string>
+    <string name="total_expenses">စုစုပေါင်းအသုံးစရိတ်</string>
+    <string name="add_expense">အသုံးစရိတ်ထည့်ရန်</string>
+    <string name="expense_details">အသုံးစရိတ်အသေးစိတ်</string>
+    <string name="edit_expense">အသုံးစရိတ်ပြင်ရန်</string>
+    <string name="loading_expenses">အသုံးစရိတ်များဖွင့်နေသည်...</string>
+    <string name="save_expense">အသုံးစရိတ်သိမ်းမည်</string>
+    <string name="enter_valid_amount">မှန်ကန်သောပမာဏထည့်ပါ</string>
+    <string name="title_required">ခေါင်းစဉ်လိုအပ်သည်</string>
+    <string name="failed_to_save_expense">အသုံးစရိတ်သိမ်းရန် မအောင်မြင်ပါ</string>
+    <string name="update_expense">အသုံးစရိတ်ပြင်မည်</string>
+    <string name="expense_not_found">အသုံးစရိတ်မတွေ့ပါ</string>
+    <string name="failed_to_load_expense">အသုံးစရိတ်ဖွင့်ရန် မအောင်မြင်ပါ</string>
+    <string name="failed_to_update_expense">အသုံးစရိတ်ပြင်ရန် မအောင်မြင်ပါ</string>
+
+    <!-- Reports -->
+    <string name="monthly_sales_trend">လစဉ်အရောင်းလမ်းကြောင်း</string>
+    <string name="loading_sales_data">အရောင်းဒေတာဖွင့်နေသည်...</string>
+    <string name="no_sales_data_for">အတွက် အရောင်းဒေတာမရှိပါ</string>
+    <string name="start_recording_sales">လမ်းကြောင်းများကြည့်ရန် အရောင်းစတင်မှတ်တမ်းတင်ပါ!</string>
+    <string name="month_year">လ/နှစ်</string>
+    <string name="avg_day">ပျမ်းမျှ/ရက်</string>
+    <string name="highest">အမြင့်ဆုံး</string>
+    <string name="sales">အရောင်းများ</string>
 </resources>

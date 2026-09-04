@@ -39,7 +39,7 @@ fun CustomerAddScreen(
     val state by viewModel.state.collectAsState()
 
     AppScreen(
-        title = "Add Customer",
+        title = stringResource(R.string.add_customer),
         showBackButton = true,
         onBackClick = onBack
     ) {
@@ -48,54 +48,49 @@ fun CustomerAddScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            // Name
             OutlinedTextField(
                 value = state.name,
                 onValueChange = { viewModel.handleEvent(CustomerAddEvent.NameChanged(it)) },
-                label = { Text("Name *") },
+                label = { Text(stringResource(R.string.name)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // Phone
             OutlinedTextField(
                 value = state.phone,
                 onValueChange = { viewModel.handleEvent(CustomerAddEvent.PhoneChanged(it)) },
-                label = { Text("Phone") },
+                label = { Text(stringResource(R.string.phone)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // Email
             OutlinedTextField(
                 value = state.email,
                 onValueChange = { viewModel.handleEvent(CustomerAddEvent.EmailChanged(it)) },
-                label = { Text("Email") },
+                label = { Text(stringResource(R.string.email)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // Address
             OutlinedTextField(
                 value = state.address,
                 onValueChange = { viewModel.handleEvent(CustomerAddEvent.AddressChanged(it)) },
-                label = { Text("Address") },
+                label = { Text(stringResource(R.string.address)) },
                 modifier = Modifier.fillMaxWidth()
             )
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // Notes
             OutlinedTextField(
                 value = state.notes,
                 onValueChange = { viewModel.handleEvent(CustomerAddEvent.NotesChanged(it)) },
-                label = { Text("Notes") },
+                label = { Text(stringResource(R.string.notes)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
@@ -103,7 +98,6 @@ fun CustomerAddScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // Error message
             state.error?.let { error ->
                 Text(
                     text = error,
@@ -113,9 +107,8 @@ fun CustomerAddScreen(
                 )
             }
             
-            // Save button
             AppPrimaryButton(
-                text = if (state.isSaving) "Saving..." else "Save Customer",
+                text = if (state.isSaving) stringResource(R.string.saving) else stringResource(R.string.save_customer),
                 onClick = {
                     viewModel.handleEvent(CustomerAddEvent.SaveCustomer)
                 },

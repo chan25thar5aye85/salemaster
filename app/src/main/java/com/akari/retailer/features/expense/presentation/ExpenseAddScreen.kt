@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -24,9 +25,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
@@ -55,7 +58,7 @@ fun ExpenseAddScreen(
     val state by viewModel.state.collectAsState()
 
     AppScreen(
-        title = "Add Expense",
+        title = stringResource(R.string.add_expense),
         showBackButton = true,
         onBackClick = onBack
     ) {
@@ -67,7 +70,7 @@ fun ExpenseAddScreen(
             OutlinedTextField(
                 value = state.title,
                 onValueChange = { viewModel.handleEvent(ExpenseAddEvent.TitleChanged(it)) },
-                label = { Text("Title *") },
+                label = { Text(stringResource(R.string.title)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -77,7 +80,7 @@ fun ExpenseAddScreen(
             OutlinedTextField(
                 value = state.amount,
                 onValueChange = { viewModel.handleEvent(ExpenseAddEvent.AmountChanged(it)) },
-                label = { Text("Amount *") },
+                label = { Text(stringResource(R.string.amount)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -94,7 +97,7 @@ fun ExpenseAddScreen(
                     value = state.category.name,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Category") },
+                    label = { Text(stringResource(R.string.category)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
@@ -105,7 +108,7 @@ fun ExpenseAddScreen(
                     onDismissRequest = { expanded = false }
                 ) {
                     ExpenseCategory.values().forEach { category ->
-                        androidx.compose.material3.DropdownMenuItem(
+                        DropdownMenuItem(
                             text = { Text(category.name) },
                             onClick = {
                                 viewModel.handleEvent(ExpenseAddEvent.CategoryChanged(category))
@@ -121,7 +124,7 @@ fun ExpenseAddScreen(
             OutlinedTextField(
                 value = state.description,
                 onValueChange = { viewModel.handleEvent(ExpenseAddEvent.DescriptionChanged(it)) },
-                label = { Text("Description") },
+                label = { Text(stringResource(R.string.description)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
@@ -139,7 +142,7 @@ fun ExpenseAddScreen(
             }
             
             AppPrimaryButton(
-                text = if (state.isSaving) "Saving..." else "Save Expense",
+                text = if (state.isSaving) stringResource(R.string.saving) else stringResource(R.string.save_expense),
                 onClick = {
                     viewModel.handleEvent(ExpenseAddEvent.SaveExpense)
                 },

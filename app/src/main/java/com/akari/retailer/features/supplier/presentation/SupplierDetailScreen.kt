@@ -8,9 +8,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
 import com.akari.retailer.core.ui.components.AppPrimaryButton
@@ -41,7 +43,7 @@ fun SupplierDetailScreen(
     val state by viewModel.state.collectAsState()
 
     AppScreen(
-        title = "Supplier Details",
+        title = stringResource(R.string.supplier_details),
         showBackButton = true,
         onBackClick = onBack
     ) {
@@ -58,7 +60,7 @@ fun SupplierDetailScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
                         Text(
-                            text = "Loading supplier...",
+                            text = stringResource(R.string.loading_suppliers),
                             style = AppTypography.body,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
@@ -84,7 +86,7 @@ fun SupplierDetailScreen(
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
                         AppPrimaryButton(
-                            text = "Retry",
+                            text = stringResource(R.string.retry),
                             onClick = {
                                 viewModel.handleEvent(SupplierDetailEvent.LoadSupplier)
                             }
@@ -112,7 +114,7 @@ fun SupplierDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "🏢 Company",
+                                    text = "🏢 ${stringResource(R.string.company)}",
                                     style = AppTypography.body,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -130,7 +132,7 @@ fun SupplierDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "📱 Phone",
+                                    text = "📱 ${stringResource(R.string.phone)}",
                                     style = AppTypography.body,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -148,7 +150,7 @@ fun SupplierDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "✉️ Email",
+                                    text = "✉️ ${stringResource(R.string.email)}",
                                     style = AppTypography.body,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -166,7 +168,7 @@ fun SupplierDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "📍 Address",
+                                    text = "📍 ${stringResource(R.string.address)}",
                                     style = AppTypography.body,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -184,7 +186,7 @@ fun SupplierDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "📦 Products",
+                                    text = "📦 ${stringResource(R.string.products)}",
                                     style = AppTypography.body,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -202,7 +204,7 @@ fun SupplierDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "📝 Notes",
+                                    text = "📝 ${stringResource(R.string.notes)}",
                                     style = AppTypography.body,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -222,7 +224,7 @@ fun SupplierDetailScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "Stats",
+                            text = stringResource(R.string.stats),
                             style = AppTypography.title,
                             modifier = Modifier.padding(bottom = Spacing.medium)
                         )
@@ -233,7 +235,7 @@ fun SupplierDetailScreen(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = "Total Purchased",
+                                    text = stringResource(R.string.total_purchased),
                                     style = AppTypography.small,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -245,7 +247,7 @@ fun SupplierDetailScreen(
                             }
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = "Products",
+                                    text = stringResource(R.string.products),
                                     style = AppTypography.small,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -262,7 +264,7 @@ fun SupplierDetailScreen(
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
                 AppPrimaryButton(
-                    text = "Edit Supplier",
+                    text = stringResource(R.string.edit_supplier),
                     onClick = {
                         onEdit(supplier)
                     }

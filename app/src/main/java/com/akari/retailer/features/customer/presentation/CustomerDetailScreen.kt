@@ -17,8 +17,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
-import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.components.AppPrimaryButton
+import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.customer.data.repository.FirestoreCustomerRepository
@@ -45,11 +45,9 @@ fun CustomerDetailScreen(
     val state by viewModel.state.collectAsState()
 
     AppScreen(
-        title = "Customer Details",
+        title = stringResource(R.string.customer_details),
         showBackButton = true,
-        onBackClick = onBack,
-        showSearchButton = false,
-        showDateFilter = false
+        onBackClick = onBack
     ) {
         Column(
             modifier = Modifier
@@ -64,7 +62,7 @@ fun CustomerDetailScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
                         Text(
-                            text = "Loading customer...",
+                            text = stringResource(R.string.loading_customers),
                             style = AppTypography.body,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
@@ -90,7 +88,7 @@ fun CustomerDetailScreen(
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
                         AppPrimaryButton(
-                            text = "Retry",
+                            text = stringResource(R.string.retry),
                             onClick = {
                                 viewModel.handleEvent(CustomerDetailEvent.LoadCustomer)
                             }
@@ -101,12 +99,10 @@ fun CustomerDetailScreen(
             }
 
             state.customer?.let { customer ->
-                // Customer Info Card
                 AppCard {
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // Name
                         Text(
                             text = customer.name,
                             style = AppTypography.header
@@ -114,14 +110,13 @@ fun CustomerDetailScreen(
                         
                         Spacer(modifier = Modifier.height(Spacing.medium))
                         
-                        // Phone
                         if (customer.phone.isNotEmpty()) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "📱 Phone",
+                                    text = "📱 ${stringResource(R.string.phone)}",
                                     style = AppTypography.body,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -133,14 +128,13 @@ fun CustomerDetailScreen(
                             Spacer(modifier = Modifier.height(Spacing.small))
                         }
                         
-                        // Email
                         if (customer.email.isNotEmpty()) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "✉️ Email",
+                                    text = "✉️ ${stringResource(R.string.email)}",
                                     style = AppTypography.body,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -152,14 +146,13 @@ fun CustomerDetailScreen(
                             Spacer(modifier = Modifier.height(Spacing.small))
                         }
                         
-                        // Address
                         if (customer.address.isNotEmpty()) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "📍 Address",
+                                    text = "📍 ${stringResource(R.string.address)}",
                                     style = AppTypography.body,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -171,14 +164,13 @@ fun CustomerDetailScreen(
                             Spacer(modifier = Modifier.height(Spacing.small))
                         }
                         
-                        // Notes
                         if (customer.notes.isNotEmpty()) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "📝 Notes",
+                                    text = "📝 ${stringResource(R.string.notes)}",
                                     style = AppTypography.body,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -193,13 +185,12 @@ fun CustomerDetailScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
-                // Stats Card
                 AppCard {
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "Stats",
+                            text = stringResource(R.string.stats),
                             style = AppTypography.title,
                             modifier = Modifier.padding(bottom = Spacing.medium)
                         )
@@ -210,7 +201,7 @@ fun CustomerDetailScreen(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = "Total Spent",
+                                    text = stringResource(R.string.total_spent),
                                     style = AppTypography.small,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -222,7 +213,7 @@ fun CustomerDetailScreen(
                             }
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = "Total Orders",
+                                    text = stringResource(R.string.total_orders),
                                     style = AppTypography.small,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -238,9 +229,8 @@ fun CustomerDetailScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
-                // Edit button
                 AppPrimaryButton(
-                    text = "Edit Customer",
+                    text = stringResource(R.string.edit_customer),
                     onClick = {
                         onEdit(customer)
                     }

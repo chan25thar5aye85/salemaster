@@ -8,8 +8,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
@@ -37,7 +39,7 @@ fun SupplierAddScreen(
     val state by viewModel.state.collectAsState()
 
     AppScreen(
-        title = "Add Supplier",
+        title = stringResource(R.string.add_supplier),
         showBackButton = true,
         onBackClick = onBack
     ) {
@@ -49,7 +51,7 @@ fun SupplierAddScreen(
             OutlinedTextField(
                 value = state.name,
                 onValueChange = { viewModel.handleEvent(SupplierAddEvent.NameChanged(it)) },
-                label = { Text("Name *") },
+                label = { Text(stringResource(R.string.name)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -59,7 +61,7 @@ fun SupplierAddScreen(
             OutlinedTextField(
                 value = state.company,
                 onValueChange = { viewModel.handleEvent(SupplierAddEvent.CompanyChanged(it)) },
-                label = { Text("Company") },
+                label = { Text(stringResource(R.string.company)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -69,7 +71,7 @@ fun SupplierAddScreen(
             OutlinedTextField(
                 value = state.phone,
                 onValueChange = { viewModel.handleEvent(SupplierAddEvent.PhoneChanged(it)) },
-                label = { Text("Phone") },
+                label = { Text(stringResource(R.string.phone)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -79,7 +81,7 @@ fun SupplierAddScreen(
             OutlinedTextField(
                 value = state.email,
                 onValueChange = { viewModel.handleEvent(SupplierAddEvent.EmailChanged(it)) },
-                label = { Text("Email") },
+                label = { Text(stringResource(R.string.email)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -89,7 +91,7 @@ fun SupplierAddScreen(
             OutlinedTextField(
                 value = state.address,
                 onValueChange = { viewModel.handleEvent(SupplierAddEvent.AddressChanged(it)) },
-                label = { Text("Address") },
+                label = { Text(stringResource(R.string.address)) },
                 modifier = Modifier.fillMaxWidth()
             )
             
@@ -98,7 +100,7 @@ fun SupplierAddScreen(
             OutlinedTextField(
                 value = state.notes,
                 onValueChange = { viewModel.handleEvent(SupplierAddEvent.NotesChanged(it)) },
-                label = { Text("Notes") },
+                label = { Text(stringResource(R.string.notes)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
@@ -116,7 +118,7 @@ fun SupplierAddScreen(
             }
             
             AppPrimaryButton(
-                text = if (state.isSaving) "Saving..." else "Save Supplier",
+                text = if (state.isSaving) stringResource(R.string.saving) else stringResource(R.string.save_supplier),
                 onClick = {
                     viewModel.handleEvent(SupplierAddEvent.SaveSupplier)
                 },
