@@ -28,6 +28,10 @@ import com.akari.retailer.features.customer.presentation.CustomerAddScreen
 import com.akari.retailer.features.customer.presentation.CustomerDetailScreen
 import com.akari.retailer.features.customer.presentation.CustomerEditScreen
 import com.akari.retailer.features.customer.presentation.CustomerListScreen
+import com.akari.retailer.features.expense.presentation.ExpenseAddScreen
+import com.akari.retailer.features.expense.presentation.ExpenseDetailScreen
+import com.akari.retailer.features.expense.presentation.ExpenseEditScreen
+import com.akari.retailer.features.expense.presentation.ExpenseListScreen
 import com.akari.retailer.features.reports.presentation.TrendsScreen
 import com.akari.retailer.features.sales.presentation.entry.SaleEntryScreen
 import com.akari.retailer.features.sales.presentation.history.SaleHistoryScreen
@@ -167,6 +171,46 @@ fun AppNavHost() {
                         onSupplierUpdated = { navController.popBackStack() }
                     )
                 }
+                
+                composable(Routes.EXPENSES) {
+                    ExpenseListScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(Routes.EXPENSE_ADD) {
+                    ExpenseAddScreen(
+                        onBack = { navController.popBackStack() },
+                        onExpenseAdded = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(
+                    route = Routes.EXPENSE_DETAIL,
+                    arguments = listOf(navArgument("expenseId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val expenseId = backStackEntry.arguments?.getString("expenseId") ?: ""
+                    ExpenseDetailScreen(
+                        expenseId = expenseId,
+                        onBack = { navController.popBackStack() },
+                        onEdit = { expense ->
+                            navController.navigate(Routes.EXPENSE_EDIT.replace("{expenseId}", expense.id))
+                        }
+                    )
+                }
+                
+                composable(
+                    route = Routes.EXPENSE_EDIT,
+                    arguments = listOf(navArgument("expenseId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val expenseId = backStackEntry.arguments?.getString("expenseId") ?: ""
+                    ExpenseEditScreen(
+                        expenseId = expenseId,
+                        onBack = { navController.popBackStack() },
+                        onExpenseUpdated = { navController.popBackStack() }
+                    )
+                }
             }
 
             val currentRoute = navController.currentBackStackEntry?.destination?.route
@@ -179,9 +223,10 @@ fun AppNavHost() {
                             "reports" -> navController.navigate(Routes.TRENDS)
                             "customers" -> navController.navigate(Routes.CUSTOMERS)
                             "suppliers" -> navController.navigate(Routes.SUPPLIERS)
-                            "expenses", "inventory" -> {
+                            "expenses" -> navController.navigate(Routes.EXPENSES)
+                            "inventory" -> {
                                 scope.launch {
-                                    snackbarHostState.showSnackbar("$route coming soon!")
+                                    snackbarHostState.showSnackbar("Inventory coming soon!")
                                 }
                             }
                             else -> {
