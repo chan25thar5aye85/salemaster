@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "217301633755",
+    "project_id": "akari-retail",
+    "storage_bucket": "akari-retail.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:217301633755:android:d6226dfee6a6dd24b69afe",
+        "android_client_info": {
+          "package_name": "com.akari.retailer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8oDAHZGH6IeUGQmAZBZ9sEh2fXB60hXU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:217301633755:android:6aea8ef53ea7d1dfb69afe",
+        "android_client_info": {
+          "package_name": "com.hninakari.saletracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8oDAHZGH6IeUGQmAZBZ9sEh2fXB60hXU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
