@@ -256,7 +256,16 @@ fun InventoryDetailScreen(
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
                 AppPrimaryButton(
-                    text = "View Stock History",
+                    text = stringResource(R.string.adjust_stock),
+                    onClick = {
+                        navController.navigate(Routes.STOCK_ADJUSTMENT)
+                    }
+                )
+                
+                Spacer(modifier = Modifier.height(Spacing.medium))
+
+                AppPrimaryButton(
+                    text = stringResource(R.string.stock_history),
                     onClick = {
                         navController.navigate(
                             Routes.STOCK_HISTORY.replace("{productId}", product.id).replace("{productName}", product.name)

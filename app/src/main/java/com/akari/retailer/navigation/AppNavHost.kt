@@ -36,6 +36,7 @@ import com.akari.retailer.features.inventory.presentation.InventoryAddScreen
 import com.akari.retailer.features.inventory.presentation.InventoryDetailScreen
 import com.akari.retailer.features.inventory.presentation.InventoryEditScreen
 import com.akari.retailer.features.inventory.presentation.InventoryListScreen
+import com.akari.retailer.features.inventory.presentation.StockAdjustmentScreen
 import com.akari.retailer.features.inventory.presentation.StockHistoryScreen
 import com.akari.retailer.features.reports.presentation.TrendsScreen
 import com.akari.retailer.features.sales.presentation.entry.SaleEntryScreen
@@ -270,6 +271,12 @@ fun AppNavHost() {
                     StockHistoryScreen(
                         productId = productId,
                         productName = productName,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(Routes.STOCK_ADJUSTMENT) {
+                    StockAdjustmentScreen(
                         onBack = { navController.popBackStack() }
                     )
                 }

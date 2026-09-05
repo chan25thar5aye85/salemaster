@@ -144,6 +144,36 @@
     <string name="product_min_stock">အနည်းဆုံးအရေအတွက်</string>
     <string name="product_supplier_id">ပေးသွင်းသူ ID</string>
 
+    <!-- Stock Adjustment -->
+    <string name="stock_adjustment">ပစ္စည်းပြင်ဆင်ခြင်း</string>
+    <string name="select_product">ပစ္စည်းရွေးပါ</string>
+    <string name="product">ပစ္စည်း *</string>
+    <string name="current_stock">လက်ရှိအရေအတွက်</string>
+    <string name="new_stock">အရေအတွက်အသစ် *</string>
+    <string name="reason">အကြောင်းပြချက် *</string>
+    <string name="notes_optional">မှတ်ချက် (ထည့်ရန်မလို)</string>
+    <string name="save_adjustment">သိမ်းမည်</string>
+    <string name="saving_adjustment">သိမ်းနေသည်...</string>
+    <string name="enter_valid_stock">မှန်ကန်သောအရေအတွက်ထည့်ပါ</string>
+    <string name="enter_reason">အကြောင်းပြချက်ထည့်ပါ</string>
+    <string name="stock_unchanged">အရေအတွက်အတူတူဖြစ်နေသည်</string>
+    <string name="adjust_stock">ပစ္စည်းပြင်ရန်</string>
+    <string name="adjustment_saved">ပြင်ဆင်ပြီး</string>
+    <string name="reason_stock_count">ပစ္စည်းရေတွက်ခြင်း</string>
+    <string name="reason_damaged">ပျက်စီးသွားသည်</string>
+    <string name="reason_lost">ပျောက်သွားသည်</string>
+    <string name="reason_return">ပြန်လာသည်</string>
+    <string name="reason_correction">ပြင်ဆင်ခြင်း</string>
+    <string name="reason_other">အခြား</string>
+
+    <!-- Stock History -->
+    <string name="stock_history">ပစ္စည်းမှတ်တမ်း</string>
+    <string name="stock_in">ပစ္စည်းဝင်သည်</string>
+    <string name="stock_out">ပစ္စည်းထွက်သည်</string>
+    <string name="current">လက်ရှိ</string>
+    <string name="no_stock_movements">ပစ္စည်းလှုပ်ရှားမှုမရှိပါ</string>
+    <string name="stock_tracked_message">အရောင်းများ သို့မဟုတ် ဝယ်ယူမှုများပြုလုပ်သောအခါ ပစ္စည်းများကို ခြေရာခံမည်</string>
+
     <!-- Common Fields -->
     <string name="name">အမည် *</string>
     <string name="phone">ဖုန်း</string>

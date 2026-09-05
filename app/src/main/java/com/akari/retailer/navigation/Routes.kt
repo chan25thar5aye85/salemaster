@@ -15,6 +15,7 @@ object Routes {
     const val INVENTORY_DETAIL = "inventory_detail/{productId}"
     const val INVENTORY_EDIT = "inventory_edit/{productId}"
     const val STOCK_HISTORY = "stock_history/{productId}/{productName}"
+    const val STOCK_ADJUSTMENT = "stock_adjustment"
     const val CUSTOMERS = "customers"
     const val CUSTOMER_ADD = "customer_add"
     const val CUSTOMER_EDIT = "customer_edit/{customerId}"

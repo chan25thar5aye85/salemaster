@@ -144,6 +144,36 @@
     <string name="product_min_stock">Min Stock Level</string>
     <string name="product_supplier_id">Supplier ID</string>
 
+    <!-- Stock Adjustment -->
+    <string name="stock_adjustment">Stock Adjustment</string>
+    <string name="select_product">Select Product</string>
+    <string name="product">Product *</string>
+    <string name="current_stock">Current Stock</string>
+    <string name="new_stock">New Stock *</string>
+    <string name="reason">Reason *</string>
+    <string name="notes_optional">Notes (Optional)</string>
+    <string name="save_adjustment">Save Adjustment</string>
+    <string name="saving_adjustment">Saving...</string>
+    <string name="enter_valid_stock">Enter a valid stock quantity</string>
+    <string name="enter_reason">Enter a reason for adjustment</string>
+    <string name="stock_unchanged">Stock quantity is the same</string>
+    <string name="adjust_stock">Adjust Stock</string>
+    <string name="adjustment_saved">Adjustment saved!</string>
+    <string name="reason_stock_count">Stock Count</string>
+    <string name="reason_damaged">Damaged</string>
+    <string name="reason_lost">Lost</string>
+    <string name="reason_return">Return</string>
+    <string name="reason_correction">Correction</string>
+    <string name="reason_other">Other</string>
+
+    <!-- Stock History -->
+    <string name="stock_history">Stock History</string>
+    <string name="stock_in">Stock In</string>
+    <string name="stock_out">Stock Out</string>
+    <string name="current">Current</string>
+    <string name="no_stock_movements">No stock movements</string>
+    <string name="stock_tracked_message">Stock will be tracked when you make sales or purchases</string>
+
     <!-- Common Fields -->
     <string name="name">Name *</string>
     <string name="phone">Phone</string>
