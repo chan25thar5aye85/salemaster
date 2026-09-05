@@ -32,6 +32,11 @@ import com.akari.retailer.features.expense.presentation.ExpenseAddScreen
 import com.akari.retailer.features.expense.presentation.ExpenseDetailScreen
 import com.akari.retailer.features.expense.presentation.ExpenseEditScreen
 import com.akari.retailer.features.expense.presentation.ExpenseListScreen
+import com.akari.retailer.features.inventory.presentation.InventoryAddScreen
+import com.akari.retailer.features.inventory.presentation.InventoryDetailScreen
+import com.akari.retailer.features.inventory.presentation.InventoryEditScreen
+import com.akari.retailer.features.inventory.presentation.InventoryListScreen
+import com.akari.retailer.features.inventory.presentation.StockHistoryScreen
 import com.akari.retailer.features.reports.presentation.TrendsScreen
 import com.akari.retailer.features.sales.presentation.entry.SaleEntryScreen
 import com.akari.retailer.features.sales.presentation.history.SaleHistoryScreen
@@ -211,6 +216,63 @@ fun AppNavHost() {
                         onExpenseUpdated = { navController.popBackStack() }
                     )
                 }
+                
+                composable(Routes.INVENTORY) {
+                    InventoryListScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(Routes.INVENTORY_ADD) {
+                    InventoryAddScreen(
+                        onBack = { navController.popBackStack() },
+                        onProductAdded = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(
+                    route = Routes.INVENTORY_DETAIL,
+                    arguments = listOf(navArgument("productId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val productId = backStackEntry.arguments?.getString("productId") ?: ""
+                    InventoryDetailScreen(
+                        productId = productId,
+                        navController = navController,
+                        onBack = { navController.popBackStack() },
+                        onEdit = { product ->
+                            navController.navigate(Routes.INVENTORY_EDIT.replace("{productId}", product.id))
+                        }
+                    )
+                }
+                
+                composable(
+                    route = Routes.INVENTORY_EDIT,
+                    arguments = listOf(navArgument("productId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val productId = backStackEntry.arguments?.getString("productId") ?: ""
+                    InventoryEditScreen(
+                        productId = productId,
+                        onBack = { navController.popBackStack() },
+                        onProductUpdated = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(
+                    route = Routes.STOCK_HISTORY,
+                    arguments = listOf(
+                        navArgument("productId") { type = NavType.StringType },
+                        navArgument("productName") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val productId = backStackEntry.arguments?.getString("productId") ?: ""
+                    val productName = backStackEntry.arguments?.getString("productName") ?: ""
+                    StockHistoryScreen(
+                        productId = productId,
+                        productName = productName,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
 
             val currentRoute = navController.currentBackStackEntry?.destination?.route
@@ -224,11 +286,7 @@ fun AppNavHost() {
                             "customers" -> navController.navigate(Routes.CUSTOMERS)
                             "suppliers" -> navController.navigate(Routes.SUPPLIERS)
                             "expenses" -> navController.navigate(Routes.EXPENSES)
-                            "inventory" -> {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar("Inventory coming soon!")
-                                }
-                            }
+                            "inventory" -> navController.navigate(Routes.INVENTORY)
                             else -> {
                                 scope.launch {
                                     snackbarHostState.showSnackbar("Coming soon!")

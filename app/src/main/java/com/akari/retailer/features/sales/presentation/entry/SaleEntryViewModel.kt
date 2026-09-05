@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.akari.retailer.data.repository.SaleRepository
 import com.akari.retailer.features.sales.domain.models.PaymentMethod
 import com.akari.retailer.features.sales.domain.models.Sale
+import com.akari.retailer.features.sales.domain.models.SaleItem
 import com.akari.retailer.core.utils.MoneyFormatter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -87,29 +88,34 @@ class SaleEntryViewModel(
     private fun saveSale(cashierId: String = "default") {
         val currentState = _state.value
         
-        // ✅ Get items BEFORE resetting
         val items = stateManager.getItems(currentState)
 
-        // Validate: at least one item
         if (items.isEmpty()) {
             _state.value = stateManager.setError(currentState, "Add at least one item")
             return
         }
 
-        // Validate: all items must be positive
         if (items.any { it <= 0 }) {
             _state.value = stateManager.setError(currentState, "All items must have a positive amount")
             return
         }
 
-        // ✅ Calculate total BEFORE resetting
         val total = items.sum()
         val paymentMethod = currentState.paymentMethod
         val currentRecentSales = currentState.recentSales
 
         Log.d(TAG, "💾 Saving sale: items=$items, total=$total, payment=$paymentMethod")
 
-        // Reset UI immediately
+        // Convert items to SaleItem list
+        val saleItems = items.map { amount ->
+            SaleItem(
+                productId = "", // For simple sales, no product linked
+                quantity = 1,
+                price = amount,
+                total = amount
+            )
+        }
+
         _state.value = stateManager.resetState().copy(
             isSaving = false,
             saveSuccess = true,
@@ -117,11 +123,10 @@ class SaleEntryViewModel(
             paymentMethod = paymentMethod
         )
 
-        // ✅ Save in background with the captured values
         viewModelScope.launch {
             try {
                 val sale = Sale(
-                    items = items,
+                    items = saleItems,
                     total = total,
                     paymentMethod = paymentMethod,
                     cashierId = cashierId

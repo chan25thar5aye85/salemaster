@@ -2,7 +2,6 @@ package com.akari.retailer.features.sales.presentation.entry
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -83,7 +82,7 @@ fun SaleEntryScreen(
     AppScreen(
         title = stringResource(R.string.sale_entry),
         showBackButton = false,
-        showTopBar = true  // ✅ New parameter to show purple TopAppBar without back button
+        showTopBar = true
     ) {
         Column(
             modifier = Modifier
@@ -91,7 +90,6 @@ fun SaleEntryScreen(
                 .verticalScroll(rememberScrollState())
                 .imePadding()
         ) {
-            // Offline indicator
             if (!isOnline) {
                 Card(
                     modifier = Modifier
