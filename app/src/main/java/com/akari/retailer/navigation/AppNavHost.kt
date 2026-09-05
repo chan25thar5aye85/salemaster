@@ -36,6 +36,9 @@ import com.akari.retailer.features.inventory.presentation.InventoryAddScreen
 import com.akari.retailer.features.inventory.presentation.InventoryDetailScreen
 import com.akari.retailer.features.inventory.presentation.InventoryEditScreen
 import com.akari.retailer.features.inventory.presentation.InventoryListScreen
+import com.akari.retailer.features.inventory.presentation.PurchaseOrderDetailScreen
+import com.akari.retailer.features.inventory.presentation.PurchaseOrderScreen
+import com.akari.retailer.features.inventory.presentation.PurchaseOrderTabsScreen
 import com.akari.retailer.features.inventory.presentation.StockAdjustmentScreen
 import com.akari.retailer.features.inventory.presentation.StockHistoryScreen
 import com.akari.retailer.features.reports.presentation.TrendsScreen
@@ -280,6 +283,30 @@ fun AppNavHost() {
                         onBack = { navController.popBackStack() }
                     )
                 }
+                
+                composable(Routes.PURCHASE_ORDERS) {
+                    PurchaseOrderTabsScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(Routes.PURCHASE_ORDER_ADD) {
+                    PurchaseOrderScreen(
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(
+                    route = Routes.PURCHASE_ORDER_DETAIL,
+                    arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+                    PurchaseOrderDetailScreen(
+                        orderId = orderId,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
 
             val currentRoute = navController.currentBackStackEntry?.destination?.route
@@ -292,6 +319,7 @@ fun AppNavHost() {
                             "reports" -> navController.navigate(Routes.TRENDS)
                             "customers" -> navController.navigate(Routes.CUSTOMERS)
                             "suppliers" -> navController.navigate(Routes.SUPPLIERS)
+                            "purchase_orders" -> navController.navigate(Routes.PURCHASE_ORDERS)
                             "expenses" -> navController.navigate(Routes.EXPENSES)
                             "inventory" -> navController.navigate(Routes.INVENTORY)
                             else -> {
@@ -302,7 +330,7 @@ fun AppNavHost() {
                         }
                     },
                     modifier = Modifier
-                        .matchParentSize()
+                        .fillMaxSize()
                         .padding(bottom = bottomPadding + 16.dp)
                         .padding(horizontal = 16.dp)
                 )

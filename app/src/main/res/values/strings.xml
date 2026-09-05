@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- App -->
     <string name="app_name">RetailApp</string>
-
-    <!-- Sales -->
     <string name="sale_entry">Sale Entry</string>
     <string name="item">Item</string>
     <string name="item_number">Item %d</string>
@@ -29,8 +26,6 @@
     <string name="payment_breakdown">Payment Breakdown</string>
     <string name="no_sales_today">No sales today</string>
     <string name="filter_by_date">Filter by date</string>
-
-    <!-- Reports -->
     <string name="reports">Reports</string>
     <string name="monthly_sales_trend">Monthly Sales Trend</string>
     <string name="loading_sales_data">Loading sales data...</string>
@@ -40,8 +35,6 @@
     <string name="avg_day">Avg/Day</string>
     <string name="highest">Highest</string>
     <string name="sales">Sales</string>
-
-    <!-- Expenses -->
     <string name="expenses">Expenses</string>
     <string name="add_expense">Add Expense</string>
     <string name="expense_details">Expense Details</string>
@@ -62,8 +55,6 @@
     <string name="expense_not_found">Expense not found</string>
     <string name="failed_to_load_expense">Failed to load expense</string>
     <string name="failed_to_update_expense">Failed to update expense</string>
-
-    <!-- Customers -->
     <string name="customers">Customers</string>
     <string name="add_customer">Add Customer</string>
     <string name="customer_details">Customer Details</string>
@@ -88,8 +79,6 @@
     <string name="last_order">Last Order</string>
     <string name="no_phone">No phone</string>
     <string name="customers_count">customers</string>
-
-    <!-- Suppliers -->
     <string name="suppliers">Suppliers</string>
     <string name="add_supplier">Add Supplier</string>
     <string name="supplier_details">Supplier Details</string>
@@ -109,8 +98,6 @@
     <string name="failed_to_load_supplier">Failed to load supplier</string>
     <string name="failed_to_update_supplier">Failed to update supplier</string>
     <string name="total_purchased">Total Purchased</string>
-
-    <!-- Inventory -->
     <string name="inventory">Inventory</string>
     <string name="add_product">Add Product</string>
     <string name="edit_product">Edit Product</string>
@@ -143,10 +130,8 @@
     <string name="product_stock_quantity">Stock Quantity</string>
     <string name="product_min_stock">Min Stock Level</string>
     <string name="product_supplier_id">Supplier ID</string>
-
-    <!-- Stock Adjustment -->
     <string name="stock_adjustment">Stock Adjustment</string>
-    <string name="select_product">Select Product</string>
+    <string name="select_product_stock">Select Product</string>
     <string name="product">Product *</string>
     <string name="current_stock">Current Stock</string>
     <string name="new_stock">New Stock *</string>
@@ -165,16 +150,75 @@
     <string name="reason_return">Return</string>
     <string name="reason_correction">Correction</string>
     <string name="reason_other">Other</string>
-
-    <!-- Stock History -->
     <string name="stock_history">Stock History</string>
     <string name="stock_in">Stock In</string>
     <string name="stock_out">Stock Out</string>
     <string name="current">Current</string>
     <string name="no_stock_movements">No stock movements</string>
     <string name="stock_tracked_message">Stock will be tracked when you make sales or purchases</string>
-
-    <!-- Common Fields -->
+    <string name="purchase_orders">Purchase Orders</string>
+    <string name="purchase_order_add">Add Purchase Order</string>
+    <string name="purchase_order_title">Purchase Order</string>
+    <string name="select_supplier">Select Supplier</string>
+    <string name="supplier">Supplier *</string>
+    <string name="select_product_purchase">Select Product</string>
+    <string name="quantity">Quantity *</string>
+    <string name="purchase_cost_price">Cost Price *</string>
+    <string name="total_cost">Total Cost</string>
+    <string name="save_purchase">Save Purchase</string>
+    <string name="saving_purchase">Saving...</string>
+    <string name="no_suppliers">No suppliers available</string>
+    <string name="no_products">No products available</string>
+    <string name="no_purchase_orders">No purchase orders yet</string>
+    <string name="tap_add_purchase_order">Tap + to add your first purchase order</string>
+    <string name="product_label">Product</string>
+    <string name="qty_label">Qty</string>
+    <string name="cost_label">Cost</string>
+    <string name="total_label">Total</string>
+    <string name="status_all">All</string>
+    <string name="status_draft">Draft</string>
+    <string name="status_sent">Sent</string>
+    <string name="status_acknowledged">Acknowledged</string>
+    <string name="status_received">Received</string>
+    <string name="status_invoiced">Invoiced</string>
+    <string name="status_closed">Closed</string>
+    <string name="status_ordered">Ordered</string>
+    <string name="status_received_short">Received</string>
+    <string name="po_status">Status</string>
+    <string name="po_send">Send</string>
+    <string name="po_acknowledge">Acknowledge</string>
+    <string name="po_receive">Receive</string>
+    <string name="po_invoice">Invoice</string>
+    <string name="po_close">Close</string>
+    <string name="po_edit_order">Edit Order</string>
+    <string name="po_adjust_received">Adjust Received</string>
+    <string name="po_ordered_items">Ordered Items</string>
+    <string name="po_received_items">Received Items</string>
+    <string name="po_received_quantity">Received Qty</string>
+    <string name="po_confirm_send">Confirm Send</string>
+    <string name="po_confirm_receive">Confirm Receive</string>
+    <string name="po_confirm_acknowledge">Confirm Acknowledge</string>
+    <string name="po_confirm_invoice">Confirm Invoice</string>
+    <string name="po_confirm_close">Confirm Close</string>
+    <string name="po_order_date">Order Date</string>
+    <string name="po_sent_date">Sent Date</string>
+    <string name="po_acknowledged_date">Acknowledged Date</string>
+    <string name="po_received_date">Received Date</string>
+    <string name="po_invoiced_date">Invoiced Date</string>
+    <string name="po_closed_date">Closed Date</string>
+    <string name="po_status_updated">Status updated</string>
+    <string name="po_items_updated">Items updated</string>
+    <string name="po_cannot_edit_received">Cannot edit after received</string>
+    <string name="update_status">Update Status</string>
+    <string name="invoice_number">Invoice Number</string>
+    <string name="invoice_amount">Invoice Amount</string>
+    <string name="payment_due_date">Payment Due Date</string>
+    <string name="paid_at">Paid Date</string>
+    <string name="received_at">Received Date</string>
+    <string name="mark_received">Mark as Received</string>
+    <string name="mark_invoiced">Mark as Invoiced</string>
+    <string name="mark_closed">Mark as Closed</string>
+    <string name="order_status">Status</string>
     <string name="name">Name *</string>
     <string name="phone">Phone</string>
     <string name="email">Email</string>
@@ -187,13 +231,10 @@
     <string name="title">Title</string>
     <string name="date">Date</string>
     <string name="sku">SKU</string>
-    <string name="cost_price">Cost Price</string>
     <string name="sell_price">Sell Price *</string>
     <string name="stock_quantity">Stock Quantity</string>
     <string name="min_stock_level">Min Stock Level</string>
     <string name="supplier_id">Supplier ID</string>
-
-    <!-- Common Actions -->
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
     <string name="back">Back</string>

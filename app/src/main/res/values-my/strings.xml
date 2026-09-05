@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- App -->
     <string name="app_name">အရောင်းချခြင်း</string>
-
-    <!-- Sales -->
     <string name="sale_entry">အရောင်းထည့်ရန်</string>
     <string name="item">ပစ္စည်း</string>
     <string name="item_number">ပစ္စည်း %d</string>
@@ -29,8 +26,6 @@
     <string name="payment_breakdown">ငွေပေးချေမှုအသေးစိတ်</string>
     <string name="no_sales_today">ယနေ့အရောင်းမရှိပါ</string>
     <string name="filter_by_date">ရက်စွဲအလိုက် စစ်ထုတ်ရန်</string>
-
-    <!-- Reports -->
     <string name="reports">အစီရင်ခံစာ</string>
     <string name="monthly_sales_trend">လစဉ်အရောင်းလမ်းကြောင်း</string>
     <string name="loading_sales_data">အရောင်းဒေတာဖွင့်နေသည်...</string>
@@ -40,8 +35,6 @@
     <string name="avg_day">ပျမ်းမျှ/ရက်</string>
     <string name="highest">အမြင့်ဆုံး</string>
     <string name="sales">အရောင်းများ</string>
-
-    <!-- Expenses -->
     <string name="expenses">အသုံးစရိတ်များ</string>
     <string name="add_expense">အသုံးစရိတ်ထည့်ရန်</string>
     <string name="expense_details">အသုံးစရိတ်အသေးစိတ်</string>
@@ -62,8 +55,6 @@
     <string name="expense_not_found">အသုံးစရိတ်မတွေ့ပါ</string>
     <string name="failed_to_load_expense">အသုံးစရိတ်ဖွင့်ရန် မအောင်မြင်ပါ</string>
     <string name="failed_to_update_expense">အသုံးစရိတ်ပြင်ရန် မအောင်မြင်ပါ</string>
-
-    <!-- Customers -->
     <string name="customers">ဖောက်သည်များ</string>
     <string name="add_customer">ဖောက်သည်ထည့်ရန်</string>
     <string name="customer_details">ဖောက်သည်အသေးစိတ်</string>
@@ -88,8 +79,6 @@
     <string name="last_order">နောက်ဆုံးအော်ဒါ</string>
     <string name="no_phone">ဖုန်းမရှိပါ</string>
     <string name="customers_count">ဖောက်သည်များ</string>
-
-    <!-- Suppliers -->
     <string name="suppliers">ပေးသွင်းသူများ</string>
     <string name="add_supplier">ပေးသွင်းသူထည့်ရန်</string>
     <string name="supplier_details">ပေးသွင်းသူအသေးစိတ်</string>
@@ -109,8 +98,6 @@
     <string name="failed_to_load_supplier">ပေးသွင်းသူဖွင့်ရန် မအောင်မြင်ပါ</string>
     <string name="failed_to_update_supplier">ပေးသွင်းသူပြင်ရန် မအောင်မြင်ပါ</string>
     <string name="total_purchased">စုစုပေါင်းဝယ်ယူမှု</string>
-
-    <!-- Inventory -->
     <string name="inventory">ပစ္စည်းစာရင်း</string>
     <string name="add_product">ပစ္စည်းထည့်ရန်</string>
     <string name="edit_product">ပစ္စည်းပြင်ရန်</string>
@@ -143,10 +130,8 @@
     <string name="product_stock_quantity">ပစ္စည်းအရေအတွက်</string>
     <string name="product_min_stock">အနည်းဆုံးအရေအတွက်</string>
     <string name="product_supplier_id">ပေးသွင်းသူ ID</string>
-
-    <!-- Stock Adjustment -->
     <string name="stock_adjustment">ပစ္စည်းပြင်ဆင်ခြင်း</string>
-    <string name="select_product">ပစ္စည်းရွေးပါ</string>
+    <string name="select_product_stock">ပစ္စည်းရွေးပါ</string>
     <string name="product">ပစ္စည်း *</string>
     <string name="current_stock">လက်ရှိအရေအတွက်</string>
     <string name="new_stock">အရေအတွက်အသစ် *</string>
@@ -165,16 +150,75 @@
     <string name="reason_return">ပြန်လာသည်</string>
     <string name="reason_correction">ပြင်ဆင်ခြင်း</string>
     <string name="reason_other">အခြား</string>
-
-    <!-- Stock History -->
     <string name="stock_history">ပစ္စည်းမှတ်တမ်း</string>
     <string name="stock_in">ပစ္စည်းဝင်သည်</string>
     <string name="stock_out">ပစ္စည်းထွက်သည်</string>
     <string name="current">လက်ရှိ</string>
     <string name="no_stock_movements">ပစ္စည်းလှုပ်ရှားမှုမရှိပါ</string>
     <string name="stock_tracked_message">အရောင်းများ သို့မဟုတ် ဝယ်ယူမှုများပြုလုပ်သောအခါ ပစ္စည်းများကို ခြေရာခံမည်</string>
-
-    <!-- Common Fields -->
+    <string name="purchase_orders">ဝယ်ယူမှုများ</string>
+    <string name="purchase_order_add">ဝယ်ယူမှုထည့်ရန်</string>
+    <string name="purchase_order_title">ဝယ်ယူမှု</string>
+    <string name="select_supplier">ပေးသွင်းသူရွေးပါ</string>
+    <string name="supplier">ပေးသွင်းသူ *</string>
+    <string name="select_product_purchase">ပစ္စည်းရွေးပါ</string>
+    <string name="quantity">အရေအတွက် *</string>
+    <string name="purchase_cost_price">ဝယ်ဈေး *</string>
+    <string name="total_cost">စုစုပေါင်းကုန်ကျ</string>
+    <string name="save_purchase">သိမ်းမည်</string>
+    <string name="saving_purchase">သိမ်းနေသည်...</string>
+    <string name="no_suppliers">ပေးသွင်းသူမရှိပါ</string>
+    <string name="no_products">ပစ္စည်းမရှိပါ</string>
+    <string name="no_purchase_orders">ဝယ်ယူမှုမရှိသေးပါ</string>
+    <string name="tap_add_purchase_order">ပထမဆုံးဝယ်ယူမှုထည့်ရန် + ကိုနှိပ်ပါ</string>
+    <string name="product_label">ပစ္စည်း</string>
+    <string name="qty_label">အရေအတွက်</string>
+    <string name="cost_label">ကုန်ကျ</string>
+    <string name="total_label">စုစုပေါင်း</string>
+    <string name="status_all">အားလုံး</string>
+    <string name="status_draft">မူကြမ်း</string>
+    <string name="status_sent">ပို့ပြီး</string>
+    <string name="status_acknowledged">အတည်ပြုပြီး</string>
+    <string name="status_received">ရောက်ရှိပြီး</string>
+    <string name="status_invoiced">ငွေတောင်းခံပြီး</string>
+    <string name="status_closed">ပိတ်ပြီး</string>
+    <string name="status_ordered">မှာထားပြီး</string>
+    <string name="status_received_short">ရောက်ရှိပြီး</string>
+    <string name="po_status">အခြေအနေ</string>
+    <string name="po_send">ပို့မည်</string>
+    <string name="po_acknowledge">အတည်ပြုမည်</string>
+    <string name="po_receive">လက်ခံမည်</string>
+    <string name="po_invoice">ငွေတောင်းခံမည်</string>
+    <string name="po_close">ပိတ်မည်</string>
+    <string name="po_edit_order">မှာယူမှုပြင်ရန်</string>
+    <string name="po_adjust_received">လက်ခံရရှိမှုပြင်ရန်</string>
+    <string name="po_ordered_items">မှာထားသည့်ပစ္စည်းများ</string>
+    <string name="po_received_items">လက်ခံရရှိသည့်ပစ္စည်းများ</string>
+    <string name="po_received_quantity">လက်ခံရရှိအရေအတွက်</string>
+    <string name="po_confirm_send">ပို့ကြောင်းအတည်ပြုမည်</string>
+    <string name="po_confirm_receive">လက်ခံကြောင်းအတည်ပြုမည်</string>
+    <string name="po_confirm_acknowledge">အတည်ပြုကြောင်းအတည်ပြုမည်</string>
+    <string name="po_confirm_invoice">ငွေတောင်းခံကြောင်းအတည်ပြုမည်</string>
+    <string name="po_confirm_close">ပိတ်ကြောင်းအတည်ပြုမည်</string>
+    <string name="po_order_date">မှာယူသည့်ရက်</string>
+    <string name="po_sent_date">ပို့သည့်ရက်</string>
+    <string name="po_acknowledged_date">အတည်ပြုသည့်ရက်</string>
+    <string name="po_received_date">လက်ခံရရှိသည့်ရက်</string>
+    <string name="po_invoiced_date">ငွေတောင်းခံသည့်ရက်</string>
+    <string name="po_closed_date">ပိတ်သည့်ရက်</string>
+    <string name="po_status_updated">အခြေအနေပြောင်းပြီး</string>
+    <string name="po_items_updated">ပစ္စည်းများပြောင်းပြီး</string>
+    <string name="po_cannot_edit_received">ရောက်ရှိပြီးနောက် ပြင်လို့မရပါ</string>
+    <string name="update_status">အခြေအနေပြောင်းရန်</string>
+    <string name="invoice_number">ငွေတောင်းခံနံပါတ်</string>
+    <string name="invoice_amount">ငွေတောင်းခံပမာဏ</string>
+    <string name="payment_due_date">ငွေပေးရမည့်ရက်</string>
+    <string name="paid_at">ငွေပေးချေသည့်ရက်</string>
+    <string name="received_at">လက်ခံရရှိသည့်ရက်</string>
+    <string name="mark_received">ရောက်ရှိပြီးအဖြစ်မှတ်ရန်</string>
+    <string name="mark_invoiced">ငွေတောင်းခံပြီးအဖြစ်မှတ်ရန်</string>
+    <string name="mark_closed">ပိတ်ပြီးအဖြစ်မှတ်ရန်</string>
+    <string name="order_status">အခြေအနေ</string>
     <string name="name">အမည် *</string>
     <string name="phone">ဖုန်း</string>
     <string name="email">အီးမေးလ်</string>
@@ -187,13 +231,10 @@
     <string name="title">ခေါင်းစဉ်</string>
     <string name="date">ရက်စွဲ</string>
     <string name="sku">SKU</string>
-    <string name="cost_price">ဝယ်ဈေး</string>
     <string name="sell_price">ရောင်းဈေး *</string>
     <string name="stock_quantity">ပစ္စည်းအရေအတွက်</string>
     <string name="min_stock_level">အနည်းဆုံးအရေအတွက်</string>
     <string name="supplier_id">ပေးသွင်းသူ ID</string>
-
-    <!-- Common Actions -->
     <string name="delete">ဖျက်မည်</string>
     <string name="cancel">မလုပ်တော့</string>
     <string name="back">နောက်သို့</string>

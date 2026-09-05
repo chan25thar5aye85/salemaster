@@ -97,7 +97,7 @@ fun StockAdjustmentScreen(
                 onExpandedChange = { expanded = it }
             ) {
                 OutlinedTextField(
-                    value = state.selectedProduct?.name ?: stringResource(R.string.select_product),
+                    value = state.selectedProduct?.name ?: stringResource(R.string.select_product_stock),
                     onValueChange = {},
                     readOnly = true,
                     label = { Text(stringResource(R.string.product)) },

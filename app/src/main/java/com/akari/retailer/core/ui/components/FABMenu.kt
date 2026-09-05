@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -42,9 +43,10 @@ fun FABMenu(
     val menuItems = listOf(
         FABMenuItemData(Icons.Default.Receipt, stringResource(R.string.expenses), "expenses"),
         FABMenuItemData(Icons.Default.Inventory, stringResource(R.string.inventory), "inventory"),
-        FABMenuItemData(Icons.Default.People, "Customers", "customers"),
+        FABMenuItemData(Icons.Default.People, stringResource(R.string.customers), "customers"),
         FABMenuItemData(Icons.Default.PieChart, stringResource(R.string.reports), "reports"),
-        FABMenuItemData(Icons.Default.Business, "Suppliers", "suppliers"),
+        FABMenuItemData(Icons.Default.Business, stringResource(R.string.suppliers), "suppliers"),
+        FABMenuItemData(Icons.Default.ShoppingCart, stringResource(R.string.purchase_orders), "purchase_orders"),
         FABMenuItemData(Icons.Default.Settings, stringResource(R.string.settings), "settings")
     )
 

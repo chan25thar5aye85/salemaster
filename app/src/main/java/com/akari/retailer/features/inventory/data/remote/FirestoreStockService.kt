@@ -64,17 +64,8 @@ class FirestoreStockService {
                 return@callbackFlow
             }
             
-            // First check if any documents exist
-            val snapshot = collection.limit(1).get().await()
-            if (snapshot.isEmpty) {
-                trySend(emptyList())
-                close()
-                return@callbackFlow
-            }
-            
             val listener = collection
                 .whereEqualTo("productId", productId)
-                .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .addSnapshotListener { querySnapshot, error ->
                     if (error != null) {
                         close(error)
@@ -106,7 +97,7 @@ class FirestoreStockService {
                             userId = data["userId"] as? String ?: ""
                         )
                     }
-                    trySend(movements)
+                    trySend(movements.sortedByDescending { it.createdAt })
                 }
             
             awaitClose { listener.remove() }
@@ -126,15 +117,7 @@ class FirestoreStockService {
                 return@callbackFlow
             }
             
-            val snapshot = collection.limit(1).get().await()
-            if (snapshot.isEmpty) {
-                trySend(emptyList())
-                close()
-                return@callbackFlow
-            }
-            
             val listener = collection
-                .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .addSnapshotListener { querySnapshot, error ->
                     if (error != null) {
                         close(error)
@@ -166,7 +149,7 @@ class FirestoreStockService {
                             userId = data["userId"] as? String ?: ""
                         )
                     }
-                    trySend(movements)
+                    trySend(movements.sortedByDescending { it.createdAt })
                 }
             
             awaitClose { listener.remove() }
@@ -186,7 +169,6 @@ class FirestoreStockService {
             
             val snapshot = collection
                 .whereEqualTo("productId", productId)
-                .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .get()
                 .await()
             
@@ -210,7 +192,7 @@ class FirestoreStockService {
                     userId = data["userId"] as? String ?: ""
                 )
             }
-            Result.success(movements)
+            Result.success(movements.sortedByDescending { it.createdAt })
         } catch (e: Exception) {
             Log.e(TAG, "Error in getMovementsForProductSync: ${e.message}")
             Result.success(emptyList())
