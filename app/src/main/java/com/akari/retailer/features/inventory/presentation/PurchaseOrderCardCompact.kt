@@ -7,10 +7,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.akari.retailer.R
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrder
@@ -23,15 +21,15 @@ import java.util.Locale
 fun PurchaseOrderCardCompact(
     order: PurchaseOrder,
     navController: NavController,
-    productName: String = "Product"
+    orderName: String = "Order"
 ) {
     val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())
     
     val statusColor = when (order.status) {
         PurchaseOrderStatus.DRAFT -> Color(0xFFFF9800)
-        PurchaseOrderStatus.SENT -> Color(0xFF4CAF50)
-        PurchaseOrderStatus.ACKNOWLEDGED -> Color(0xFF2196F3)
-        PurchaseOrderStatus.RECEIVED -> Color(0xFF9C27B0)
+        PurchaseOrderStatus.SENT -> Color(0xFF2196F3)
+        PurchaseOrderStatus.ACKNOWLEDGED -> Color(0xFF9C27B0)
+        PurchaseOrderStatus.RECEIVED -> Color(0xFF4CAF50)
         PurchaseOrderStatus.INVOICED -> Color(0xFFFF5722)
         PurchaseOrderStatus.CLOSED -> Color(0xFF78909C)
     }
@@ -58,69 +56,82 @@ fun PurchaseOrderCardCompact(
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.medium),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(Spacing.medium)
         ) {
-            Column(
-                modifier = Modifier.weight(1f)
+            // Row 1: Order Name + Status Badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-                    verticalAlignment = Alignment.CenterVertically
+                Text(
+                    text = "📦 $orderName",
+                    style = AppTypography.title
+                )
+                // Status Badge
+                Card(
+                    modifier = Modifier.wrapContentWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = statusColor.copy(alpha = 0.15f)
+                    )
                 ) {
                     Text(
-                        text = "📦",
-                        style = AppTypography.title
-                    )
-                    Text(
-                        text = productName,
-                        style = AppTypography.title
-                    )
-                }
-                
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "${order.items.size} items",
+                        text = statusText,
                         style = AppTypography.small,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                    Text(
-                        text = "${stringResource(R.string.total)}: ${order.totalCost}",
-                        style = AppTypography.small,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = dateFormat.format(order.orderedAt),
-                        style = AppTypography.small,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        color = statusColor,
+                        modifier = Modifier.padding(horizontal = Spacing.medium, vertical = Spacing.small)
                     )
                 }
             }
             
-            // Status Badge
-            Card(
-                modifier = Modifier
-                    .wrapContentWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = statusColor.copy(alpha = 0.15f)
-                )
-            ) {
+            Spacer(modifier = Modifier.height(Spacing.small))
+            
+            // Row 2: Order Number
+            Text(
+                text = "🔢 ${order.orderNumber}",
+                style = AppTypography.body,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+            
+            // Row 3: Supplier
+            if (order.supplierName.isNotEmpty()) {
                 Text(
-                    text = statusText,
-                    style = AppTypography.small,
-                    color = statusColor,
-                    modifier = Modifier.padding(
-                        horizontal = Spacing.medium,
-                        vertical = 4.dp
-                    )
+                    text = "🏢 ${order.supplierName}",
+                    style = AppTypography.body,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
+            
+            // Row 4: Items and Total
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = Spacing.small),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "📋 ${order.items.size} items",
+                    style = AppTypography.small,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                Text(
+                    text = "💰 ${order.totalCost}",
+                    style = AppTypography.small,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+            }
+            
+            // Row 5: Date
+            Text(
+                text = "📅 ${dateFormat.format(order.orderDate)}",
+                style = AppTypography.small,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                modifier = Modifier.padding(top = Spacing.small)
+            )
         }
     }
 }

@@ -23,4 +23,8 @@ class FirestoreStockRepository(
     override suspend fun getMovementsForProductSync(productId: String): Result<List<StockMovement>> {
         return service.getMovementsForProductSync(productId)
     }
+    
+    override suspend fun deleteMovement(movementId: String): Result<Unit> {
+        return service.deleteMovement(movementId)
+    }
 }

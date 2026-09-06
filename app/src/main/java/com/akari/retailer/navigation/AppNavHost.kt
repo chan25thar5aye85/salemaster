@@ -37,8 +37,10 @@ import com.akari.retailer.features.inventory.presentation.InventoryDetailScreen
 import com.akari.retailer.features.inventory.presentation.InventoryEditScreen
 import com.akari.retailer.features.inventory.presentation.InventoryListScreen
 import com.akari.retailer.features.inventory.presentation.PurchaseOrderDetailScreen
+import com.akari.retailer.features.inventory.presentation.PurchaseOrderEditScreen
 import com.akari.retailer.features.inventory.presentation.PurchaseOrderScreen
 import com.akari.retailer.features.inventory.presentation.PurchaseOrderTabsScreen
+import com.akari.retailer.features.inventory.presentation.ReceiveOrderScreen
 import com.akari.retailer.features.inventory.presentation.StockAdjustmentScreen
 import com.akari.retailer.features.inventory.presentation.StockHistoryScreen
 import com.akari.retailer.features.reports.presentation.TrendsScreen
@@ -79,6 +81,7 @@ fun AppNavHost() {
                 navController = navController,
                 startDestination = Routes.SALE_ENTRY
             ) {
+                // ==================== SALE MODULE ====================
                 composable(Routes.SALE_ENTRY) {
                     SaleEntryScreen(navController = navController)
                 }
@@ -89,18 +92,21 @@ fun AppNavHost() {
                     )
                 }
                 
+                // ==================== SETTINGS MODULE ====================
                 composable(Routes.SETTINGS) {
                     SettingsScreen(
                         onBack = { navController.popBackStack() }
                     )
                 }
                 
+                // ==================== REPORTS MODULE ====================
                 composable(Routes.TRENDS) {
                     TrendsScreen(
                         onBack = { navController.popBackStack() }
                     )
                 }
                 
+                // ==================== CUSTOMER MODULE ====================
                 composable(Routes.CUSTOMERS) {
                     CustomerListScreen(
                         navController = navController,
@@ -141,6 +147,7 @@ fun AppNavHost() {
                     )
                 }
                 
+                // ==================== SUPPLIER MODULE ====================
                 composable(Routes.SUPPLIERS) {
                     SupplierListScreen(
                         navController = navController,
@@ -181,6 +188,7 @@ fun AppNavHost() {
                     )
                 }
                 
+                // ==================== EXPENSE MODULE ====================
                 composable(Routes.EXPENSES) {
                     ExpenseListScreen(
                         navController = navController,
@@ -221,6 +229,7 @@ fun AppNavHost() {
                     )
                 }
                 
+                // ==================== INVENTORY MODULE ====================
                 composable(Routes.INVENTORY) {
                     InventoryListScreen(
                         navController = navController,
@@ -284,6 +293,7 @@ fun AppNavHost() {
                     )
                 }
                 
+                // ==================== PURCHASE ORDER MODULE ====================
                 composable(Routes.PURCHASE_ORDERS) {
                     PurchaseOrderTabsScreen(
                         navController = navController,
@@ -303,12 +313,37 @@ fun AppNavHost() {
                 ) { backStackEntry ->
                     val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
                     PurchaseOrderDetailScreen(
+                        navController = navController,
+                        orderId = orderId,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(
+                    route = Routes.PURCHASE_ORDER_EDIT,
+                    arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+                    PurchaseOrderEditScreen(
+                        orderId = orderId,
+                        onBack = { navController.popBackStack() },
+                        navController = navController
+                    )
+                }
+                
+                composable(
+                    route = Routes.RECEIVE_ORDER,
+                    arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+                    ReceiveOrderScreen(
                         orderId = orderId,
                         onBack = { navController.popBackStack() }
                     )
                 }
             }
 
+            // ==================== FAB MENU (Only on Sale Entry Screen) ====================
             val currentRoute = navController.currentBackStackEntry?.destination?.route
             if (currentRoute == Routes.SALE_ENTRY) {
                 FABMenu(

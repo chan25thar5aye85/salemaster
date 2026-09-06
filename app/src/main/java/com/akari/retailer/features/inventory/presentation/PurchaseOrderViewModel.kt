@@ -4,11 +4,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.inventory.data.repository.InventoryRepository
-import com.akari.retailer.features.inventory.data.repository.StockRepository
-import com.akari.retailer.features.inventory.domain.models.MovementType
+import com.akari.retailer.features.inventory.data.repository.PurchaseOrderRepository
 import com.akari.retailer.features.inventory.domain.models.Product
+import com.akari.retailer.features.inventory.domain.models.PurchaseOrderItem
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus
-import com.akari.retailer.features.inventory.domain.models.StockMovement
 import com.akari.retailer.features.supplier.data.repository.SupplierRepository
 import com.akari.retailer.features.supplier.domain.models.Supplier
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,19 +15,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 data class PurchaseOrderState(
     val suppliers: List<Supplier> = emptyList(),
     val products: List<Product> = emptyList(),
     val selectedSupplier: Supplier? = null,
-    val selectedProduct: Product? = null,
-    val quantity: String = "",
-    val costPrice: String = "",
+    val orderName: String = "",  // Added orderName
+    val tempItems: List<PurchaseOrderItem> = emptyList(),
     val notes: String = "",
-    val totalCost: Int = 0,
-    val selectedStatus: PurchaseOrderStatus = PurchaseOrderStatus.DRAFT,
-    val invoiceNumber: String = "",
-    val invoiceAmount: String = "",
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
@@ -37,14 +34,17 @@ data class PurchaseOrderState(
 
 sealed class PurchaseOrderEvent {
     data class SupplierSelected(val supplier: Supplier) : PurchaseOrderEvent()
-    data class ProductSelected(val product: Product) : PurchaseOrderEvent()
-    data class QuantityChanged(val value: String) : PurchaseOrderEvent()
-    data class CostPriceChanged(val value: String) : PurchaseOrderEvent()
+    data class OrderNameChanged(val value: String) : PurchaseOrderEvent()  // Added
+    data object AddItem : PurchaseOrderEvent()
+    data class UpdateItem(
+        val index: Int,
+        val productId: String,
+        val productName: String,
+        val quantity: Int,
+        val costPrice: Int
+    ) : PurchaseOrderEvent()
+    data class RemoveItem(val index: Int) : PurchaseOrderEvent()
     data class NotesChanged(val value: String) : PurchaseOrderEvent()
-    data class StatusChanged(val status: PurchaseOrderStatus) : PurchaseOrderEvent()
-    data class InvoiceNumberChanged(val value: String) : PurchaseOrderEvent()
-    data class InvoiceAmountChanged(val value: String) : PurchaseOrderEvent()
-    data object LoadData : PurchaseOrderEvent()
     data object SavePurchase : PurchaseOrderEvent()
     data object ClearError : PurchaseOrderEvent()
     data object ResetSuccess : PurchaseOrderEvent()
@@ -52,7 +52,7 @@ sealed class PurchaseOrderEvent {
 
 class PurchaseOrderViewModel(
     private val inventoryRepository: InventoryRepository,
-    private val stockRepository: StockRepository,
+    private val purchaseOrderRepository: PurchaseOrderRepository,
     private val supplierRepository: SupplierRepository
 ) : ViewModel() {
 
@@ -61,51 +61,43 @@ class PurchaseOrderViewModel(
     val state: StateFlow<PurchaseOrderState> = _state.asStateFlow()
 
     init {
-        Log.d(TAG, "ViewModel created")
         loadData()
     }
 
     fun handleEvent(event: PurchaseOrderEvent) {
-        Log.d(TAG, "handleEvent: ${event::class.simpleName}")
         when (event) {
             is PurchaseOrderEvent.SupplierSelected -> {
-                Log.d(TAG, "Supplier selected: ${event.supplier.name}")
                 _state.value = _state.value.copy(selectedSupplier = event.supplier, error = null)
             }
-            is PurchaseOrderEvent.ProductSelected -> {
-                Log.d(TAG, "Product selected: ${event.product.name}")
-                _state.value = _state.value.copy(
-                    selectedProduct = event.product,
-                    error = null
+            is PurchaseOrderEvent.OrderNameChanged -> {
+                _state.value = _state.value.copy(orderName = event.value)
+            }
+            PurchaseOrderEvent.AddItem -> {
+                val newItem = PurchaseOrderItem()
+                _state.value = _state.value.copy(tempItems = _state.value.tempItems + newItem)
+            }
+            is PurchaseOrderEvent.UpdateItem -> {
+                val updatedItems = _state.value.tempItems.toMutableList()
+                val item = updatedItems[event.index].copy(
+                    productId = event.productId,
+                    productName = event.productName,
+                    quantity = event.quantity,
+                    costPrice = event.costPrice,
+                    total = event.quantity * event.costPrice
                 )
-                calculateTotal()
+                updatedItems[event.index] = item
+                _state.value = _state.value.copy(tempItems = updatedItems, error = null)
             }
-            is PurchaseOrderEvent.QuantityChanged -> {
-                _state.value = _state.value.copy(quantity = event.value)
-                calculateTotal()
-            }
-            is PurchaseOrderEvent.CostPriceChanged -> {
-                _state.value = _state.value.copy(costPrice = event.value)
-                calculateTotal()
+            is PurchaseOrderEvent.RemoveItem -> {
+                val updatedItems = _state.value.tempItems.toMutableList()
+                updatedItems.removeAt(event.index)
+                _state.value = _state.value.copy(tempItems = updatedItems)
             }
             is PurchaseOrderEvent.NotesChanged -> _state.value = _state.value.copy(notes = event.value)
-            is PurchaseOrderEvent.StatusChanged -> _state.value = _state.value.copy(selectedStatus = event.status)
-            is PurchaseOrderEvent.InvoiceNumberChanged -> _state.value = _state.value.copy(invoiceNumber = event.value)
-            is PurchaseOrderEvent.InvoiceAmountChanged -> _state.value = _state.value.copy(invoiceAmount = event.value)
-            PurchaseOrderEvent.LoadData -> loadData()
-            PurchaseOrderEvent.SavePurchase -> {
-                Log.d(TAG, "🔥 SAVE EVENT RECEIVED!")
-                savePurchase()
-            }
+            PurchaseOrderEvent.SavePurchase -> savePurchase()
             PurchaseOrderEvent.ClearError -> _state.value = _state.value.copy(error = null)
             PurchaseOrderEvent.ResetSuccess -> _state.value = _state.value.copy(saveSuccess = false)
         }
-    }
-
-    private fun calculateTotal() {
-        val quantity = _state.value.quantity.toIntOrNull() ?: 0
-        val costPrice = _state.value.costPrice.toIntOrNull() ?: 0
-        _state.value = _state.value.copy(totalCost = quantity * costPrice)
     }
 
     private fun loadData() {
@@ -129,106 +121,92 @@ class PurchaseOrderViewModel(
                 _state.value = _state.value.copy(
                     products = emptyList(),
                     isLoading = false,
-                    error = "Failed to load products: ${e.message}"
+                    error = "Failed to load products"
                 )
             }
         }
     }
 
     private fun savePurchase() {
-        Log.d(TAG, "savePurchase: STARTED!")
         val currentState = _state.value
-        
         val supplier = currentState.selectedSupplier
-        val product = currentState.selectedProduct
+        
+        if (currentState.orderName.isBlank()) {
+            _state.value = _state.value.copy(error = "Enter an order name")
+            return
+        }
         
         if (supplier == null) {
-            Log.e(TAG, "❌ No supplier selected")
             _state.value = _state.value.copy(error = "Select a supplier")
             return
         }
         
-        if (product == null) {
-            Log.e(TAG, "❌ No product selected")
-            _state.value = _state.value.copy(error = "Select a product")
+        if (currentState.tempItems.isEmpty()) {
+            _state.value = _state.value.copy(error = "Add at least one item")
             return
         }
         
-        val quantityInt = currentState.quantity.toIntOrNull()
-        if (quantityInt == null || quantityInt <= 0) {
-            Log.e(TAG, "❌ Invalid quantity: ${currentState.quantity}")
-            _state.value = _state.value.copy(error = "Enter a valid quantity")
-            return
+        val invalidItems = currentState.tempItems.filter { 
+            it.productId.isEmpty() || it.quantity <= 0 || it.costPrice <= 0 
         }
-        
-        val costPriceInt = currentState.costPrice.toIntOrNull()
-        if (costPriceInt == null || costPriceInt <= 0) {
-            Log.e(TAG, "❌ Invalid cost price: ${currentState.costPrice}")
-            _state.value = _state.value.copy(error = "Enter a valid cost price")
+        if (invalidItems.isNotEmpty()) {
+            _state.value = _state.value.copy(error = "Fill in all item fields correctly")
             return
         }
         
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
-            Log.d(TAG, "💾 Saving purchase...")
             
             try {
-                val newStock = product.stockQuantity + quantityInt
-                val updatedProduct = product.copy(
-                    stockQuantity = newStock,
-                    updatedAt = System.currentTimeMillis()
+                // Generate order number
+                val orderNumber = generateOrderNumber()
+                val totalCost = currentState.tempItems.sumOf { it.total }
+                
+                // Create order with the new fields
+                val order = com.akari.retailer.features.inventory.domain.models.PurchaseOrder(
+                    orderName = currentState.orderName.trim(),
+                    orderNumber = orderNumber,
+                    supplierId = supplier.id,
+                    supplierName = supplier.name,
+                    items = currentState.tempItems.map { item ->
+                        PurchaseOrderItem(
+                            productId = item.productId,
+                            productName = item.productName,
+                            quantity = item.quantity,
+                            costPrice = item.costPrice,
+                            total = item.quantity * item.costPrice,
+                            receivedQuantity = 0
+                        )
+                    },
+                    notes = currentState.notes,
+                    status = PurchaseOrderStatus.DRAFT,
+                    totalCost = totalCost,
+                    createdBy = "default"
                 )
                 
-                val updateResult = inventoryRepository.updateProduct(updatedProduct)
-                if (updateResult.isFailure) {
+                val result = purchaseOrderRepository.createOrder(order)
+                
+                if (result.isSuccess) {
                     _state.value = _state.value.copy(
                         isSaving = false,
-                        error = updateResult.exceptionOrNull()?.message ?: "Failed to update product"
+                        saveSuccess = true,
+                        error = null
                     )
-                    return@launch
-                }
-                Log.d(TAG, "✅ Product stock updated")
-                
-                val movement = StockMovement(
-                    productId = product.id,
-                    type = MovementType.PURCHASE,
-                    quantity = quantityInt,
-                    previousStock = product.stockQuantity,
-                    newStock = newStock,
-                    reason = "Purchase from ${supplier.name}",
-                    userId = "default"
-                )
-                
-                val movementResult = stockRepository.addMovement(movement)
-                if (movementResult.isFailure) {
+                    
+                    // Reset form after success
+                    _state.value = _state.value.copy(
+                        selectedSupplier = null,
+                        orderName = "",
+                        tempItems = emptyList(),
+                        notes = "",
+                        saveSuccess = false
+                    )
+                } else {
                     _state.value = _state.value.copy(
                         isSaving = false,
-                        error = movementResult.exceptionOrNull()?.message ?: "Failed to record movement"
+                        error = result.exceptionOrNull()?.message ?: "Failed to save purchase"
                     )
-                    return@launch
                 }
-                Log.d(TAG, "✅ Stock movement recorded")
-                
-                _state.value = _state.value.copy(
-                    isSaving = false,
-                    saveSuccess = true,
-                    error = null
-                )
-                Log.d(TAG, "✅ PURCHASE SAVED!")
-                
-                kotlinx.coroutines.delay(1500)
-                _state.value = _state.value.copy(
-                    selectedSupplier = null,
-                    selectedProduct = null,
-                    quantity = "",
-                    costPrice = "",
-                    notes = "",
-                    totalCost = 0,
-                    invoiceNumber = "",
-                    invoiceAmount = "",
-                    selectedStatus = PurchaseOrderStatus.DRAFT,
-                    saveSuccess = false
-                )
                 
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Save failed", e)
@@ -239,17 +217,23 @@ class PurchaseOrderViewModel(
             }
         }
     }
+    
+    private fun generateOrderNumber(): String {
+        val date = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
+        val random = (1000..9999).random()
+        return "PO-$date-$random"
+    }
 }
 
 class PurchaseOrderViewModelFactory(
     private val inventoryRepository: InventoryRepository,
-    private val stockRepository: StockRepository,
+    private val purchaseOrderRepository: PurchaseOrderRepository,
     private val supplierRepository: SupplierRepository
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PurchaseOrderViewModel::class.java)) {
-            return PurchaseOrderViewModel(inventoryRepository, stockRepository, supplierRepository) as T
+            return PurchaseOrderViewModel(inventoryRepository, purchaseOrderRepository, supplierRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

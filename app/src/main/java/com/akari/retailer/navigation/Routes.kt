@@ -20,6 +20,7 @@ object Routes {
     const val PURCHASE_ORDER_ADD = "purchase_order_add"
     const val PURCHASE_ORDER_DETAIL = "purchase_order_detail/{orderId}"
     const val PURCHASE_ORDER_EDIT = "purchase_order_edit/{orderId}"
+    const val RECEIVE_ORDER = "receive_order/{orderId}"
     const val CUSTOMERS = "customers"
     const val CUSTOMER_ADD = "customer_add"
     const val CUSTOMER_EDIT = "customer_edit/{customerId}"

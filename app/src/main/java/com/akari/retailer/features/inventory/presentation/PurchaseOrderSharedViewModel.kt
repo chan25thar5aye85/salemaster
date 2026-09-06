@@ -21,6 +21,26 @@ class PurchaseOrderSharedViewModel : ViewModel() {
         return orders.find { it.id == orderId }
     }
     
+    fun addOrder(order: PurchaseOrder) {
+        orders = orders + order
+        listeners.forEach { it(orders) }
+    }
+    
+    fun updateOrder(order: PurchaseOrder) {
+        orders = orders.map { if (it.id == order.id) order else it }
+        listeners.forEach { it(orders) }
+    }
+    
+    fun removeOrder(orderId: String) {
+        orders = orders.filter { it.id != orderId }
+        listeners.forEach { it(orders) }
+    }
+    
+    fun clear() {
+        orders = emptyList()
+        listeners.clear()
+    }
+    
     fun addListener(listener: (List<PurchaseOrder>) -> Unit) {
         listeners.add(listener)
         listener(orders)
@@ -28,10 +48,5 @@ class PurchaseOrderSharedViewModel : ViewModel() {
     
     fun removeListener(listener: (List<PurchaseOrder>) -> Unit) {
         listeners.remove(listener)
-    }
-    
-    fun clear() {
-        orders = emptyList()
-        listeners.clear()
     }
 }

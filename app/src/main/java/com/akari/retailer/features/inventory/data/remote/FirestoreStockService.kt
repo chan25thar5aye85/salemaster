@@ -55,6 +55,20 @@ class FirestoreStockService {
         }
     }
     
+    suspend fun deleteMovement(movementId: String): Result<Unit> {
+        return try {
+            val collection = getCollection()
+            if (collection == null) {
+                return Result.failure(Exception("Firestore not available"))
+            }
+            collection.document(movementId).delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "Delete movement error: ${e.message}")
+            Result.failure(e)
+        }
+    }
+    
     fun getMovementsForProduct(productId: String): Flow<List<StockMovement>> = callbackFlow {
         try {
             val collection = getCollection()

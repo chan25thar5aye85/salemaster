@@ -8,4 +8,5 @@ interface StockRepository {
     fun getMovementsForProduct(productId: String): Flow<List<StockMovement>>
     fun getAllMovements(): Flow<List<StockMovement>>
     suspend fun getMovementsForProductSync(productId: String): Result<List<StockMovement>>
+    suspend fun deleteMovement(movementId: String): Result<Unit>
 }

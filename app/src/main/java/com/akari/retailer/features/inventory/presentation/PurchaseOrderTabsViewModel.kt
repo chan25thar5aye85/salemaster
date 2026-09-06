@@ -51,7 +51,6 @@ class PurchaseOrderTabsViewModel(
             _state.value = _state.value.copy(isLoading = true, error = null)
             
             try {
-                // Load suppliers once
                 var supplierMap = mapOf<String, String>()
                 try {
                     val suppliers = supplierRepository.getSuppliers().first()
@@ -60,48 +59,36 @@ class PurchaseOrderTabsViewModel(
                     // Suppliers failed
                 }
                 
-                // Load stock movements once using first()
-                try {
-                    val movements = stockRepository.getAllMovements().first()
-                    val purchaseMovements = movements.filter { it.type == com.akari.retailer.features.inventory.domain.models.MovementType.PURCHASE }
-                    
-                    val orders = purchaseMovements.map { movement ->
-                        val item = PurchaseOrderItem(
-                            productId = movement.productId,
-                            quantity = movement.quantity,
-                            costPrice = movement.previousStock,
-                            total = movement.quantity * movement.previousStock
-                        )
-                        
-                        PurchaseOrder(
-                            id = movement.id,
-                            supplierId = "",
-                            supplierName = supplierMap[movement.userId] ?: "Supplier",
-                            items = listOf(item),
-                            receivedItems = listOf(item),
-                            totalCost = movement.quantity * movement.previousStock,
-                            status = PurchaseOrderStatus.RECEIVED,
-                            orderedAt = movement.createdAt,
-                            receivedAt = movement.createdAt,
-                            notes = movement.reason
-                        )
-                    }
-                    
-                    // Store in shared ViewModel
-                    sharedViewModel.setOrders(orders)
-                    
-                    _state.value = _state.value.copy(
-                        orders = orders,
-                        isLoading = false,
-                        error = null
+                val movements = stockRepository.getAllMovements().first()
+                val purchaseMovements = movements.filter { it.type == com.akari.retailer.features.inventory.domain.models.MovementType.PURCHASE }
+                
+                val orders = purchaseMovements.map { movement ->
+                    val item = PurchaseOrderItem(
+                        productId = movement.productId,
+                        quantity = movement.quantity,
+                        costPrice = movement.previousStock,
+                        total = movement.quantity * movement.previousStock
                     )
-                } catch (e: Exception) {
-                    _state.value = _state.value.copy(
-                        orders = emptyList(),
-                        isLoading = false,
-                        error = "Failed to load purchase orders"
+                    
+                    PurchaseOrder(
+                        id = movement.id,
+                        supplierId = "",
+                        supplierName = supplierMap[movement.userId] ?: "Supplier",
+                        items = listOf(item),
+                        status = PurchaseOrderStatus.RECEIVED,
+                        orderDate = movement.createdAt,
+                        notes = movement.reason
                     )
                 }
+                
+                // Store in shared ViewModel so detail screen can access
+                sharedViewModel.setOrders(orders)
+                
+                _state.value = _state.value.copy(
+                    orders = orders,
+                    isLoading = false,
+                    error = null
+                )
                 
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
