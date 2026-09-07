@@ -53,14 +53,8 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
                 receivedCost = order.receivedCost,
                 orderDate = order.orderDate,
                 sentDate = order.sentDate,
-                acknowledgedDate = order.acknowledgedDate,
                 receivedDate = order.receivedDate,
-                invoicedDate = order.invoicedDate,
                 closedDate = order.closedDate,
-                invoiceNumber = order.invoiceNumber,
-                invoiceAmount = order.invoiceAmount,
-                paymentDueDate = order.paymentDueDate,
-                paidDate = order.paidDate,
                 notes = order.notes,
                 createdBy = order.createdBy,
                 createdAt = order.createdAt,
@@ -248,17 +242,13 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             }
             
             val currentTime = System.currentTimeMillis()
-            // Use HashMap with explicit type
             val updates: MutableMap<String, Any> = HashMap()
             updates["status"] = newStatus.name
             updates["updatedAt"] = currentTime
             
-            // Set the appropriate date field based on the new status
             when (newStatus) {
                 PurchaseOrderStatus.SENT -> updates["sentDate"] = currentTime
-                PurchaseOrderStatus.ACKNOWLEDGED -> updates["acknowledgedDate"] = currentTime
                 PurchaseOrderStatus.RECEIVED -> updates["receivedDate"] = currentTime
-                PurchaseOrderStatus.INVOICED -> updates["invoicedDate"] = currentTime
                 PurchaseOrderStatus.CLOSED -> updates["closedDate"] = currentTime
                 else -> {}
             }
@@ -293,14 +283,8 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             "receivedCost" to order.receivedCost,
             "orderDate" to order.orderDate,
             "sentDate" to order.sentDate,
-            "acknowledgedDate" to order.acknowledgedDate,
             "receivedDate" to order.receivedDate,
-            "invoicedDate" to order.invoicedDate,
             "closedDate" to order.closedDate,
-            "invoiceNumber" to order.invoiceNumber,
-            "invoiceAmount" to order.invoiceAmount,
-            "paymentDueDate" to order.paymentDueDate,
-            "paidDate" to order.paidDate,
             "notes" to order.notes,
             "createdBy" to order.createdBy,
             "createdAt" to order.createdAt,
@@ -338,14 +322,8 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             receivedCost = (data["receivedCost"] as? Number)?.toInt() ?: 0,
             orderDate = (data["orderDate"] as? Number)?.toLong() ?: System.currentTimeMillis(),
             sentDate = (data["sentDate"] as? Number)?.toLong() ?: 0,
-            acknowledgedDate = (data["acknowledgedDate"] as? Number)?.toLong() ?: 0,
             receivedDate = (data["receivedDate"] as? Number)?.toLong() ?: 0,
-            invoicedDate = (data["invoicedDate"] as? Number)?.toLong() ?: 0,
             closedDate = (data["closedDate"] as? Number)?.toLong() ?: 0,
-            invoiceNumber = data["invoiceNumber"] as? String ?: "",
-            invoiceAmount = (data["invoiceAmount"] as? Number)?.toInt() ?: 0,
-            paymentDueDate = (data["paymentDueDate"] as? Number)?.toLong() ?: 0,
-            paidDate = (data["paidDate"] as? Number)?.toLong() ?: 0,
             notes = data["notes"] as? String ?: "",
             createdBy = data["createdBy"] as? String ?: "",
             createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),

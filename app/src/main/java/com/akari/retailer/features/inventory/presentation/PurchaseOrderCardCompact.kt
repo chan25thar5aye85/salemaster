@@ -28,18 +28,14 @@ fun PurchaseOrderCardCompact(
     val statusColor = when (order.status) {
         PurchaseOrderStatus.DRAFT -> Color(0xFFFF9800)
         PurchaseOrderStatus.SENT -> Color(0xFF2196F3)
-        PurchaseOrderStatus.ACKNOWLEDGED -> Color(0xFF9C27B0)
         PurchaseOrderStatus.RECEIVED -> Color(0xFF4CAF50)
-        PurchaseOrderStatus.INVOICED -> Color(0xFFFF5722)
         PurchaseOrderStatus.CLOSED -> Color(0xFF78909C)
     }
     
     val statusText = when (order.status) {
         PurchaseOrderStatus.DRAFT -> "Draft"
         PurchaseOrderStatus.SENT -> "Sent"
-        PurchaseOrderStatus.ACKNOWLEDGED -> "Acknowledged"
         PurchaseOrderStatus.RECEIVED -> "Received"
-        PurchaseOrderStatus.INVOICED -> "Invoiced"
         PurchaseOrderStatus.CLOSED -> "Closed"
     }
     

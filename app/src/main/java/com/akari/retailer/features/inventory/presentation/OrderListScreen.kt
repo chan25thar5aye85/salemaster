@@ -19,12 +19,16 @@ import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
+import com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus
 import com.akari.retailer.navigation.Routes
 
 @Composable
-fun PurchaseOrderTabsScreen(
+fun OrderListScreen(
     navController: NavController,
-    onBack: () -> Unit
+    status: PurchaseOrderStatus? = null,
+    title: String,
+    onBack: () -> Unit,
+    showAddButton: Boolean = true
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
@@ -36,12 +40,17 @@ fun PurchaseOrderTabsScreen(
     )
     
     val state by viewModel.state.collectAsState()
+    
+    // Apply filter for this screen
+    LaunchedEffect(status) {
+        viewModel.handleEvent(PurchaseOrderListEvent.FilterByStatus(status))
+    }
 
     AppScreen(
-        title = stringResource(R.string.purchase_orders),
+        title = title,
         showBackButton = true,
         onBackClick = onBack,
-        showAddButton = true,
+        showAddButton = showAddButton,
         onAddClick = { navController.navigate(Routes.PURCHASE_ORDER_ADD) }
     ) {
         Column(
@@ -69,9 +78,21 @@ fun PurchaseOrderTabsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("❌", fontSize = 40.sp)
-                        Text(state.error!!, style = AppTypography.body, color = MaterialTheme.colorScheme.error)
-                        TextButton(onClick = { viewModel.handleEvent(PurchaseOrderListEvent.LoadOrders) }) {
+                        Text(
+                            text = "❌",
+                            fontSize = 40.sp
+                        )
+                        Text(
+                            text = state.error!!,
+                            style = AppTypography.body,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(top = Spacing.medium)
+                        )
+                        TextButton(
+                            onClick = {
+                                viewModel.handleEvent(PurchaseOrderListEvent.LoadOrders)
+                            }
+                        ) {
                             Text(stringResource(R.string.retry))
                         }
                     }
@@ -79,15 +100,42 @@ fun PurchaseOrderTabsScreen(
                 return@Column
             }
 
-            if (state.orders.isEmpty()) {
+            val orders = state.orders
+
+            if (orders.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("📦", fontSize = 48.sp)
-                        Text(stringResource(R.string.no_purchase_orders), style = AppTypography.header)
-                        Text(stringResource(R.string.tap_add_purchase_order), style = AppTypography.body, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Text(
+                            text = when (status) {
+                                PurchaseOrderStatus.DRAFT -> "📝"
+                                PurchaseOrderStatus.SENT -> "📤"
+                                PurchaseOrderStatus.RECEIVED -> "📦"
+                                PurchaseOrderStatus.CLOSED -> "✅"
+                                else -> "📦"
+                            },
+                            fontSize = 48.sp
+                        )
+                        Text(
+                            text = when (status) {
+                                PurchaseOrderStatus.DRAFT -> "No draft orders"
+                                PurchaseOrderStatus.SENT -> "No sent orders"
+                                PurchaseOrderStatus.RECEIVED -> "No received orders"
+                                PurchaseOrderStatus.CLOSED -> "No closed orders"
+                                else -> stringResource(R.string.no_purchase_orders)
+                            },
+                            style = AppTypography.header,
+                            modifier = Modifier.padding(top = Spacing.medium)
+                        )
+                        if (status == PurchaseOrderStatus.DRAFT || status == null) {
+                            Text(
+                                text = stringResource(R.string.tap_add_purchase_order),
+                                style = AppTypography.body,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
                     }
                 }
                 return@Column
@@ -98,7 +146,10 @@ fun PurchaseOrderTabsScreen(
                 verticalArrangement = Arrangement.spacedBy(Spacing.medium),
                 contentPadding = PaddingValues(bottom = Spacing.xxlarge)
             ) {
-                items(state.orders, key = { it.id }) { order ->
+                items(
+                    items = orders,
+                    key = { it.id }
+                ) { order ->
                     PurchaseOrderCardCompact(
                         order = order,
                         navController = navController,

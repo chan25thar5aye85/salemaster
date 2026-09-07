@@ -16,11 +16,19 @@ object Routes {
     const val INVENTORY_EDIT = "inventory_edit/{productId}"
     const val STOCK_HISTORY = "stock_history/{productId}/{productName}"
     const val STOCK_ADJUSTMENT = "stock_adjustment"
+    
+    // Purchase Orders
     const val PURCHASE_ORDERS = "purchase_orders"
     const val PURCHASE_ORDER_ADD = "purchase_order_add"
     const val PURCHASE_ORDER_DETAIL = "purchase_order_detail/{orderId}"
-    const val PURCHASE_ORDER_EDIT = "purchase_order_edit/{orderId}"
     const val RECEIVE_ORDER = "receive_order/{orderId}"
+    
+    // Status-specific order lists
+    const val DRAFT_ORDERS = "draft_orders"
+    const val SENT_ORDERS = "sent_orders"
+    const val RECEIVED_ORDERS = "received_orders"
+    const val CLOSED_ORDERS = "closed_orders"
+    
     const val CUSTOMERS = "customers"
     const val CUSTOMER_ADD = "customer_add"
     const val CUSTOMER_EDIT = "customer_edit/{customerId}"

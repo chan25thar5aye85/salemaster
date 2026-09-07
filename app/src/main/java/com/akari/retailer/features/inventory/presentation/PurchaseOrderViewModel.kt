@@ -23,7 +23,7 @@ data class PurchaseOrderState(
     val suppliers: List<Supplier> = emptyList(),
     val products: List<Product> = emptyList(),
     val selectedSupplier: Supplier? = null,
-    val orderName: String = "",  // Added orderName
+    val orderName: String = "",
     val tempItems: List<PurchaseOrderItem> = emptyList(),
     val notes: String = "",
     val isLoading: Boolean = true,
@@ -34,7 +34,7 @@ data class PurchaseOrderState(
 
 sealed class PurchaseOrderEvent {
     data class SupplierSelected(val supplier: Supplier) : PurchaseOrderEvent()
-    data class OrderNameChanged(val value: String) : PurchaseOrderEvent()  // Added
+    data class OrderNameChanged(val value: String) : PurchaseOrderEvent()
     data object AddItem : PurchaseOrderEvent()
     data class UpdateItem(
         val index: Int,
@@ -158,11 +158,9 @@ class PurchaseOrderViewModel(
             _state.value = _state.value.copy(isSaving = true, error = null)
             
             try {
-                // Generate order number
                 val orderNumber = generateOrderNumber()
                 val totalCost = currentState.tempItems.sumOf { it.total }
                 
-                // Create order with the new fields
                 val order = com.akari.retailer.features.inventory.domain.models.PurchaseOrder(
                     orderName = currentState.orderName.trim(),
                     orderNumber = orderNumber,
@@ -193,7 +191,6 @@ class PurchaseOrderViewModel(
                         error = null
                     )
                     
-                    // Reset form after success
                     _state.value = _state.value.copy(
                         selectedSupplier = null,
                         orderName = "",
