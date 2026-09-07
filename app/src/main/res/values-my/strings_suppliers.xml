@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="suppliers">ပေးသွင်းသူများ</string>
+    <string name="add_supplier">ပေးသွင်းသူထည့်ရန်</string>
+    <string name="supplier_details">ပေးသွင်းသူအသေးစိတ်</string>
+    <string name="edit_supplier">ပေးသွင်းသူပြင်ရန်</string>
+    <string name="delete_supplier">ပေးသွင်းသူဖျက်မည်</string>
+    <string name="delete_supplier_confirmation">ဤပေးသွင်းသူကို ဖျက်ရန် သေချာပါသလား?</string>
+    <string name="no_suppliers_yet">ပေးသွင်းသူမရှိသေးပါ</string>
+    <string name="tap_add_supplier">ပထမဆုံးပေးသွင်းသူထည့်ရန် + ကိုနှိပ်ပါ</string>
+    <string name="no_suppliers_found">တွေ့ရှိသည့်ပေးသွင်းသူမရှိပါ</string>
+    <string name="search_suppliers">အမည် သို့မဟုတ် ဖုန်းဖြင့် ရှာဖွေရန်...</string>
+    <string name="loading_suppliers">ပေးသွင်းသူများဖွင့်နေသည်...</string>
+    <string name="save_supplier">ပေးသွင်းသူသိမ်းမည်</string>
+    <string name="supplier_name_required">ပေးသွင်းသူအမည် လိုအပ်သည်</string>
+    <string name="failed_to_save_supplier">ပေးသွင်းသူသိမ်းရန် မအောင်မြင်ပါ</string>
+    <string name="update_supplier">ပေးသွင်းသူပြင်မည်</string>
+    <string name="supplier_not_found">ပေးသွင်းသူမတွေ့ပါ</string>
+    <string name="failed_to_load_supplier">ပေးသွင်းသူဖွင့်ရန် မအောင်မြင်ပါ</string>
+    <string name="failed_to_update_supplier">ပေးသွင်းသူပြင်ရန် မအောင်မြင်ပါ</string>
+    <string name="total_purchased">စုစုပေါင်းဝယ်ယူမှု</string>
+</resources>

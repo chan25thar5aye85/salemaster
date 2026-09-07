@@ -9,8 +9,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.akari.retailer.R
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrder
@@ -35,9 +37,9 @@ fun PurchaseOrderCardCompact(
     }
     
     val statusText = when (order.status) {
-        PurchaseOrderStatus.ORDER -> "Order"
-        PurchaseOrderStatus.RECEIVED -> "Received"
-        PurchaseOrderStatus.COMPLETED -> "Completed"
+        PurchaseOrderStatus.ORDER -> stringResource(R.string.order_status_order)
+        PurchaseOrderStatus.RECEIVED -> stringResource(R.string.order_status_received)
+        PurchaseOrderStatus.COMPLETED -> stringResource(R.string.order_status_completed)
     }
     
     // Get items and total for current status
@@ -93,14 +95,14 @@ fun PurchaseOrderCardCompact(
                 Spacer(modifier = Modifier.height(Spacing.small))
                 
                 Text(
-                    text = "🔢 ${order.orderNumber}",
+                    text = "${stringResource(R.string.order_number_label)}: ${order.orderNumber}",
                     style = AppTypography.body,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
                 
                 if (order.supplierName.isNotEmpty()) {
                     Text(
-                        text = "🏢 ${order.supplierName}",
+                        text = "${stringResource(R.string.supplier)}: ${order.supplierName}",
                         style = AppTypography.body,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -113,7 +115,7 @@ fun PurchaseOrderCardCompact(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "📋 ${currentItems.size} items",
+                        text = "📋 ${currentItems.size} ${stringResource(R.string.items_count)}",
                         style = AppTypography.small,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -141,7 +143,7 @@ fun PurchaseOrderCardCompact(
                 ) {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = "Delete",
+                        contentDescription = stringResource(R.string.delete),
                         tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
                     )
                 }

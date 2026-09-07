@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="purchases">ဝယ်ယူမှုများ</string>
+    <string name="purchase_detail">ဝယ်ယူမှုအသေးစိတ်</string>
+    <string name="purchases_list">ဝယ်ယူမှုစာရင်း</string>
+    <string name="loading_purchases">ဝယ်ယူမှုများဖွင့်နေသည်...</string>
+    <string name="no_purchases_yet">ဝယ်ယူမှုမရှိသေးပါ</string>
+    <string name="create_purchase">ဝယ်ယူမှုပြုလုပ်မည်</string>
+    <string name="purchase_completed">ဝယ်ယူမှုပြီးဆုံးပါပြီ</string>
+    <string name="purchase_receipt">ဝယ်ယူမှုပြေစာ</string>
+    <string name="receipt_number">ပြေစာနံပါတ်</string>
+    <string name="purchase_date">ဝယ်ယူသည့်ရက်</string>
+    <string name="create_purchase_warning">ဤအော်ဒါမှ ဝယ်ယူမှုပြုလုပ်ရန် သေချာပါသလား?</string>
+    <string name="purchase_will_update">ဤသို့ပြုလုပ်မည်:</string>
+    <string name="purchase_update_stock">✅ ပစ္စည်းစာရင်းကို အပ်ဒိတ်လုပ်မည်</string>
+    <string name="purchase_create_expense">💰 အသုံးစရိတ်မှတ်တမ်းပြုလုပ်မည်</string>
+    <string name="purchase_update_supplier">📊 ပေးသွင်းသူ၏ ဝယ်ယူမှုမှတ်တမ်းကို အပ်ဒိတ်လုပ်မည်</string>
+    <string name="purchase_generate_receipt">📝 ပြေစာထုတ်ပေးမည်</string>
+    <string name="purchase_cannot_undo">⚠️ ဤလုပ်ဆောင်ချက်ကို ပြန်ဖျက်၍မရပါ။</string>
+    <string name="yes_create_purchase">ဟုတ်ကဲ့၊ ဝယ်ယူမှုပြုလုပ်မည်</string>
+    <string name="purchase_created_success">✅ ဝယ်ယူမှုအောင်မြင်ပါပြီ!</string>
+    <string name="purchase_failed">❌ ဝယ်ယူမှုမအောင်မြင်ပါ</string>
+    <string name="view_receipt">ပြေစာကြည့်ရန်</string>
+    <string name="thank_you_business">သင်၏ စီးပွားရေးအတွက် ကျေးဇူးတင်ပါသည်!</string>
+    <string name="create_purchase_from_orders">အော်ဒါများမှ ဝယ်ယူမှုများပြုလုပ်ပါ</string>
+    <string name="purchase_not_found">ဝယ်ယူမှုမတွေ့ပါ</string>
+    <string name="finalize_purchase">ဝယ်ယူမှုအပြီးသတ်ရန်</string>
+    <string name="purchase_already_created">ဤအော်ဒါအတွက် ဝယ်ယူမှုရှိပြီးသားဖြစ်သည်</string>
+    <string name="no_items_to_purchase">ဝယ်ယူရန် ပစ္စည်းမရှိပါ</string>
+</resources>

@@ -12,9 +12,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
@@ -60,7 +62,7 @@ fun PurchaseOrderScreen(
     }
 
     AppScreen(
-        title = "Add Purchase Order",
+        title = stringResource(R.string.purchase_order_add),
         showBackButton = true,
         onBackClick = onBack
     ) {
@@ -90,8 +92,8 @@ fun PurchaseOrderScreen(
             OutlinedTextField(
                 value = state.orderName,
                 onValueChange = { viewModel.handleEvent(PurchaseOrderEvent.OrderNameChanged(it)) },
-                label = { Text("Order Name *") },
-                placeholder = { Text("e.g., Weekly Stock Purchase") },
+                label = { Text(stringResource(R.string.order_name_label)) },
+                placeholder = { Text(stringResource(R.string.order_name_hint)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -100,7 +102,7 @@ fun PurchaseOrderScreen(
 
             // Order Number info
             Text(
-                text = "Order Number: Will be auto-generated",
+                text = stringResource(R.string.order_number_auto),
                 style = AppTypography.small,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.padding(bottom = Spacing.medium)
@@ -113,10 +115,10 @@ fun PurchaseOrderScreen(
                 onExpandedChange = { supplierExpanded = it }
             ) {
                 OutlinedTextField(
-                    value = state.selectedSupplier?.name ?: "Select Supplier",
+                    value = state.selectedSupplier?.name ?: stringResource(R.string.select_supplier),
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Supplier *") },
+                    label = { Text(stringResource(R.string.supplier_label)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
@@ -128,7 +130,7 @@ fun PurchaseOrderScreen(
                 ) {
                     if (state.suppliers.isEmpty()) {
                         DropdownMenuItem(
-                            text = { Text("No suppliers available") },
+                            text = { Text(stringResource(R.string.no_suppliers)) },
                             onClick = {}
                         )
                     } else {
@@ -154,7 +156,7 @@ fun PurchaseOrderScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Items",
+                    text = stringResource(R.string.add_items),
                     style = AppTypography.title
                 )
                 TextButton(
@@ -163,7 +165,7 @@ fun PurchaseOrderScreen(
                     }
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(16.dp))
-                    Text(" Add Item")
+                    Text(stringResource(R.string.add_items))
                 }
             }
             
@@ -245,7 +247,7 @@ fun PurchaseOrderScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Total",
+                        text = stringResource(R.string.total_label),
                         style = AppTypography.title
                     )
                     Text(
@@ -262,7 +264,7 @@ fun PurchaseOrderScreen(
             OutlinedTextField(
                 value = state.notes,
                 onValueChange = { viewModel.handleEvent(PurchaseOrderEvent.NotesChanged(it)) },
-                label = { Text("Notes (Optional)") },
+                label = { Text(stringResource(R.string.notes_optional)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(80.dp)
@@ -279,9 +281,9 @@ fun PurchaseOrderScreen(
             if (!buttonEnabled && state.error == null) {
                 Text(
                     text = when {
-                        state.orderName.isBlank() -> "⚠️ Enter an order name"
-                        state.selectedSupplier == null -> "⚠️ Select a supplier"
-                        state.tempItems.isEmpty() -> "⚠️ Add at least one item"
+                        state.orderName.isBlank() -> "⚠️ ${stringResource(R.string.order_name_label)}"
+                        state.selectedSupplier == null -> "⚠️ ${stringResource(R.string.supplier_label)}"
+                        state.tempItems.isEmpty() -> "⚠️ ${stringResource(R.string.add_items)}"
                         else -> ""
                     },
                     style = AppTypography.small,
@@ -291,7 +293,7 @@ fun PurchaseOrderScreen(
             }
             
             AppPrimaryButton(
-                text = if (state.isSaving) "Saving..." else "Save Order",
+                text = if (state.isSaving) stringResource(R.string.saving) else stringResource(R.string.save_order),
                 onClick = {
                     viewModel.handleEvent(PurchaseOrderEvent.SavePurchase)
                 },
@@ -337,10 +339,10 @@ fun ItemRowWithDropdown(
                     onExpandedChange = { expanded = it }
                 ) {
                     OutlinedTextField(
-                        value = if (item.productName.isEmpty()) "Select Product" else item.productName,
+                        value = if (item.productName.isEmpty()) stringResource(R.string.select_product) else item.productName,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Product") },
+                        label = { Text(stringResource(R.string.product_label)) },
                         modifier = Modifier
                             .weight(2f)
                             .menuAnchor(),
@@ -353,7 +355,7 @@ fun ItemRowWithDropdown(
                     ) {
                         if (products.isEmpty()) {
                             DropdownMenuItem(
-                                text = { Text("No products available") },
+                                text = { Text(stringResource(R.string.no_products)) },
                                 onClick = { expanded = false }
                             )
                         } else {
@@ -363,7 +365,7 @@ fun ItemRowWithDropdown(
                                         Column {
                                             Text(product.name)
                                             Text(
-                                                text = "Stock: ${product.stockQuantity}",
+                                                text = "${stringResource(R.string.current_stock)}: ${product.stockQuantity}",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -382,7 +384,7 @@ fun ItemRowWithDropdown(
                 Spacer(modifier = Modifier.width(Spacing.small))
                 
                 IconButton(onClick = onRemove) {
-                    Icon(Icons.Default.Delete, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error)
+                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error)
                 }
             }
             
@@ -399,7 +401,7 @@ fun ItemRowWithDropdown(
                         val qty = it.toIntOrNull() ?: 0
                         onQuantityChange(qty)
                     },
-                    label = { Text("Qty") },
+                    label = { Text(stringResource(R.string.qty_label)) },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -411,7 +413,7 @@ fun ItemRowWithDropdown(
                         val price = it.toIntOrNull() ?: 0
                         onPriceChange(price)
                     },
-                    label = { Text("Price") },
+                    label = { Text(stringResource(R.string.enter_price)) },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -420,7 +422,7 @@ fun ItemRowWithDropdown(
             
             if (item.total > 0) {
                 Text(
-                    text = "Subtotal: ${item.total}",
+                    text = "${stringResource(R.string.subtotal)}: ${item.total}",
                     style = AppTypography.small,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(top = Spacing.small)

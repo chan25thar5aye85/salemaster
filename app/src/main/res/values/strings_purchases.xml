@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="purchases">Purchases</string>
+    <string name="purchase_detail">Purchase Detail</string>
+    <string name="purchases_list">Purchases List</string>
+    <string name="loading_purchases">Loading purchases...</string>
+    <string name="no_purchases_yet">No purchases yet</string>
+    <string name="create_purchase">Create Purchase</string>
+    <string name="purchase_completed">Purchase Completed</string>
+    <string name="purchase_receipt">Purchase Receipt</string>
+    <string name="receipt_number">Receipt Number</string>
+    <string name="purchase_date">Purchase Date</string>
+    <string name="create_purchase_warning">Are you sure you want to create a purchase from this order?</string>
+    <string name="purchase_will_update">This will:</string>
+    <string name="purchase_update_stock">✅ Update stock inventory</string>
+    <string name="purchase_create_expense">💰 Create an expense record</string>
+    <string name="purchase_update_supplier">📊 Update supplier purchase history</string>
+    <string name="purchase_generate_receipt">📝 Generate a receipt</string>
+    <string name="purchase_cannot_undo">⚠️ This action CANNOT be undone.</string>
+    <string name="yes_create_purchase">Yes, Create Purchase</string>
+    <string name="purchase_created_success">✅ Purchase created successfully!</string>
+    <string name="purchase_failed">❌ Failed to create purchase</string>
+    <string name="view_receipt">View Receipt</string>
+    <string name="thank_you_business">Thank you for your business!</string>
+    <string name="create_purchase_from_orders">Create purchases from orders</string>
+    <string name="purchase_not_found">Purchase not found</string>
+    <string name="finalize_purchase">Finalize Purchase</string>
+    <string name="purchase_already_created">Purchase already created for this order</string>
+    <string name="no_items_to_purchase">No items to purchase</string>
+</resources>

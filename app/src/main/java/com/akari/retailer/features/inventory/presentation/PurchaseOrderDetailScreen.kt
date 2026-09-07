@@ -10,11 +10,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
@@ -86,7 +88,7 @@ fun PurchaseOrderDetailScreen(
     }
 
     AppScreen(
-        title = state.order?.orderName ?: "Order Detail",
+        title = state.order?.orderName ?: stringResource(R.string.order_detail),
         showBackButton = true,
         onBackClick = onBack
     ) {
@@ -114,7 +116,7 @@ fun PurchaseOrderDetailScreen(
                             Text("❌", fontSize = 48.sp)
                             Text(state.error!!, style = AppTypography.body, color = MaterialTheme.colorScheme.error)
                             Spacer(modifier = Modifier.height(Spacing.medium))
-                            AppPrimaryButton(text = "Go Back", onClick = onBack)
+                            AppPrimaryButton(text = stringResource(R.string.back), onClick = onBack)
                         }
                     }
                 }
@@ -126,9 +128,9 @@ fun PurchaseOrderDetailScreen(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("📭", fontSize = 48.sp)
-                            Text("Order not found", style = AppTypography.header)
+                            Text(stringResource(R.string.order_not_found), style = AppTypography.header)
                             Spacer(modifier = Modifier.height(Spacing.medium))
-                            AppPrimaryButton(text = "Go Back", onClick = onBack)
+                            AppPrimaryButton(text = stringResource(R.string.back), onClick = onBack)
                         }
                     }
                 }
@@ -137,11 +139,11 @@ fun PurchaseOrderDetailScreen(
                     val currentOrder = state.order!!
                     val isCompleted = currentOrder.status == PurchaseOrderStatus.COMPLETED
                     
-                    // Always show all 3 tabs, but make them read-only if completed
+                    // Always show all 3 tabs
                     val statusTabs = listOf(
-                        "ORDER" to PurchaseOrderStatus.ORDER,
-                        "RECEIVED" to PurchaseOrderStatus.RECEIVED,
-                        "COMPLETED" to PurchaseOrderStatus.COMPLETED
+                        stringResource(R.string.order_status_order) to PurchaseOrderStatus.ORDER,
+                        stringResource(R.string.order_status_received) to PurchaseOrderStatus.RECEIVED,
+                        stringResource(R.string.order_status_completed) to PurchaseOrderStatus.COMPLETED
                     )
                     
                     // Make sure selectedTab is valid
@@ -181,7 +183,7 @@ fun PurchaseOrderDetailScreen(
                     // RECEIVED tab - Show Purchase button only if not completed
                     if (isReceived && !isCompleted) {
                         AppPrimaryButton(
-                            text = if (isCreatingPurchase) "Creating..." else "🛒 Create Purchase",
+                            text = if (isCreatingPurchase) stringResource(R.string.saving) else stringResource(R.string.create_purchase),
                             onClick = {
                                 showCreatePurchaseDialog = true
                             },
@@ -201,7 +203,7 @@ fun PurchaseOrderDetailScreen(
                             )
                         ) {
                             Text(
-                                text = "✅ Purchase Completed",
+                                text = "✅ ${stringResource(R.string.purchase_completed)}",
                                 style = AppTypography.header,
                                 color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier
@@ -212,7 +214,7 @@ fun PurchaseOrderDetailScreen(
                         Spacer(modifier = Modifier.height(Spacing.medium))
                     }
                     
-                    // Items List - Read-only if completed
+                    // Items List
                     PurchaseOrderItemsList(
                         items = displayItems,
                         status = selectedStatus,
@@ -288,6 +290,19 @@ fun PurchaseOrderDetailScreen(
     
     // Create Purchase Confirmation Dialog
     if (showCreatePurchaseDialog) {
+        val finalizePurchase = stringResource(R.string.finalize_purchase)
+        val createPurchaseWarning = stringResource(R.string.create_purchase_warning)
+        val purchaseWillUpdate = stringResource(R.string.purchase_will_update)
+        val purchaseUpdateStock = stringResource(R.string.purchase_update_stock)
+        val purchaseCreateExpense = stringResource(R.string.purchase_create_expense)
+        val purchaseUpdateSupplier = stringResource(R.string.purchase_update_supplier)
+        val purchaseGenerateReceipt = stringResource(R.string.purchase_generate_receipt)
+        val purchaseCannotUndo = stringResource(R.string.purchase_cannot_undo)
+        val yesCreatePurchase = stringResource(R.string.yes_create_purchase)
+        val purchaseCreatedSuccess = stringResource(R.string.purchase_created_success)
+        val purchaseFailed = stringResource(R.string.purchase_failed)
+        val cancelText = stringResource(R.string.cancel)
+        
         AlertDialog(
             onDismissRequest = { 
                 if (!isCreatingPurchase) {
@@ -296,26 +311,23 @@ fun PurchaseOrderDetailScreen(
             },
             title = { 
                 Text(
-                    "⚠️ Finalize Purchase",
+                    "⚠️ $finalizePurchase",
                     color = MaterialTheme.colorScheme.error
                 )
             },
             text = {
                 Column {
-                    Text(
-                        "Are you sure you want to create a purchase from this order?",
-                        style = AppTypography.body
-                    )
+                    Text(createPurchaseWarning, style = AppTypography.body)
                     Spacer(modifier = Modifier.height(Spacing.small))
-                    Text("This will:", style = AppTypography.body)
+                    Text(purchaseWillUpdate, style = AppTypography.body)
                     Spacer(modifier = Modifier.height(Spacing.small))
-                    Text("• ✅ Update stock inventory", style = AppTypography.small)
-                    Text("• 💰 Create an expense record", style = AppTypography.small)
-                    Text("• 📊 Update supplier purchase history", style = AppTypography.small)
-                    Text("• 📝 Generate a receipt", style = AppTypography.small)
+                    Text(purchaseUpdateStock, style = AppTypography.small)
+                    Text(purchaseCreateExpense, style = AppTypography.small)
+                    Text(purchaseUpdateSupplier, style = AppTypography.small)
+                    Text(purchaseGenerateReceipt, style = AppTypography.small)
                     Spacer(modifier = Modifier.height(Spacing.small))
                     Text(
-                        "⚠️ This action CANNOT be undone.",
+                        purchaseCannotUndo,
                         style = AppTypography.body,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -327,21 +339,16 @@ fun PurchaseOrderDetailScreen(
                         isCreatingPurchase = true
                         showCreatePurchaseDialog = false
                         scope.launch {
-                            try {
-                                val result = viewModel.createPurchase(orderId)
-                                isCreatingPurchase = false
-                                if (result.isSuccess) {
-                                    Toast.makeText(context, "✅ Purchase created successfully!", Toast.LENGTH_LONG).show()
-                                    navController.navigate(Routes.PURCHASES) {
-                                        popUpTo(Routes.PURCHASE_ORDER_DETAIL) { inclusive = true }
-                                    }
-                                } else {
-                                    val errorMsg = result.exceptionOrNull()?.message ?: "Failed to create purchase"
-                                    Toast.makeText(context, "❌ $errorMsg", Toast.LENGTH_LONG).show()
+                            val result = viewModel.createPurchase(orderId)
+                            isCreatingPurchase = false
+                            if (result.isSuccess) {
+                                Toast.makeText(context, purchaseCreatedSuccess, Toast.LENGTH_LONG).show()
+                                navController.navigate(Routes.PURCHASES) {
+                                    popUpTo(Routes.PURCHASE_ORDER_DETAIL) { inclusive = true }
                                 }
-                            } catch (e: Exception) {
-                                isCreatingPurchase = false
-                                Toast.makeText(context, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show()
+                            } else {
+                                val errorMsg = result.exceptionOrNull()?.message ?: purchaseFailed
+                                Toast.makeText(context, "❌ $errorMsg", Toast.LENGTH_LONG).show()
                             }
                         }
                     },
@@ -356,7 +363,7 @@ fun PurchaseOrderDetailScreen(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text("Yes, Create Purchase")
+                        Text(yesCreatePurchase)
                     }
                 }
             },
@@ -369,7 +376,7 @@ fun PurchaseOrderDetailScreen(
                     },
                     enabled = !isCreatingPurchase
                 ) {
-                    Text("Cancel")
+                    Text(cancelText)
                 }
             }
         )
@@ -391,14 +398,20 @@ fun PurchaseOrderDetailScreen(
                     else -> ""
                 }
                 
+                val deleteOrderItem = stringResource(R.string.delete_order_item)
+                val confirmDeleteOrder = stringResource(R.string.confirm_delete_order)
+                val deleteText = stringResource(R.string.delete)
+                val cancelText = stringResource(R.string.cancel)
+                val orderDeleted = stringResource(R.string.order_deleted)
+                
                 AlertDialog(
                     onDismissRequest = { 
                         showDeleteConfirmation = false
                         deleteIndex = -1
                         deleteStatus = null
                     },
-                    title = { Text("Delete Item") },
-                    text = { Text("Are you sure you want to remove '${itemName}' from ${deleteStatus?.name}?") },
+                    title = { Text(deleteOrderItem) },
+                    text = { Text("$confirmDeleteOrder '${itemName}'?") },
                     confirmButton = {
                         Button(
                             onClick = {
@@ -424,14 +437,14 @@ fun PurchaseOrderDetailScreen(
                                     showDeleteConfirmation = false
                                     deleteIndex = -1
                                     deleteStatus = null
-                                    Toast.makeText(context, "Item removed!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, orderDeleted, Toast.LENGTH_SHORT).show()
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.error
                             )
                         ) {
-                            Text("Delete")
+                            Text(deleteText)
                         }
                     },
                     dismissButton = {
@@ -440,7 +453,7 @@ fun PurchaseOrderDetailScreen(
                             deleteIndex = -1
                             deleteStatus = null
                         }) {
-                            Text("Cancel")
+                            Text(cancelText)
                         }
                     }
                 )
@@ -462,9 +475,17 @@ fun PurchaseOrderDetailScreen(
                 }
                 
                 if (editingIndex < items.size) {
+                    val editOrderItem = stringResource(R.string.edit_order_item)
+                    val enterQuantity = stringResource(R.string.enter_quantity)
+                    val enterPrice = stringResource(R.string.enter_price)
+                    val saveOrder = stringResource(R.string.save_order)
+                    val orderUpdated = stringResource(R.string.order_updated)
+                    val enterValidAmount = stringResource(R.string.enter_valid_amount)
+                    val cancelText = stringResource(R.string.cancel)
+                    
                     AlertDialog(
                         onDismissRequest = { showEditDialog = false },
-                        title = { Text("Edit Item") },
+                        title = { Text(editOrderItem) },
                         text = {
                             Column {
                                 Text(
@@ -476,7 +497,7 @@ fun PurchaseOrderDetailScreen(
                                 OutlinedTextField(
                                     value = editQuantity,
                                     onValueChange = { editQuantity = it },
-                                    label = { Text("Quantity") },
+                                    label = { Text(enterQuantity) },
                                     singleLine = true,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     modifier = Modifier.fillMaxWidth()
@@ -487,7 +508,7 @@ fun PurchaseOrderDetailScreen(
                                 OutlinedTextField(
                                     value = editPrice,
                                     onValueChange = { editPrice = it },
-                                    label = { Text("Price") },
+                                    label = { Text(enterPrice) },
                                     singleLine = true,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     modifier = Modifier.fillMaxWidth()
@@ -533,18 +554,18 @@ fun PurchaseOrderDetailScreen(
                                             }
                                         }
                                         showEditDialog = false
-                                        Toast.makeText(context, "Updated!", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, orderUpdated, Toast.LENGTH_SHORT).show()
                                     } else {
-                                        Toast.makeText(context, "Enter valid quantity and price", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, enterValidAmount, Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             ) {
-                                Text("Save")
+                                Text(saveOrder)
                             }
                         },
                         dismissButton = {
                             TextButton(onClick = { showEditDialog = false }) {
-                                Text("Cancel")
+                                Text(cancelText)
                             }
                         }
                     )
@@ -554,35 +575,40 @@ fun PurchaseOrderDetailScreen(
     }
     
     // Add Dialog
-    AddItemDialog(
-        showDialog = showAddDialog,
-        products = products,
-        onDismiss = { showAddDialog = false },
-        onAdd = { product, qty ->
-            val existing = state.editableOrderItems.find { it.productId == product.id }
-            val newItems = state.editableOrderItems.toMutableList()
-            
-            if (existing != null) {
-                val index = newItems.indexOf(existing)
-                newItems[index] = existing.copy(
-                    quantity = existing.quantity + qty,
-                    total = (existing.quantity + qty) * existing.costPrice
-                )
-            } else {
-                newItems.add(
-                    PurchaseOrderItem(
-                        productId = product.id,
-                        productName = product.name,
-                        quantity = qty,
-                        costPrice = product.sellPrice,
-                        total = qty * product.sellPrice
+    if (showAddDialog) {
+        // Get string outside the lambda
+        val addItemToOrderText = stringResource(R.string.add_item_to_order)
+        
+        AddItemDialog(
+            showDialog = showAddDialog,
+            products = products,
+            onDismiss = { showAddDialog = false },
+            onAdd = { product, qty ->
+                val existing = state.editableOrderItems.find { it.productId == product.id }
+                val newItems = state.editableOrderItems.toMutableList()
+                
+                if (existing != null) {
+                    val index = newItems.indexOf(existing)
+                    newItems[index] = existing.copy(
+                        quantity = existing.quantity + qty,
+                        total = (existing.quantity + qty) * existing.costPrice
                     )
-                )
+                } else {
+                    newItems.add(
+                        PurchaseOrderItem(
+                            productId = product.id,
+                            productName = product.name,
+                            quantity = qty,
+                            costPrice = product.sellPrice,
+                            total = qty * product.sellPrice
+                        )
+                    )
+                }
+                
+                viewModel.updateOrderItems(newItems, orderId)
+                showAddDialog = false
+                Toast.makeText(context, addItemToOrderText, Toast.LENGTH_SHORT).show()
             }
-            
-            viewModel.updateOrderItems(newItems, orderId)
-            showAddDialog = false
-            Toast.makeText(context, "Item added!", Toast.LENGTH_SHORT).show()
-        }
-    )
+        )
+    }
 }

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="customers">Customers</string>
+    <string name="add_customer">Add Customer</string>
+    <string name="customer_details">Customer Details</string>
+    <string name="edit_customer">Edit Customer</string>
+    <string name="delete_customer">Delete Customer</string>
+    <string name="delete_customer_confirmation">Are you sure you want to delete this customer?</string>
+    <string name="no_customers_yet">No customers yet</string>
+    <string name="tap_add_customer">Tap + to add your first customer</string>
+    <string name="no_customers_found">No customers found for</string>
+    <string name="try_different_search">Try a different search</string>
+    <string name="search_customers">Search by name or phone...</string>
+    <string name="loading_customers">Loading customers...</string>
+    <string name="save_customer">Save Customer</string>
+    <string name="customer_name_required">Customer name is required</string>
+    <string name="failed_to_save_customer">Failed to save customer</string>
+    <string name="update_customer">Update Customer</string>
+    <string name="customer_not_found">Customer not found</string>
+    <string name="failed_to_load_customer">Failed to load customer</string>
+    <string name="failed_to_update_customer">Failed to update customer</string>
+    <string name="total_orders">Total Orders</string>
+    <string name="total_spent">Total Spent</string>
+    <string name="last_order">Last Order</string>
+    <string name="no_phone">No phone</string>
+    <string name="customers_count">customers</string>
+</resources>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="expenses">အသုံးစရိတ်များ</string>
+    <string name="add_expense">အသုံးစရိတ်ထည့်ရန်</string>
+    <string name="expense_details">အသုံးစရိတ်အသေးစိတ်</string>
+    <string name="edit_expense">အသုံးစရိတ်ပြင်ရန်</string>
+    <string name="delete_expense">အသုံးစရိတ်ဖျက်မည်</string>
+    <string name="delete_expense_confirmation">ဤအသုံးစရိတ်ကို ဖျက်ရန် သေချာပါသလား?</string>
+    <string name="no_expenses_yet">အသုံးစရိတ်မရှိသေးပါ</string>
+    <string name="tap_add_expense">ပထမဆုံးအသုံးစရိတ်ထည့်ရန် + ကိုနှိပ်ပါ</string>
+    <string name="no_expenses_found">တွေ့ရှိသည့်အသုံးစရိတ်မရှိပါ</string>
+    <string name="search_expenses">အသုံးစရိတ်ရှာဖွေရန်...</string>
+    <string name="total_expenses">စုစုပေါင်းအသုံးစရိတ်</string>
+    <string name="loading_expenses">အသုံးစရိတ်များဖွင့်နေသည်...</string>
+    <string name="save_expense">အသုံးစရိတ်သိမ်းမည်</string>
+    <string name="enter_valid_amount">မှန်ကန်သောပမာဏထည့်ပါ</string>
+    <string name="title_required">ခေါင်းစဉ်လိုအပ်သည်</string>
+    <string name="failed_to_save_expense">အသုံးစရိတ်သိမ်းရန် မအောင်မြင်ပါ</string>
+    <string name="update_expense">အသုံးစရိတ်ပြင်မည်</string>
+    <string name="expense_not_found">အသုံးစရိတ်မတွေ့ပါ</string>
+    <string name="failed_to_load_expense">အသုံးစရိတ်ဖွင့်ရန် မအောင်မြင်ပါ</string>
+    <string name="failed_to_update_expense">အသုံးစရိတ်ပြင်ရန် မအောင်မြင်ပါ</string>
+</resources>

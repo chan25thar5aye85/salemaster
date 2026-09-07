@@ -8,8 +8,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
 import com.akari.retailer.core.ui.components.AppScreen
@@ -43,17 +45,17 @@ fun PurchaseDetailScreen(
                 purchase = loadedPurchase
                 isLoading = false
                 if (loadedPurchase == null) {
-                    error = "Purchase not found"
+                    error = context.getString(R.string.purchase_not_found)
                 }
             }
         } catch (e: Exception) {
             isLoading = false
-            error = e.message ?: "Failed to load purchase"
+            error = e.message ?: context.getString(R.string.purchase_not_found)
         }
     }
 
     AppScreen(
-        title = "Purchase Detail",
+        title = stringResource(R.string.purchase_detail),
         showBackButton = true,
         onBackClick = onBack
     ) {
@@ -71,7 +73,7 @@ fun PurchaseDetailScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             CircularProgressIndicator()
                             Text(
-                                text = "Loading purchase...",
+                                text = stringResource(R.string.loading_purchases),
                                 style = AppTypography.body,
                                 modifier = Modifier.padding(top = Spacing.medium)
                             )
@@ -89,7 +91,7 @@ fun PurchaseDetailScreen(
                             Text(error!!, style = AppTypography.body, color = MaterialTheme.colorScheme.error)
                             Spacer(modifier = Modifier.height(Spacing.medium))
                             TextButton(onClick = onBack) {
-                                Text("Go Back")
+                                Text(stringResource(R.string.back))
                             }
                         }
                     }
@@ -102,10 +104,10 @@ fun PurchaseDetailScreen(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("📭", fontSize = 48.sp)
-                            Text("Purchase not found", style = AppTypography.header)
+                            Text(stringResource(R.string.purchase_not_found), style = AppTypography.header)
                             Spacer(modifier = Modifier.height(Spacing.medium))
                             TextButton(onClick = onBack) {
-                                Text("Go Back")
+                                Text(stringResource(R.string.back))
                             }
                         }
                     }
@@ -145,7 +147,7 @@ fun PurchaseDetailScreen(
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
                             Text(
-                                text = "🔢 Order: ${currentPurchase.orderNumber}",
+                                text = "${stringResource(R.string.order_number)}: ${currentPurchase.orderNumber}",
                                 style = AppTypography.small,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
@@ -160,7 +162,7 @@ fun PurchaseDetailScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "Items (${currentPurchase.items.size})",
+                                text = "${stringResource(R.string.items_count)} (${currentPurchase.items.size})",
                                 style = AppTypography.title,
                                 modifier = Modifier.padding(bottom = Spacing.medium)
                             )
@@ -194,7 +196,7 @@ fun PurchaseDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Total",
+                                    text = stringResource(R.string.total_cost),
                                     style = AppTypography.title
                                 )
                                 Text(
@@ -213,7 +215,7 @@ fun PurchaseDetailScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    text = "Notes",
+                                    text = stringResource(R.string.notes),
                                     style = AppTypography.title,
                                     modifier = Modifier.padding(bottom = Spacing.medium)
                                 )

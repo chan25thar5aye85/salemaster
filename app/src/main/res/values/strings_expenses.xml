@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="expenses">Expenses</string>
+    <string name="add_expense">Add Expense</string>
+    <string name="expense_details">Expense Details</string>
+    <string name="edit_expense">Edit Expense</string>
+    <string name="delete_expense">Delete Expense</string>
+    <string name="delete_expense_confirmation">Are you sure you want to delete this expense?</string>
+    <string name="no_expenses_yet">No expenses yet</string>
+    <string name="tap_add_expense">Tap + to add your first expense</string>
+    <string name="no_expenses_found">No expenses found for</string>
+    <string name="search_expenses">Search expenses...</string>
+    <string name="total_expenses">Total Expenses</string>
+    <string name="loading_expenses">Loading expenses...</string>
+    <string name="save_expense">Save Expense</string>
+    <string name="enter_valid_amount">Enter a valid amount</string>
+    <string name="title_required">Title is required</string>
+    <string name="failed_to_save_expense">Failed to save expense</string>
+    <string name="update_expense">Update Expense</string>
+    <string name="expense_not_found">Expense not found</string>
+    <string name="failed_to_load_expense">Failed to load expense</string>
+    <string name="failed_to_update_expense">Failed to update expense</string>
+</resources>

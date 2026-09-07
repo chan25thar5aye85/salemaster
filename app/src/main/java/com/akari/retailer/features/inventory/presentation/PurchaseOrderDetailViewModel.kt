@@ -3,13 +3,21 @@ package com.akari.retailer.features.inventory.presentation
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.akari.retailer.features.expense.data.repository.FirestoreExpenseRepository
+import com.akari.retailer.features.expense.data.remote.FirestoreExpenseService
+import com.akari.retailer.features.expense.domain.models.Expense
+import com.akari.retailer.features.expense.domain.models.ExpenseCategory
+import com.akari.retailer.features.inventory.data.repository.FirestoreInventoryRepository
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseRepository
+import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
 import com.akari.retailer.features.inventory.domain.models.Purchase
 import com.akari.retailer.features.inventory.domain.models.PurchaseItem
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrder
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderItem
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus
+import com.akari.retailer.features.supplier.data.repository.FirestoreSupplierRepository
+import com.akari.retailer.features.supplier.data.remote.FirestoreSupplierService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,6 +41,15 @@ class PurchaseOrderDetailViewModel(
     private val TAG = "PurchaseOrderDetailVM"
     private val _state = MutableStateFlow(PurchaseOrderDetailState())
     val state: StateFlow<PurchaseOrderDetailState> = _state.asStateFlow()
+
+    // Lazy initialize repositories
+    private val inventoryService by lazy { FirestoreInventoryService() }
+    private val inventoryRepository by lazy { FirestoreInventoryRepository(inventoryService) }
+    private val purchaseRepo by lazy { FirestorePurchaseRepository() }
+    private val expenseService by lazy { FirestoreExpenseService() }
+    private val expenseRepository by lazy { FirestoreExpenseRepository(expenseService) }
+    private val supplierService by lazy { FirestoreSupplierService() }
+    private val supplierRepository by lazy { FirestoreSupplierRepository(supplierService) }
 
     fun loadOrder(orderId: String) {
         viewModelScope.launch {
@@ -74,6 +91,7 @@ class PurchaseOrderDetailViewModel(
             
             val currentOrder = _state.value.order ?: return@launch
             
+            // Receive only selected items
             val currentReceivedItems = currentOrder.receivedItems.toMutableList()
             selectedItems.forEach { item ->
                 if (!currentReceivedItems.any { it.productId == item.productId }) {
@@ -121,7 +139,7 @@ class PurchaseOrderDetailViewModel(
             val receiptNumber = generateReceiptNumber()
             Log.d(TAG, "🧾 Receipt number: $receiptNumber")
             
-            // Create Purchase record
+            // 1. Create Purchase record
             val purchase = Purchase(
                 orderId = currentOrder.id,
                 orderName = currentOrder.orderName,
@@ -144,35 +162,82 @@ class PurchaseOrderDetailViewModel(
             )
             
             Log.d(TAG, "💾 Saving purchase to Firestore...")
+            val purchaseResult = purchaseRepo.createPurchase(purchase)
             
-            try {
-                val purchaseRepo = FirestorePurchaseRepository()
-                val result = purchaseRepo.createPurchase(purchase)
-                
-                if (result.isSuccess) {
-                    Log.d(TAG, "✅ Purchase created: ${result.getOrNull()}")
-                    
-                    // Mark order as COMPLETED
-                    Log.d(TAG, "🔄 Updating order status to COMPLETED...")
-                    val statusResult = repository.updateStatus(orderId, PurchaseOrderStatus.COMPLETED)
-                    if (statusResult.isSuccess) {
-                        Log.d(TAG, "✅ Order status updated to COMPLETED")
-                        loadOrder(orderId)
-                        Result.success(Unit)
-                    } else {
-                        val error = statusResult.exceptionOrNull()?.message ?: "Failed to update order status"
-                        Log.e(TAG, "❌ Failed to update status: $error")
-                        Result.failure(Exception(error))
+            if (purchaseResult.isFailure) {
+                val error = purchaseResult.exceptionOrNull()?.message ?: "Failed to create purchase"
+                Log.e(TAG, "❌ Failed to create purchase: $error")
+                return Result.failure(Exception(error))
+            }
+            
+            Log.d(TAG, "✅ Purchase created: ${purchaseResult.getOrNull()}")
+            
+            // 2. Update stock for each item
+            Log.d(TAG, "📦 Updating stock...")
+            currentOrder.receivedItems.forEach { item ->
+                val productResult = inventoryRepository.getProductByIdSync(item.productId)
+                if (productResult.isSuccess) {
+                    val product = productResult.getOrNull()
+                    if (product != null) {
+                        val newStock = product.stockQuantity + item.quantity
+                        val updatedProduct = product.copy(
+                            stockQuantity = newStock,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                        inventoryRepository.updateProduct(updatedProduct)
+                        Log.d(TAG, "✅ Stock updated for ${item.productName}: ${product.stockQuantity} → $newStock")
                     }
-                } else {
-                    val error = result.exceptionOrNull()?.message ?: "Failed to create purchase"
-                    Log.e(TAG, "❌ Failed to create purchase: $error")
-                    Result.failure(Exception(error))
+                }
+            }
+            
+            // 3. Create expense record
+            Log.d(TAG, "💰 Creating expense...")
+            val totalCost = currentOrder.receivedItems.sumOf { it.total }
+            val expense = Expense(
+                title = "Purchase Order: ${currentOrder.orderName}",
+                amount = totalCost,
+                category = ExpenseCategory.INVENTORY,
+                description = "PO #${currentOrder.orderNumber} from ${currentOrder.supplierName}",
+                date = System.currentTimeMillis()
+            )
+            val expenseResult = expenseRepository.addExpense(expense)
+            if (expenseResult.isSuccess) {
+                Log.d(TAG, "✅ Expense created: ${expenseResult.getOrNull()}")
+            } else {
+                Log.w(TAG, "⚠️ Failed to create expense: ${expenseResult.exceptionOrNull()?.message}")
+            }
+            
+            // 4. Update supplier stats
+            Log.d(TAG, "📊 Updating supplier stats...")
+            try {
+                val supplierResult = supplierRepository.getSupplierById(currentOrder.supplierId).collect { supplier ->
+                    if (supplier != null) {
+                        val updatedSupplier = supplier.copy(
+                            totalPurchased = supplier.totalPurchased + totalCost,
+                            lastOrderDate = System.currentTimeMillis(),
+                            updatedAt = System.currentTimeMillis()
+                        )
+                        supplierRepository.updateSupplier(updatedSupplier)
+                        Log.d(TAG, "✅ Supplier stats updated: ${supplier.name} total: ${supplier.totalPurchased} → ${updatedSupplier.totalPurchased}")
+                    }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "❌ Exception in purchase creation: ${e.message}", e)
-                Result.failure(e)
+                Log.w(TAG, "⚠️ Failed to update supplier stats: ${e.message}")
             }
+            
+            // 5. Mark order as COMPLETED
+            Log.d(TAG, "🔄 Updating order status to COMPLETED...")
+            val statusResult = repository.updateStatus(orderId, PurchaseOrderStatus.COMPLETED)
+            if (statusResult.isFailure) {
+                val error = statusResult.exceptionOrNull()?.message ?: "Failed to update order status"
+                Log.e(TAG, "❌ Failed to update status: $error")
+                return Result.failure(Exception(error))
+            }
+            
+            Log.d(TAG, "✅ Order status updated to COMPLETED")
+            loadOrder(orderId)
+            Result.success(Unit)
+            
         } catch (e: Exception) {
             Log.e(TAG, "❌ Create purchase error: ${e.message}", e)
             Result.failure(e)

@@ -42,14 +42,14 @@ fun FABMenu(
     var isExpanded by remember { mutableStateOf(false) }
 
     val menuItems = listOf(
-        FABMenuItemData(Icons.Default.Receipt, stringResource(R.string.expenses), "expenses"),
-        FABMenuItemData(Icons.Default.Inventory, stringResource(R.string.inventory), "inventory"),
-        FABMenuItemData(Icons.Default.People, stringResource(R.string.customers), "customers"),
-        FABMenuItemData(Icons.Default.PieChart, stringResource(R.string.reports), "reports"),
-        FABMenuItemData(Icons.Default.Business, stringResource(R.string.suppliers), "suppliers"),
-        FABMenuItemData(Icons.Default.ShoppingCart, stringResource(R.string.purchase_orders), "purchase_orders"),
-        FABMenuItemData(Icons.Default.History, "Purchases", "purchases"),
-        FABMenuItemData(Icons.Default.Settings, stringResource(R.string.settings), "settings")
+        FABMenuItemData(Icons.Default.Receipt, stringResource(R.string.fab_expenses), "expenses"),
+        FABMenuItemData(Icons.Default.Inventory, stringResource(R.string.fab_inventory), "inventory"),
+        FABMenuItemData(Icons.Default.People, stringResource(R.string.fab_customers), "customers"),
+        FABMenuItemData(Icons.Default.PieChart, stringResource(R.string.fab_reports), "reports"),
+        FABMenuItemData(Icons.Default.Business, stringResource(R.string.fab_suppliers), "suppliers"),
+        FABMenuItemData(Icons.Default.ShoppingCart, stringResource(R.string.fab_purchase_orders), "purchase_orders"),
+        FABMenuItemData(Icons.Default.History, stringResource(R.string.fab_purchases), "purchases"),
+        FABMenuItemData(Icons.Default.Settings, stringResource(R.string.fab_settings), "settings")
     )
 
     Box(

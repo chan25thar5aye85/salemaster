@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="suppliers">Suppliers</string>
+    <string name="add_supplier">Add Supplier</string>
+    <string name="supplier_details">Supplier Details</string>
+    <string name="edit_supplier">Edit Supplier</string>
+    <string name="delete_supplier">Delete Supplier</string>
+    <string name="delete_supplier_confirmation">Are you sure you want to delete this supplier?</string>
+    <string name="no_suppliers_yet">No suppliers yet</string>
+    <string name="tap_add_supplier">Tap + to add your first supplier</string>
+    <string name="no_suppliers_found">No suppliers found for</string>
+    <string name="search_suppliers">Search by name or phone...</string>
+    <string name="loading_suppliers">Loading suppliers...</string>
+    <string name="save_supplier">Save Supplier</string>
+    <string name="supplier_name_required">Supplier name is required</string>
+    <string name="failed_to_save_supplier">Failed to save supplier</string>
+    <string name="update_supplier">Update Supplier</string>
+    <string name="supplier_not_found">Supplier not found</string>
+    <string name="failed_to_load_supplier">Failed to load supplier</string>
+    <string name="failed_to_update_supplier">Failed to update supplier</string>
+    <string name="total_purchased">Total Purchased</string>
+</resources>

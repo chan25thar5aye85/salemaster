@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="customers">ဖောက်သည်များ</string>
+    <string name="add_customer">ဖောက်သည်ထည့်ရန်</string>
+    <string name="customer_details">ဖောက်သည်အသေးစိတ်</string>
+    <string name="edit_customer">ဖောက်သည်ပြင်ရန်</string>
+    <string name="delete_customer">ဖောက်သည်ဖျက်မည်</string>
+    <string name="delete_customer_confirmation">ဤဖောက်သည်ကို ဖျက်ရန် သေချာပါသလား?</string>
+    <string name="no_customers_yet">ဖောက်သည်မရှိသေးပါ</string>
+    <string name="tap_add_customer">ပထမဆုံးဖောက်သည်ထည့်ရန် + ကိုနှိပ်ပါ</string>
+    <string name="no_customers_found">တွေ့ရှိသည့်ဖောက်သည်မရှိပါ</string>
+    <string name="try_different_search">မတူညီသော ရှာဖွေမှုကို စမ်းကြည့်ပါ</string>
+    <string name="search_customers">အမည် သို့မဟုတ် ဖုန်းဖြင့် ရှာဖွေရန်...</string>
+    <string name="loading_customers">ဖောက်သည်များဖွင့်နေသည်...</string>
+    <string name="save_customer">ဖောက်သည်သိမ်းမည်</string>
+    <string name="customer_name_required">ဖောက်သည်အမည် လိုအပ်သည်</string>
+    <string name="failed_to_save_customer">ဖောက်သည်သိမ်းရန် မအောင်မြင်ပါ</string>
+    <string name="update_customer">ဖောက်သည်ပြင်မည်</string>
+    <string name="customer_not_found">ဖောက်သည်မတွေ့ပါ</string>
+    <string name="failed_to_load_customer">ဖောက်သည်ဖွင့်ရန် မအောင်မြင်ပါ</string>
+    <string name="failed_to_update_customer">ဖောက်သည်ပြင်ရန် မအောင်မြင်ပါ</string>
+    <string name="total_orders">စုစုပေါင်းအော်ဒါ</string>
+    <string name="total_spent">စုစုပေါင်းသုံးစွဲမှု</string>
+    <string name="last_order">နောက်ဆုံးအော်ဒါ</string>
+    <string name="no_phone">ဖုန်းမရှိပါ</string>
+    <string name="customers_count">ဖောက်သည်များ</string>
+</resources>

@@ -9,9 +9,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
@@ -53,7 +55,7 @@ fun PurchaseListScreen(
     }
 
     AppScreen(
-        title = "Purchases",
+        title = stringResource(R.string.purchases),
         showBackButton = true,
         onBackClick = onBack
     ) {
@@ -67,7 +69,10 @@ fun PurchaseListScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
-                        Text("Loading purchases...", modifier = Modifier.padding(top = Spacing.medium))
+                        Text(
+                            text = stringResource(R.string.loading_purchases),
+                            modifier = Modifier.padding(top = Spacing.medium)
+                        )
                     }
                 }
                 return@Column
@@ -86,7 +91,7 @@ fun PurchaseListScreen(
                                 retryKey++
                             }
                         ) {
-                            Text("Retry")
+                            Text(stringResource(R.string.retry))
                         }
                     }
                 }
@@ -100,8 +105,15 @@ fun PurchaseListScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("📦", fontSize = 48.sp)
-                        Text("No purchases yet", style = AppTypography.header)
-                        Text("Create purchases from orders", style = AppTypography.body, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Text(
+                            text = stringResource(R.string.no_purchases_yet),
+                            style = AppTypography.header
+                        )
+                        Text(
+                            text = stringResource(R.string.create_purchase_from_orders),
+                            style = AppTypography.body,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
                     }
                 }
                 return@Column
@@ -173,7 +185,7 @@ fun PurchaseCard(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
             Text(
-                text = "📋 ${purchase.items.size} items",
+                text = "📋 ${purchase.items.size} ${stringResource(R.string.items_count)}",
                 style = AppTypography.small,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )

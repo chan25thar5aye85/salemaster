@@ -36,43 +36,6 @@ fun PurchaseOrderTabsScreen(
     )
     
     val state by viewModel.state.collectAsState()
-    
-    var showDeleteDialog by remember { mutableStateOf(false) }
-    var pendingDeleteId by remember { mutableStateOf<String?>(null) }
-
-    // Delete confirmation dialog
-    if (showDeleteDialog && pendingDeleteId != null) {
-        AlertDialog(
-            onDismissRequest = {
-                showDeleteDialog = false
-                pendingDeleteId = null
-            },
-            title = { Text("Delete Order") },
-            text = { Text("Are you sure you want to delete this order? This cannot be undone.") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        pendingDeleteId?.let { viewModel.handleEvent(PurchaseOrderListEvent.DeleteOrder(it)) }
-                        showDeleteDialog = false
-                        pendingDeleteId = null
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text("Delete")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showDeleteDialog = false
-                    pendingDeleteId = null
-                }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
 
     AppScreen(
         title = stringResource(R.string.purchase_orders),
@@ -123,13 +86,7 @@ fun PurchaseOrderTabsScreen(
                     PurchaseOrderCardCompact(
                         order = order,
                         navController = navController,
-                        orderName = order.orderName,
-                        onDelete = {
-                            if (order.status == com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus.ORDER) {
-                                pendingDeleteId = order.id
-                                showDeleteDialog = true
-                            }
-                        }
+                        orderName = order.orderName
                     )
                 }
             }

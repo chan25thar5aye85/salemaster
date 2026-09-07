@@ -6,8 +6,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.akari.retailer.R
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderItem
@@ -46,12 +48,12 @@ fun PurchaseOrderItemsList(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val statusLabel = when (status) {
-                    PurchaseOrderStatus.ORDER -> "ORDER"
-                    PurchaseOrderStatus.RECEIVED -> "RECEIVED"
-                    PurchaseOrderStatus.COMPLETED -> "COMPLETED"
+                    PurchaseOrderStatus.ORDER -> stringResource(R.string.order_status_order)
+                    PurchaseOrderStatus.RECEIVED -> stringResource(R.string.order_status_received)
+                    PurchaseOrderStatus.COMPLETED -> stringResource(R.string.order_status_completed)
                 }
                 Text(
-                    text = "Items ($statusLabel)",
+                    text = "${stringResource(R.string.order_items)} ($statusLabel)",
                     style = AppTypography.title
                 )
                 Row(
@@ -64,12 +66,12 @@ fun PurchaseOrderItemsList(
                             onClick = onReceiveClick,
                             enabled = !isUpdating && selectedCount > 0
                         ) {
-                            Text(if (selectedCount > 0) "📦 Receive ($selectedCount)" else "📦 Receive")
+                            Text(if (selectedCount > 0) "📦 ${stringResource(R.string.receive_items)} ($selectedCount)" else "📦 ${stringResource(R.string.receive_items)}")
                         }
                     }
                     if (showAddButton && !isReadOnly) {
                         TextButton(onClick = onAddClick) {
-                            Text("+ Add")
+                            Text("+ ${stringResource(R.string.add_items)}")
                         }
                     }
                 }
@@ -79,7 +81,7 @@ fun PurchaseOrderItemsList(
             
             if (items.isEmpty()) {
                 Text(
-                    text = "No items in ${status.name}",
+                    text = stringResource(R.string.no_items_in_order),
                     style = AppTypography.body,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     modifier = Modifier.padding(vertical = 8.dp)
@@ -94,22 +96,23 @@ fun PurchaseOrderItemsList(
                     ) {
                         val selectedCount = selectedIndices.size
                         Text(
-                            text = if (selectedCount == items.size) "All selected" else "$selectedCount/${items.size} selected",
+                            text = if (selectedCount == items.size) stringResource(R.string.all_selected) else "$selectedCount/${items.size} ${stringResource(R.string.items_selected)}",
                             style = AppTypography.small,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
                         TextButton(onClick = onSelectAll) {
-                            Text(if (selectedCount == items.size) "Deselect All" else "Select All")
+                            Text(if (selectedCount == items.size) stringResource(R.string.deselect_all) else stringResource(R.string.select_all))
                         }
                     }
                     Spacer(modifier = Modifier.height(Spacing.small))
                 }
                 
                 val isReceivedTab = status == PurchaseOrderStatus.RECEIVED
+                val isCompletedTab = status == PurchaseOrderStatus.COMPLETED
                 
                 items.forEachIndexed { index, item ->
-                    if (showDeleteButton && !isReadOnly && !isReceivedTab) {
-                        // ORDER items - full editable with checkbox and delete
+                    if (!isReadOnly && !isCompletedTab) {
+                        // ORDER and RECEIVED items - editable with checkbox and delete
                         OrderItemRow(
                             index = index,
                             item = item,
@@ -119,7 +122,7 @@ fun PurchaseOrderItemsList(
                             onItemDelete = { onItemDelete(index) }
                         )
                     } else {
-                        // RECEIVED or COMPLETED items - no checkbox, no delete, read-only
+                        // COMPLETED items - read-only
                         ReadOnlyItemRow(
                             index = index,
                             item = item
@@ -133,7 +136,7 @@ fun PurchaseOrderItemsList(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Total", style = AppTypography.title)
+                    Text(stringResource(R.string.order_total), style = AppTypography.title)
                     Text(
                         "$total",
                         style = AppTypography.header,
