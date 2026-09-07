@@ -17,6 +17,7 @@ import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
+import com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus
 import com.akari.retailer.navigation.Routes
 
 @Composable
@@ -32,6 +33,14 @@ fun PurchaseOrderDetailScreen(
     var order by remember { mutableStateOf<com.akari.retailer.features.inventory.domain.models.PurchaseOrder?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+    
+    var selectedTab by remember { mutableStateOf(0) }
+    
+    val statusTabs = listOf(
+        "DRAFT" to PurchaseOrderStatus.DRAFT,
+        "SENT" to PurchaseOrderStatus.SENT,
+        "RECEIVED" to PurchaseOrderStatus.RECEIVED
+    )
     
     LaunchedEffect(orderId) {
         isLoading = true
@@ -100,7 +109,47 @@ fun PurchaseOrderDetailScreen(
                 else -> {
                     val currentOrder = order!!
                     
-                    // Items List
+                    // Status Filter Tabs
+                    ScrollableTabRow(
+                        selectedTabIndex = selectedTab,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        edgePadding = 0.dp
+                    ) {
+                        statusTabs.forEachIndexed { index, (label, status) ->
+                            val items = currentOrder.getItemsForStatus(status)
+                            val count = items.size
+                            
+                            Tab(
+                                selected = selectedTab == index,
+                                onClick = { selectedTab = index },
+                                text = {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(label, style = AppTypography.label)
+                                        if (count > 0) {
+                                            Badge(
+                                                containerColor = if (selectedTab == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                                contentColor = if (selectedTab == index) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                                            ) {
+                                                Text("$count", style = AppTypography.small)
+                                            }
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(Spacing.medium))
+                    
+                    // Show items for selected status
+                    val selectedStatus = statusTabs[selectedTab].second
+                    val currentItems = currentOrder.getItemsForStatus(selectedStatus)
+                    val currentTotal = currentOrder.getTotalForStatus(selectedStatus)
+                    
                     Card(
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -110,45 +159,53 @@ fun PurchaseOrderDetailScreen(
                                 .padding(Spacing.medium)
                         ) {
                             Text(
-                                text = "Items",
+                                text = "Items (${selectedStatus.name})",
                                 style = AppTypography.title,
                                 modifier = Modifier.padding(bottom = Spacing.small)
                             )
                             
-                            currentOrder.items.forEachIndexed { index, item ->
+                            if (currentItems.isEmpty()) {
+                                Text(
+                                    text = "No items in ${selectedStatus.name}",
+                                    style = AppTypography.body,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                            } else {
+                                currentItems.forEachIndexed { index, item ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "${index + 1}. ${item.productName}",
+                                            style = AppTypography.body,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            text = "${item.quantity} x ${item.costPrice} = ${item.total}",
+                                            style = AppTypography.body,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                                
+                                Divider(
+                                    modifier = Modifier.padding(vertical = Spacing.small)
+                                )
+                                
                                 Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
+                                    modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
+                                    Text("Total", style = AppTypography.title)
                                     Text(
-                                        text = "${index + 1}. ${item.productName}",
-                                        style = AppTypography.body,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    Text(
-                                        text = "${item.quantity} x ${item.costPrice} = ${item.total}",
-                                        style = AppTypography.body,
+                                        "$currentTotal",
+                                        style = AppTypography.header,
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                 }
-                            }
-                            
-                            Divider(
-                                modifier = Modifier.padding(vertical = Spacing.small)
-                            )
-                            
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Total", style = AppTypography.title)
-                                Text(
-                                    "${currentOrder.totalCost}",
-                                    style = AppTypography.header,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
                             }
                         }
                     }

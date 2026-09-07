@@ -166,19 +166,18 @@ class PurchaseOrderViewModel(
                     orderNumber = orderNumber,
                     supplierId = supplier.id,
                     supplierName = supplier.name,
-                    items = currentState.tempItems.map { item ->
+                    status = PurchaseOrderStatus.DRAFT,
+                    draftItems = currentState.tempItems.map { item ->
                         PurchaseOrderItem(
                             productId = item.productId,
                             productName = item.productName,
                             quantity = item.quantity,
                             costPrice = item.costPrice,
-                            total = item.quantity * item.costPrice,
-                            receivedQuantity = 0
+                            total = item.quantity * item.costPrice
                         )
                     },
+                    draftTotal = totalCost,
                     notes = currentState.notes,
-                    status = PurchaseOrderStatus.DRAFT,
-                    totalCost = totalCost,
                     createdBy = "default"
                 )
                 

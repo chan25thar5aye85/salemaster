@@ -29,15 +29,17 @@ fun PurchaseOrderCardCompact(
         PurchaseOrderStatus.DRAFT -> Color(0xFFFF9800)
         PurchaseOrderStatus.SENT -> Color(0xFF2196F3)
         PurchaseOrderStatus.RECEIVED -> Color(0xFF4CAF50)
-        PurchaseOrderStatus.CLOSED -> Color(0xFF78909C)
     }
     
     val statusText = when (order.status) {
         PurchaseOrderStatus.DRAFT -> "Draft"
         PurchaseOrderStatus.SENT -> "Sent"
         PurchaseOrderStatus.RECEIVED -> "Received"
-        PurchaseOrderStatus.CLOSED -> "Closed"
     }
+    
+    // Get items and total for current status
+    val currentItems = order.getItemsForStatus(order.status)
+    val currentTotal = order.getTotalForStatus(order.status)
     
     Card(
         modifier = Modifier
@@ -57,7 +59,6 @@ fun PurchaseOrderCardCompact(
                 .fillMaxWidth()
                 .padding(Spacing.medium)
         ) {
-            // Row 1: Order Name + Status Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -67,7 +68,6 @@ fun PurchaseOrderCardCompact(
                     text = "📦 $orderName",
                     style = AppTypography.title
                 )
-                // Status Badge
                 Card(
                     modifier = Modifier.wrapContentWidth(),
                     colors = CardDefaults.cardColors(
@@ -85,14 +85,12 @@ fun PurchaseOrderCardCompact(
             
             Spacer(modifier = Modifier.height(Spacing.small))
             
-            // Row 2: Order Number
             Text(
                 text = "🔢 ${order.orderNumber}",
                 style = AppTypography.body,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
             
-            // Row 3: Supplier
             if (order.supplierName.isNotEmpty()) {
                 Text(
                     text = "🏢 ${order.supplierName}",
@@ -101,7 +99,6 @@ fun PurchaseOrderCardCompact(
                 )
             }
             
-            // Row 4: Items and Total
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -109,19 +106,18 @@ fun PurchaseOrderCardCompact(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "📋 ${order.items.size} items",
+                    text = "📋 ${currentItems.size} items",
                     style = AppTypography.small,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
                 Text(
-                    text = "💰 ${order.totalCost}",
+                    text = "💰 $currentTotal",
                     style = AppTypography.small,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                 )
             }
             
-            // Row 5: Date
             Text(
                 text = "📅 ${dateFormat.format(order.orderDate)}",
                 style = AppTypography.small,

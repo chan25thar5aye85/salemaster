@@ -1,10 +1,9 @@
 package com.akari.retailer.features.inventory.domain.models
 
 enum class PurchaseOrderStatus {
-    DRAFT,          // Initial state - editing
-    SENT,           // Sent to supplier
-    RECEIVED,       // Items received into stock
-    CLOSED          // Fully completed
+    DRAFT,
+    SENT,
+    RECEIVED
 }
 
 data class PurchaseOrderItem(
@@ -12,13 +11,8 @@ data class PurchaseOrderItem(
     val productName: String = "",
     val quantity: Int = 0,
     val costPrice: Int = 0,
-    val total: Int = 0,
-    val receivedQuantity: Int = 0
-) {
-    fun isFullyReceived(): Boolean = receivedQuantity >= quantity
-    fun getRemainingQuantity(): Int = quantity - receivedQuantity
-    fun getReceivedTotal(): Int = receivedQuantity * costPrice
-}
+    val total: Int = 0
+)
 
 data class PurchaseOrder(
     val id: String = "",
@@ -26,43 +20,49 @@ data class PurchaseOrder(
     val orderNumber: String = "",
     val supplierId: String = "",
     val supplierName: String = "",
-    val items: List<PurchaseOrderItem> = emptyList(),
     val status: PurchaseOrderStatus = PurchaseOrderStatus.DRAFT,
-    val totalCost: Int = 0,
-    val receivedCost: Int = 0,
+    
+    // Each status has its own items
+    val draftItems: List<PurchaseOrderItem> = emptyList(),
+    val sentItems: List<PurchaseOrderItem> = emptyList(),
+    val receivedItems: List<PurchaseOrderItem> = emptyList(),
+    
+    // Each status has its own total
+    val draftTotal: Int = 0,
+    val sentTotal: Int = 0,
+    val receivedTotal: Int = 0,
+    
+    // Timeline
     val orderDate: Long = System.currentTimeMillis(),
     val sentDate: Long = 0,
     val receivedDate: Long = 0,
-    val closedDate: Long = 0,
+    
     val notes: String = "",
     val createdBy: String = "",
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 ) {
+    fun getItemsForStatus(status: PurchaseOrderStatus): List<PurchaseOrderItem> {
+        return when (status) {
+            PurchaseOrderStatus.DRAFT -> draftItems
+            PurchaseOrderStatus.SENT -> sentItems
+            PurchaseOrderStatus.RECEIVED -> receivedItems
+        }
+    }
+    
+    fun getTotalForStatus(status: PurchaseOrderStatus): Int {
+        return when (status) {
+            PurchaseOrderStatus.DRAFT -> draftTotal
+            PurchaseOrderStatus.SENT -> sentTotal
+            PurchaseOrderStatus.RECEIVED -> receivedTotal
+        }
+    }
+    
     fun canTransitionTo(newStatus: PurchaseOrderStatus): Boolean {
         return when (newStatus) {
             PurchaseOrderStatus.DRAFT -> status == PurchaseOrderStatus.DRAFT
             PurchaseOrderStatus.SENT -> status == PurchaseOrderStatus.DRAFT
-            PurchaseOrderStatus.RECEIVED -> status in listOf(PurchaseOrderStatus.SENT, PurchaseOrderStatus.RECEIVED)
-            PurchaseOrderStatus.CLOSED -> status == PurchaseOrderStatus.RECEIVED
+            PurchaseOrderStatus.RECEIVED -> status == PurchaseOrderStatus.SENT
         }
     }
-    
-    fun getStatusDate(status: PurchaseOrderStatus): Long {
-        return when (status) {
-            PurchaseOrderStatus.DRAFT -> orderDate
-            PurchaseOrderStatus.SENT -> sentDate
-            PurchaseOrderStatus.RECEIVED -> receivedDate
-            PurchaseOrderStatus.CLOSED -> closedDate
-        }
-    }
-    
-    fun getReceivedProgress(): Float {
-        return if (totalCost > 0) receivedCost.toFloat() / totalCost.toFloat() else 0f
-    }
-    
-    fun isFullyReceived(): Boolean = items.all { it.isFullyReceived() }
-    fun getOrderedQuantity(): Int = items.sumOf { it.quantity }
-    fun getReceivedQuantity(): Int = items.sumOf { it.receivedQuantity }
-    fun getRemainingQuantity(): Int = getOrderedQuantity() - getReceivedQuantity()
 }

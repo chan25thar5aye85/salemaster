@@ -41,26 +41,7 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             }
             
             val docRef = collection.document()
-            val orderWithId = PurchaseOrder(
-                id = docRef.id,
-                orderName = order.orderName,
-                orderNumber = order.orderNumber,
-                supplierId = order.supplierId,
-                supplierName = order.supplierName,
-                items = order.items,
-                status = order.status,
-                totalCost = order.totalCost,
-                receivedCost = order.receivedCost,
-                orderDate = order.orderDate,
-                sentDate = order.sentDate,
-                receivedDate = order.receivedDate,
-                closedDate = order.closedDate,
-                notes = order.notes,
-                createdBy = order.createdBy,
-                createdAt = order.createdAt,
-                updatedAt = order.updatedAt
-            )
-            
+            val orderWithId = order.copy(id = docRef.id)
             docRef.set(orderToMap(orderWithId)).await()
             Log.d(TAG, "✅ Order created: ${docRef.id}")
             Result.success(docRef.id)
@@ -246,11 +227,22 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             updates["status"] = newStatus.name
             updates["updatedAt"] = currentTime
             
-            when (newStatus) {
-                PurchaseOrderStatus.SENT -> updates["sentDate"] = currentTime
-                PurchaseOrderStatus.RECEIVED -> updates["receivedDate"] = currentTime
-                PurchaseOrderStatus.CLOSED -> updates["closedDate"] = currentTime
-                else -> {}
+            // Copy items from previous status to new status
+            val order = getOrderSync(orderId)
+            if (order != null) {
+                when (newStatus) {
+                    PurchaseOrderStatus.SENT -> {
+                        updates["sentItems"] = order.draftItems.map { itemToMap(it) }
+                        updates["sentTotal"] = order.draftTotal
+                        updates["sentDate"] = currentTime
+                    }
+                    PurchaseOrderStatus.RECEIVED -> {
+                        updates["receivedItems"] = order.sentItems.map { itemToMap(it) }
+                        updates["receivedTotal"] = order.sentTotal
+                        updates["receivedDate"] = currentTime
+                    }
+                    else -> {}
+                }
             }
             
             collection.document(orderId).update(updates).await()
@@ -262,29 +254,42 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
         }
     }
     
+    private fun itemToMap(item: PurchaseOrderItem): Map<String, Any> {
+        return mapOf(
+            "productId" to item.productId,
+            "productName" to item.productName,
+            "quantity" to item.quantity,
+            "costPrice" to item.costPrice,
+            "total" to item.total
+        )
+    }
+    
+    private fun itemFromMap(data: Map<String, Any>): PurchaseOrderItem {
+        return PurchaseOrderItem(
+            productId = data["productId"] as? String ?: "",
+            productName = data["productName"] as? String ?: "",
+            quantity = (data["quantity"] as? Number)?.toInt() ?: 0,
+            costPrice = (data["costPrice"] as? Number)?.toInt() ?: 0,
+            total = (data["total"] as? Number)?.toInt() ?: 0
+        )
+    }
+    
     private fun orderToMap(order: PurchaseOrder): Map<String, Any> {
         return mapOf(
             "orderName" to order.orderName,
             "orderNumber" to order.orderNumber,
             "supplierId" to order.supplierId,
             "supplierName" to order.supplierName,
-            "items" to order.items.map { item ->
-                mapOf(
-                    "productId" to item.productId,
-                    "productName" to item.productName,
-                    "quantity" to item.quantity,
-                    "costPrice" to item.costPrice,
-                    "total" to item.total,
-                    "receivedQuantity" to item.receivedQuantity
-                )
-            },
             "status" to order.status.name,
-            "totalCost" to order.totalCost,
-            "receivedCost" to order.receivedCost,
+            "draftItems" to order.draftItems.map { itemToMap(it) },
+            "sentItems" to order.sentItems.map { itemToMap(it) },
+            "receivedItems" to order.receivedItems.map { itemToMap(it) },
+            "draftTotal" to order.draftTotal,
+            "sentTotal" to order.sentTotal,
+            "receivedTotal" to order.receivedTotal,
             "orderDate" to order.orderDate,
             "sentDate" to order.sentDate,
             "receivedDate" to order.receivedDate,
-            "closedDate" to order.closedDate,
             "notes" to order.notes,
             "createdBy" to order.createdBy,
             "createdAt" to order.createdAt,
@@ -293,17 +298,16 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
     }
     
     private fun mapToOrder(id: String, data: Map<String, Any>): PurchaseOrder {
-        val items = (data["items"] as? List<*>)?.mapNotNull { itemData ->
-            if (itemData is Map<*, *>) {
-                PurchaseOrderItem(
-                    productId = itemData["productId"] as? String ?: "",
-                    productName = itemData["productName"] as? String ?: "",
-                    quantity = (itemData["quantity"] as? Number)?.toInt() ?: 0,
-                    costPrice = (itemData["costPrice"] as? Number)?.toInt() ?: 0,
-                    total = (itemData["total"] as? Number)?.toInt() ?: 0,
-                    receivedQuantity = (itemData["receivedQuantity"] as? Number)?.toInt() ?: 0
-                )
-            } else null
+        val draftItems = (data["draftItems"] as? List<*>)?.mapNotNull { 
+            if (it is Map<*, *>) itemFromMap(it as Map<String, Any>) else null
+        } ?: emptyList()
+        
+        val sentItems = (data["sentItems"] as? List<*>)?.mapNotNull { 
+            if (it is Map<*, *>) itemFromMap(it as Map<String, Any>) else null
+        } ?: emptyList()
+        
+        val receivedItems = (data["receivedItems"] as? List<*>)?.mapNotNull { 
+            if (it is Map<*, *>) itemFromMap(it as Map<String, Any>) else null
         } ?: emptyList()
         
         return PurchaseOrder(
@@ -312,18 +316,20 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             orderNumber = data["orderNumber"] as? String ?: "",
             supplierId = data["supplierId"] as? String ?: "",
             supplierName = data["supplierName"] as? String ?: "",
-            items = items,
             status = try {
                 PurchaseOrderStatus.valueOf(data["status"] as? String ?: "DRAFT")
             } catch (e: Exception) {
                 PurchaseOrderStatus.DRAFT
             },
-            totalCost = (data["totalCost"] as? Number)?.toInt() ?: 0,
-            receivedCost = (data["receivedCost"] as? Number)?.toInt() ?: 0,
+            draftItems = draftItems,
+            sentItems = sentItems,
+            receivedItems = receivedItems,
+            draftTotal = (data["draftTotal"] as? Number)?.toInt() ?: 0,
+            sentTotal = (data["sentTotal"] as? Number)?.toInt() ?: 0,
+            receivedTotal = (data["receivedTotal"] as? Number)?.toInt() ?: 0,
             orderDate = (data["orderDate"] as? Number)?.toLong() ?: System.currentTimeMillis(),
             sentDate = (data["sentDate"] as? Number)?.toLong() ?: 0,
             receivedDate = (data["receivedDate"] as? Number)?.toLong() ?: 0,
-            closedDate = (data["closedDate"] as? Number)?.toLong() ?: 0,
             notes = data["notes"] as? String ?: "",
             createdBy = data["createdBy"] as? String ?: "",
             createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),

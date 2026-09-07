@@ -32,7 +32,16 @@ import com.akari.retailer.features.expense.presentation.ExpenseAddScreen
 import com.akari.retailer.features.expense.presentation.ExpenseDetailScreen
 import com.akari.retailer.features.expense.presentation.ExpenseEditScreen
 import com.akari.retailer.features.expense.presentation.ExpenseListScreen
-import com.akari.retailer.features.inventory.presentation.*
+import com.akari.retailer.features.inventory.presentation.InventoryAddScreen
+import com.akari.retailer.features.inventory.presentation.InventoryDetailScreen
+import com.akari.retailer.features.inventory.presentation.InventoryEditScreen
+import com.akari.retailer.features.inventory.presentation.InventoryListScreen
+import com.akari.retailer.features.inventory.presentation.PurchaseOrderDetailScreen
+import com.akari.retailer.features.inventory.presentation.PurchaseOrderScreen
+import com.akari.retailer.features.inventory.presentation.PurchaseOrderTabsScreen
+import com.akari.retailer.features.inventory.presentation.ReceiveOrderScreen
+import com.akari.retailer.features.inventory.presentation.StockAdjustmentScreen
+import com.akari.retailer.features.inventory.presentation.StockHistoryScreen
 import com.akari.retailer.features.reports.presentation.TrendsScreen
 import com.akari.retailer.features.sales.presentation.entry.SaleEntryScreen
 import com.akari.retailer.features.sales.presentation.history.SaleHistoryScreen
@@ -71,44 +80,32 @@ fun AppNavHost() {
                 navController = navController,
                 startDestination = Routes.SALE_ENTRY
             ) {
-                // ==================== SALE MODULE ====================
+                // SALE MODULE
                 composable(Routes.SALE_ENTRY) {
                     SaleEntryScreen(navController = navController)
                 }
                 
                 composable(Routes.HISTORY) {
-                    SaleHistoryScreen(
-                        onBack = { navController.popBackStack() }
-                    )
+                    SaleHistoryScreen(onBack = { navController.popBackStack() })
                 }
                 
-                // ==================== SETTINGS MODULE ====================
+                // SETTINGS MODULE
                 composable(Routes.SETTINGS) {
-                    SettingsScreen(
-                        onBack = { navController.popBackStack() }
-                    )
+                    SettingsScreen(onBack = { navController.popBackStack() })
                 }
                 
-                // ==================== REPORTS MODULE ====================
+                // REPORTS MODULE
                 composable(Routes.TRENDS) {
-                    TrendsScreen(
-                        onBack = { navController.popBackStack() }
-                    )
+                    TrendsScreen(onBack = { navController.popBackStack() })
                 }
                 
-                // ==================== CUSTOMER MODULE ====================
+                // CUSTOMER MODULE
                 composable(Routes.CUSTOMERS) {
-                    CustomerListScreen(
-                        navController = navController,
-                        onBack = { navController.popBackStack() }
-                    )
+                    CustomerListScreen(navController = navController, onBack = { navController.popBackStack() })
                 }
                 
                 composable(Routes.CUSTOMER_ADD) {
-                    CustomerAddScreen(
-                        onBack = { navController.popBackStack() },
-                        onCustomerAdded = { navController.popBackStack() }
-                    )
+                    CustomerAddScreen(onBack = { navController.popBackStack() }, onCustomerAdded = { navController.popBackStack() })
                 }
                 
                 composable(
@@ -137,19 +134,13 @@ fun AppNavHost() {
                     )
                 }
                 
-                // ==================== SUPPLIER MODULE ====================
+                // SUPPLIER MODULE
                 composable(Routes.SUPPLIERS) {
-                    SupplierListScreen(
-                        navController = navController,
-                        onBack = { navController.popBackStack() }
-                    )
+                    SupplierListScreen(navController = navController, onBack = { navController.popBackStack() })
                 }
                 
                 composable(Routes.SUPPLIER_ADD) {
-                    SupplierAddScreen(
-                        onBack = { navController.popBackStack() },
-                        onSupplierAdded = { navController.popBackStack() }
-                    )
+                    SupplierAddScreen(onBack = { navController.popBackStack() }, onSupplierAdded = { navController.popBackStack() })
                 }
                 
                 composable(
@@ -178,19 +169,13 @@ fun AppNavHost() {
                     )
                 }
                 
-                // ==================== EXPENSE MODULE ====================
+                // EXPENSE MODULE
                 composable(Routes.EXPENSES) {
-                    ExpenseListScreen(
-                        navController = navController,
-                        onBack = { navController.popBackStack() }
-                    )
+                    ExpenseListScreen(navController = navController, onBack = { navController.popBackStack() })
                 }
                 
                 composable(Routes.EXPENSE_ADD) {
-                    ExpenseAddScreen(
-                        onBack = { navController.popBackStack() },
-                        onExpenseAdded = { navController.popBackStack() }
-                    )
+                    ExpenseAddScreen(onBack = { navController.popBackStack() }, onExpenseAdded = { navController.popBackStack() })
                 }
                 
                 composable(
@@ -219,19 +204,13 @@ fun AppNavHost() {
                     )
                 }
                 
-                // ==================== INVENTORY MODULE ====================
+                // INVENTORY MODULE
                 composable(Routes.INVENTORY) {
-                    InventoryListScreen(
-                        navController = navController,
-                        onBack = { navController.popBackStack() }
-                    )
+                    InventoryListScreen(navController = navController, onBack = { navController.popBackStack() })
                 }
                 
                 composable(Routes.INVENTORY_ADD) {
-                    InventoryAddScreen(
-                        onBack = { navController.popBackStack() },
-                        onProductAdded = { navController.popBackStack() }
-                    )
+                    InventoryAddScreen(onBack = { navController.popBackStack() }, onProductAdded = { navController.popBackStack() })
                 }
                 
                 composable(
@@ -278,54 +257,16 @@ fun AppNavHost() {
                 }
                 
                 composable(Routes.STOCK_ADJUSTMENT) {
-                    StockAdjustmentScreen(
-                        onBack = { navController.popBackStack() }
-                    )
+                    StockAdjustmentScreen(onBack = { navController.popBackStack() })
                 }
                 
-                // ==================== PURCHASE ORDER MODULE ====================
-                // Main screen with tabs
+                // PURCHASE ORDER MODULE
                 composable(Routes.PURCHASE_ORDERS) {
-                    PurchaseOrderTabsScreen(
-                        navController = navController,
-                        onBack = { navController.popBackStack() }
-                    )
+                    PurchaseOrderTabsScreen(navController = navController, onBack = { navController.popBackStack() })
                 }
                 
-                // Status-specific screens
-                composable(Routes.DRAFT_ORDERS) {
-                    DraftOrdersScreen(
-                        navController = navController,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                
-                composable(Routes.SENT_ORDERS) {
-                    SentOrdersScreen(
-                        navController = navController,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                
-                composable(Routes.RECEIVED_ORDERS) {
-                    ReceivedOrdersScreen(
-                        navController = navController,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                
-                composable(Routes.CLOSED_ORDERS) {
-                    ClosedOrdersScreen(
-                        navController = navController,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                
-                // Create and Detail screens
                 composable(Routes.PURCHASE_ORDER_ADD) {
-                    PurchaseOrderScreen(
-                        onBack = { navController.popBackStack() }
-                    )
+                    PurchaseOrderScreen(onBack = { navController.popBackStack() })
                 }
                 
                 composable(
@@ -352,7 +293,7 @@ fun AppNavHost() {
                 }
             }
 
-            // ==================== FAB MENU ====================
+            // FAB MENU
             val currentRoute = navController.currentBackStackEntry?.destination?.route
             if (currentRoute == Routes.SALE_ENTRY) {
                 FABMenu(
