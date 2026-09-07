@@ -50,6 +50,14 @@ fun PurchaseOrderScreen(
     )
     
     val state by viewModel.state.collectAsState()
+    
+    // Reset success state after navigation
+    LaunchedEffect(state.saveSuccess) {
+        if (state.saveSuccess) {
+            kotlinx.coroutines.delay(500)
+            onBack()
+        }
+    }
 
     AppScreen(
         title = "Add Purchase Order",
@@ -78,7 +86,7 @@ fun PurchaseOrderScreen(
                 Spacer(modifier = Modifier.height(Spacing.medium))
             }
 
-            // ============ ORDER NAME ============
+            // Order Name
             OutlinedTextField(
                 value = state.orderName,
                 onValueChange = { viewModel.handleEvent(PurchaseOrderEvent.OrderNameChanged(it)) },
@@ -90,7 +98,7 @@ fun PurchaseOrderScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
 
-            // ============ ORDER NUMBER (Auto-generated) ============
+            // Order Number info
             Text(
                 text = "Order Number: Will be auto-generated",
                 style = AppTypography.small,
@@ -98,7 +106,7 @@ fun PurchaseOrderScreen(
                 modifier = Modifier.padding(bottom = Spacing.medium)
             )
 
-            // ============ SUPPLIER SELECTOR ============
+            // Supplier Selector
             var supplierExpanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
                 expanded = supplierExpanded,
@@ -139,7 +147,7 @@ fun PurchaseOrderScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // ============ ITEMS HEADER ============
+            // Items Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -159,7 +167,7 @@ fun PurchaseOrderScreen(
                 }
             }
             
-            // ============ ITEMS LIST ============
+            // Items List
             if (state.tempItems.isEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -222,7 +230,7 @@ fun PurchaseOrderScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // ============ TOTAL ============
+            // Total
             val total = state.tempItems.sumOf { it.total }
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -250,7 +258,7 @@ fun PurchaseOrderScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // ============ NOTES ============
+            // Notes
             OutlinedTextField(
                 value = state.notes,
                 onValueChange = { viewModel.handleEvent(PurchaseOrderEvent.NotesChanged(it)) },
@@ -262,7 +270,7 @@ fun PurchaseOrderScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // ============ SAVE BUTTON ============
+            // Save Button
             val buttonEnabled = state.selectedSupplier != null && 
                                 state.tempItems.isNotEmpty() && 
                                 state.orderName.isNotBlank() &&
@@ -290,13 +298,6 @@ fun PurchaseOrderScreen(
                 isLoading = state.isSaving,
                 enabled = buttonEnabled
             )
-            
-            if (state.saveSuccess) {
-                LaunchedEffect(Unit) {
-                    kotlinx.coroutines.delay(1500)
-                    onBack()
-                }
-            }
             
             Spacer(modifier = Modifier.height(Spacing.xxlarge))
         }

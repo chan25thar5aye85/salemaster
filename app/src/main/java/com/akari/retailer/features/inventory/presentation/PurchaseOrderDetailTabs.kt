@@ -7,20 +7,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.akari.retailer.core.ui.theme.AppTypography
+import com.akari.retailer.features.inventory.domain.models.PurchaseOrder
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus
 
 @Composable
 fun PurchaseOrderStatusTabs(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit,
-    order: com.akari.retailer.features.inventory.domain.models.PurchaseOrder
-) {
-    val statusTabs = listOf(
+    order: PurchaseOrder,
+    statusTabs: List<Pair<String, PurchaseOrderStatus>> = listOf(
         "DRAFT" to PurchaseOrderStatus.DRAFT,
-        "SENT" to PurchaseOrderStatus.SENT,
-        "RECEIVED" to PurchaseOrderStatus.RECEIVED
+        "SENT" to PurchaseOrderStatus.SENT
     )
-    
+) {
     ScrollableTabRow(
         selectedTabIndex = selectedTab,
         containerColor = MaterialTheme.colorScheme.surface,

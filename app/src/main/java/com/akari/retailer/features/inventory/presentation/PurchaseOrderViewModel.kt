@@ -26,7 +26,7 @@ data class PurchaseOrderState(
     val orderName: String = "",
     val tempItems: List<PurchaseOrderItem> = emptyList(),
     val notes: String = "",
-    val isLoading: Boolean = true,
+    val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
     val error: String? = null
@@ -102,8 +102,6 @@ class PurchaseOrderViewModel(
 
     private fun loadData() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true)
-            
             try {
                 val suppliers = supplierRepository.getSuppliers().first()
                 _state.value = _state.value.copy(suppliers = suppliers)
@@ -113,16 +111,9 @@ class PurchaseOrderViewModel(
             
             try {
                 val products = inventoryRepository.getProducts().first()
-                _state.value = _state.value.copy(
-                    products = products,
-                    isLoading = false
-                )
+                _state.value = _state.value.copy(products = products)
             } catch (e: Exception) {
-                _state.value = _state.value.copy(
-                    products = emptyList(),
-                    isLoading = false,
-                    error = "Failed to load products"
-                )
+                _state.value = _state.value.copy(products = emptyList())
             }
         }
     }
@@ -131,6 +122,7 @@ class PurchaseOrderViewModel(
         val currentState = _state.value
         val supplier = currentState.selectedSupplier
         
+        // Validate
         if (currentState.orderName.isBlank()) {
             _state.value = _state.value.copy(error = "Enter an order name")
             return
@@ -188,14 +180,6 @@ class PurchaseOrderViewModel(
                         isSaving = false,
                         saveSuccess = true,
                         error = null
-                    )
-                    
-                    _state.value = _state.value.copy(
-                        selectedSupplier = null,
-                        orderName = "",
-                        tempItems = emptyList(),
-                        notes = "",
-                        saveSuccess = false
                     )
                 } else {
                     _state.value = _state.value.copy(

@@ -59,6 +59,34 @@ class PurchaseOrderDetailViewModel(
         }
     }
 
+    fun sendSelectedItems(orderId: String, selectedItems: List<PurchaseOrderItem>) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isUpdating = true)
+            
+            val currentOrder = _state.value.order ?: return@launch
+            
+            // Send only selected items to SENT
+            val currentSentItems = currentOrder.sentItems.toMutableList()
+            // Add only items that aren't already in sent
+            selectedItems.forEach { item ->
+                if (!currentSentItems.any { it.productId == item.productId }) {
+                    currentSentItems.add(item)
+                }
+            }
+            
+            val updatedOrder = currentOrder.copy(
+                sentItems = currentSentItems,
+                sentTotal = currentSentItems.sumOf { it.total },
+                sentDate = if (currentSentItems.isNotEmpty()) System.currentTimeMillis() else currentOrder.sentDate,
+                updatedAt = System.currentTimeMillis()
+            )
+            
+            repository.updateOrder(updatedOrder)
+            loadOrder(orderId)
+            _state.value = _state.value.copy(isUpdating = false)
+        }
+    }
+
     fun updateStatus(orderId: String, newStatus: com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isUpdating = true)

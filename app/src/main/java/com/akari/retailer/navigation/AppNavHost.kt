@@ -39,7 +39,6 @@ import com.akari.retailer.features.inventory.presentation.InventoryListScreen
 import com.akari.retailer.features.inventory.presentation.PurchaseOrderDetailScreen
 import com.akari.retailer.features.inventory.presentation.PurchaseOrderScreen
 import com.akari.retailer.features.inventory.presentation.PurchaseOrderTabsScreen
-import com.akari.retailer.features.inventory.presentation.ReceiveOrderScreen
 import com.akari.retailer.features.inventory.presentation.StockAdjustmentScreen
 import com.akari.retailer.features.inventory.presentation.StockHistoryScreen
 import com.akari.retailer.features.reports.presentation.TrendsScreen
@@ -63,9 +62,6 @@ fun AppNavHost() {
     val navBarHeight = WindowInsets.navigationBars.asPaddingValues(density).calculateBottomPadding()
     
     val bottomPadding = if (imeHeight > 0.dp) imeHeight else navBarHeight
-
-    val firestoreService = remember { FirestoreService() }
-    val repository = remember { FirestoreSaleRepository(firestoreService) }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -281,16 +277,8 @@ fun AppNavHost() {
                     )
                 }
                 
-                composable(
-                    route = Routes.RECEIVE_ORDER,
-                    arguments = listOf(navArgument("orderId") { type = NavType.StringType })
-                ) { backStackEntry ->
-                    val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
-                    ReceiveOrderScreen(
-                        orderId = orderId,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
+                // RECEIVE ORDER REMOVED FOR NOW
+                // composable(Routes.RECEIVE_ORDER) { ... }
             }
 
             // FAB MENU

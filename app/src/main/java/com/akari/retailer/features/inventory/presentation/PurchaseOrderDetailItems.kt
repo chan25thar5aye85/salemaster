@@ -18,11 +18,14 @@ fun PurchaseOrderItemsList(
     items: List<PurchaseOrderItem>,
     status: PurchaseOrderStatus,
     total: Int,
+    selectedIndices: Set<Int>,
+    onItemSelect: (Int) -> Unit,
     onItemClick: (Int) -> Unit,
     onItemDelete: (Int) -> Unit,
     onAddClick: () -> Unit,
     onSendClick: (() -> Unit)? = null,
-    isUpdating: Boolean = false
+    isUpdating: Boolean = false,
+    onSelectAll: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -45,13 +48,14 @@ fun PurchaseOrderItemsList(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Send button next to Add button (only for DRAFT)
+                    // Send button (only for DRAFT)
                     if (status == PurchaseOrderStatus.DRAFT && onSendClick != null) {
+                        val selectedCount = selectedIndices.size
                         TextButton(
                             onClick = onSendClick,
-                            enabled = !isUpdating && items.isNotEmpty()
+                            enabled = !isUpdating && selectedCount > 0
                         ) {
-                            Text("📤 Send")
+                            Text(if (selectedCount > 0) "📤 Send ($selectedCount)" else "📤 Send")
                         }
                     }
                     if (status == PurchaseOrderStatus.DRAFT) {
@@ -72,11 +76,33 @@ fun PurchaseOrderItemsList(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             } else {
+                // Select All / Deselect All row
+                if (status == PurchaseOrderStatus.DRAFT) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val selectedCount = selectedIndices.size
+                        Text(
+                            text = if (selectedCount == items.size) "All selected" else "$selectedCount/${items.size} selected",
+                            style = AppTypography.small,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                        TextButton(onClick = onSelectAll) {
+                            Text(if (selectedCount == items.size) "Deselect All" else "Select All")
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(Spacing.small))
+                }
+                
                 items.forEachIndexed { index, item ->
                     if (status == PurchaseOrderStatus.DRAFT) {
                         DraftItemRow(
                             index = index,
                             item = item,
+                            isSelected = selectedIndices.contains(index),
+                            onItemSelect = { onItemSelect(index) },
                             onItemClick = { onItemClick(index) },
                             onItemDelete = { onItemDelete(index) }
                         )
@@ -107,6 +133,8 @@ fun PurchaseOrderItemsList(
 fun DraftItemRow(
     index: Int,
     item: PurchaseOrderItem,
+    isSelected: Boolean,
+    onItemSelect: () -> Unit,
     onItemClick: () -> Unit,
     onItemDelete: () -> Unit
 ) {
@@ -118,18 +146,32 @@ fun DraftItemRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
-            modifier = Modifier
-                .weight(1f)
-                .clickable { onItemClick() },
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "${index + 1}.",
-                style = AppTypography.body,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            // Checkbox for selection
+            Checkbox(
+                checked = isSelected,
+                onCheckedChange = { _ ->
+                    onItemSelect()
+                },
+                modifier = Modifier.size(20.dp)
             )
-            Text(text = item.productName, style = AppTypography.body)
-            Text(text = "✏️", style = AppTypography.small, fontSize = 10.sp)
+            
+            // Click to edit
+            Row(
+                modifier = Modifier.clickable { onItemClick() },
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "${index + 1}.",
+                    style = AppTypography.body,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+                Text(text = item.productName, style = AppTypography.body)
+                Text(text = "✏️", style = AppTypography.small, fontSize = 10.sp)
+            }
         }
         
         Row(

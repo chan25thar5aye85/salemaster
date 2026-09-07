@@ -21,13 +21,7 @@ object Routes {
     const val PURCHASE_ORDERS = "purchase_orders"
     const val PURCHASE_ORDER_ADD = "purchase_order_add"
     const val PURCHASE_ORDER_DETAIL = "purchase_order_detail/{orderId}"
-    const val RECEIVE_ORDER = "receive_order/{orderId}"
-    
-    // Status-specific order lists
-    const val DRAFT_ORDERS = "draft_orders"
-    const val SENT_ORDERS = "sent_orders"
-    const val RECEIVED_ORDERS = "received_orders"
-    const val CLOSED_ORDERS = "closed_orders"
+    // RECEIVE_ORDER removed for now
     
     const val CUSTOMERS = "customers"
     const val CUSTOMER_ADD = "customer_add"

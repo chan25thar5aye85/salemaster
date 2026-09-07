@@ -23,7 +23,6 @@ import com.akari.retailer.features.inventory.data.repository.FirestoreInventoryR
 import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderItem
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus
-import com.akari.retailer.navigation.Routes
 import kotlinx.coroutines.launch
 
 @Composable
@@ -48,7 +47,8 @@ fun PurchaseOrderDetailScreen(
     var selectedTab by remember { mutableStateOf(0) }
     var products by remember { mutableStateOf<List<com.akari.retailer.features.inventory.domain.models.Product>>(emptyList()) }
     
-    // Dialog states
+    var selectedIndices by remember { mutableStateOf(setOf<Int>()) }
+    
     var showEditDialog by remember { mutableStateOf(false) }
     var editingIndex by remember { mutableStateOf(-1) }
     var editQuantity by remember { mutableStateOf("") }
@@ -69,11 +69,9 @@ fun PurchaseOrderDetailScreen(
         viewModel.loadOrder(orderId)
     }
     
-    // When order loads, update editable items
-    LaunchedEffect(state.order) {
-        state.order?.let {
-            viewModel.updateDraftItems(it.draftItems, orderId)
-        }
+    // When order loads, reset selection
+    LaunchedEffect(state.editableDraftItems) {
+        selectedIndices = emptySet()
     }
 
     AppScreen(
@@ -128,8 +126,7 @@ fun PurchaseOrderDetailScreen(
                     val currentOrder = state.order!!
                     val statusTabs = listOf(
                         "DRAFT" to PurchaseOrderStatus.DRAFT,
-                        "SENT" to PurchaseOrderStatus.SENT,
-                        "RECEIVED" to PurchaseOrderStatus.RECEIVED
+                        "SENT" to PurchaseOrderStatus.SENT
                     )
                     
                     val selectedStatus = statusTabs[selectedTab].second
@@ -149,16 +146,25 @@ fun PurchaseOrderDetailScreen(
                     PurchaseOrderStatusTabs(
                         selectedTab = selectedTab,
                         onTabSelected = { selectedTab = it },
-                        order = currentOrder
+                        order = currentOrder,
+                        statusTabs = statusTabs
                     )
                     
                     Spacer(modifier = Modifier.height(Spacing.small))
                     
-                    // Items List with Send button next to Add
+                    // Items List with selection
                     PurchaseOrderItemsList(
                         items = displayItems,
                         status = selectedStatus,
                         total = displayTotal,
+                        selectedIndices = selectedIndices,
+                        onItemSelect = { index ->
+                            if (selectedIndices.contains(index)) {
+                                selectedIndices = selectedIndices - index
+                            } else {
+                                selectedIndices = selectedIndices + index
+                            }
+                        },
                         onItemClick = { index ->
                             if (selectedStatus == PurchaseOrderStatus.DRAFT) {
                                 val item = state.editableDraftItems[index]
@@ -173,61 +179,42 @@ fun PurchaseOrderDetailScreen(
                             if (selectedStatus == PurchaseOrderStatus.DRAFT) {
                                 val newItems = state.editableDraftItems.filterIndexed { i, _ -> i != index }
                                 viewModel.updateDraftItems(newItems, orderId)
+                                selectedIndices = emptySet()
                             }
                         },
                         onAddClick = { showAddDialog = true },
                         onSendClick = {
-                            if (selectedStatus == PurchaseOrderStatus.DRAFT) {
-                                viewModel.updateStatus(orderId, PurchaseOrderStatus.SENT)
+                            if (selectedStatus == PurchaseOrderStatus.DRAFT && selectedIndices.isNotEmpty()) {
+                                val selectedItems = selectedIndices.map { state.editableDraftItems[it] }
+                                viewModel.sendSelectedItems(orderId, selectedItems)
+                                selectedIndices = emptySet()
                             }
                         },
-                        isUpdating = state.isUpdating
-                    )
-                    
-                    // Actions for SENT and RECEIVED (only)
-                    if (selectedStatus == PurchaseOrderStatus.SENT) {
-                        Spacer(modifier = Modifier.height(Spacing.medium))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
-                        ) {
-                            AppPrimaryButton(
-                                text = "📦 Receive",
-                                onClick = {
-                                    navController.navigate(Routes.RECEIVE_ORDER.replace("{orderId}", orderId))
-                                },
-                                modifier = Modifier.weight(1f)
-                            )
-                            OutlinedButton(
-                                onClick = {
-                                    viewModel.updateStatus(orderId, PurchaseOrderStatus.DRAFT)
-                                },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.error
-                                )
-                            ) {
-                                Text("↩️ Back")
+                        isUpdating = state.isUpdating,
+                        onSelectAll = {
+                            if (selectedStatus == PurchaseOrderStatus.DRAFT) {
+                                if (selectedIndices.size == displayItems.size) {
+                                    selectedIndices = emptySet()
+                                } else {
+                                    selectedIndices = displayItems.indices.toSet()
+                                }
                             }
                         }
-                    }
+                    )
                     
-                    if (selectedStatus == PurchaseOrderStatus.RECEIVED) {
+                    // Actions for SENT (only Back to Draft)
+                    if (selectedStatus == PurchaseOrderStatus.SENT) {
                         Spacer(modifier = Modifier.height(Spacing.medium))
-                        Card(
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.updateStatus(orderId, PurchaseOrderStatus.DRAFT)
+                            },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
                             )
                         ) {
-                            Text(
-                                text = "✅ Order Received",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(Spacing.medium)
-                            )
+                            Text("↩️ Back to Draft")
                         }
                     }
                     

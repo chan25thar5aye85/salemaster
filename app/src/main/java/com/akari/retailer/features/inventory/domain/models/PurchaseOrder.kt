@@ -2,8 +2,7 @@ package com.akari.retailer.features.inventory.domain.models
 
 enum class PurchaseOrderStatus {
     DRAFT,
-    SENT,
-    RECEIVED
+    SENT
 }
 
 data class PurchaseOrderItem(
@@ -25,17 +24,14 @@ data class PurchaseOrder(
     // Each status has its own items
     val draftItems: List<PurchaseOrderItem> = emptyList(),
     val sentItems: List<PurchaseOrderItem> = emptyList(),
-    val receivedItems: List<PurchaseOrderItem> = emptyList(),
     
     // Each status has its own total
     val draftTotal: Int = 0,
     val sentTotal: Int = 0,
-    val receivedTotal: Int = 0,
     
     // Timeline
     val orderDate: Long = System.currentTimeMillis(),
     val sentDate: Long = 0,
-    val receivedDate: Long = 0,
     
     val notes: String = "",
     val createdBy: String = "",
@@ -46,7 +42,6 @@ data class PurchaseOrder(
         return when (status) {
             PurchaseOrderStatus.DRAFT -> draftItems
             PurchaseOrderStatus.SENT -> sentItems
-            PurchaseOrderStatus.RECEIVED -> receivedItems
         }
     }
     
@@ -54,7 +49,6 @@ data class PurchaseOrder(
         return when (status) {
             PurchaseOrderStatus.DRAFT -> draftTotal
             PurchaseOrderStatus.SENT -> sentTotal
-            PurchaseOrderStatus.RECEIVED -> receivedTotal
         }
     }
     
@@ -62,7 +56,6 @@ data class PurchaseOrder(
         return when (newStatus) {
             PurchaseOrderStatus.DRAFT -> status == PurchaseOrderStatus.DRAFT
             PurchaseOrderStatus.SENT -> status == PurchaseOrderStatus.DRAFT
-            PurchaseOrderStatus.RECEIVED -> status == PurchaseOrderStatus.SENT
         }
     }
 }

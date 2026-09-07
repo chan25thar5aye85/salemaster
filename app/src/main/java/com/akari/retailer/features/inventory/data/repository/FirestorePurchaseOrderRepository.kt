@@ -227,22 +227,11 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             updates["status"] = newStatus.name
             updates["updatedAt"] = currentTime
             
-            // Copy items from previous status to new status
             val order = getOrderSync(orderId)
-            if (order != null) {
-                when (newStatus) {
-                    PurchaseOrderStatus.SENT -> {
-                        updates["sentItems"] = order.draftItems.map { itemToMap(it) }
-                        updates["sentTotal"] = order.draftTotal
-                        updates["sentDate"] = currentTime
-                    }
-                    PurchaseOrderStatus.RECEIVED -> {
-                        updates["receivedItems"] = order.sentItems.map { itemToMap(it) }
-                        updates["receivedTotal"] = order.sentTotal
-                        updates["receivedDate"] = currentTime
-                    }
-                    else -> {}
-                }
+            if (order != null && newStatus == PurchaseOrderStatus.SENT) {
+                updates["sentItems"] = order.draftItems.map { itemToMap(it) }
+                updates["sentTotal"] = order.draftTotal
+                updates["sentDate"] = currentTime
             }
             
             collection.document(orderId).update(updates).await()
@@ -283,13 +272,10 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             "status" to order.status.name,
             "draftItems" to order.draftItems.map { itemToMap(it) },
             "sentItems" to order.sentItems.map { itemToMap(it) },
-            "receivedItems" to order.receivedItems.map { itemToMap(it) },
             "draftTotal" to order.draftTotal,
             "sentTotal" to order.sentTotal,
-            "receivedTotal" to order.receivedTotal,
             "orderDate" to order.orderDate,
             "sentDate" to order.sentDate,
-            "receivedDate" to order.receivedDate,
             "notes" to order.notes,
             "createdBy" to order.createdBy,
             "createdAt" to order.createdAt,
@@ -306,10 +292,6 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             if (it is Map<*, *>) itemFromMap(it as Map<String, Any>) else null
         } ?: emptyList()
         
-        val receivedItems = (data["receivedItems"] as? List<*>)?.mapNotNull { 
-            if (it is Map<*, *>) itemFromMap(it as Map<String, Any>) else null
-        } ?: emptyList()
-        
         return PurchaseOrder(
             id = id,
             orderName = data["orderName"] as? String ?: "",
@@ -323,13 +305,10 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             },
             draftItems = draftItems,
             sentItems = sentItems,
-            receivedItems = receivedItems,
             draftTotal = (data["draftTotal"] as? Number)?.toInt() ?: 0,
             sentTotal = (data["sentTotal"] as? Number)?.toInt() ?: 0,
-            receivedTotal = (data["receivedTotal"] as? Number)?.toInt() ?: 0,
             orderDate = (data["orderDate"] as? Number)?.toLong() ?: System.currentTimeMillis(),
             sentDate = (data["sentDate"] as? Number)?.toLong() ?: 0,
-            receivedDate = (data["receivedDate"] as? Number)?.toLong() ?: 0,
             notes = data["notes"] as? String ?: "",
             createdBy = data["createdBy"] as? String ?: "",
             createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
