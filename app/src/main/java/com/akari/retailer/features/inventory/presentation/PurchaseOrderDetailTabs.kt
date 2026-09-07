@@ -16,8 +16,8 @@ fun PurchaseOrderStatusTabs(
     onTabSelected: (Int) -> Unit,
     order: PurchaseOrder,
     statusTabs: List<Pair<String, PurchaseOrderStatus>> = listOf(
-        "DRAFT" to PurchaseOrderStatus.DRAFT,
-        "SENT" to PurchaseOrderStatus.SENT
+        "ORDER" to PurchaseOrderStatus.ORDER,
+        "RECEIVED" to PurchaseOrderStatus.RECEIVED
     )
 ) {
     ScrollableTabRow(

@@ -8,8 +8,10 @@ import com.akari.retailer.features.expense.data.repository.ExpenseRepository
 import com.akari.retailer.features.expense.data.repository.FirestoreExpenseRepository
 import com.akari.retailer.features.inventory.data.repository.FirestoreInventoryRepository
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
+import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseRepository
 import com.akari.retailer.features.inventory.data.repository.InventoryRepository
 import com.akari.retailer.features.inventory.data.repository.PurchaseOrderRepository
+import com.akari.retailer.features.inventory.data.repository.PurchaseRepository
 import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
 
 class AppContainer {
@@ -32,8 +34,13 @@ class AppContainer {
         FirestoreInventoryRepository(inventoryFirestoreService)
     }
     
-    // New: Purchase Order Repository
+    // Purchase Order Repository
     val purchaseOrderRepository: PurchaseOrderRepository by lazy {
         FirestorePurchaseOrderRepository()
+    }
+    
+    // Purchase Repository (Completed purchases)
+    val purchaseRepository: PurchaseRepository by lazy {
+        FirestorePurchaseRepository()
     }
 }

@@ -122,7 +122,6 @@ class PurchaseOrderViewModel(
         val currentState = _state.value
         val supplier = currentState.selectedSupplier
         
-        // Validate
         if (currentState.orderName.isBlank()) {
             _state.value = _state.value.copy(error = "Enter an order name")
             return
@@ -158,8 +157,8 @@ class PurchaseOrderViewModel(
                     orderNumber = orderNumber,
                     supplierId = supplier.id,
                     supplierName = supplier.name,
-                    status = PurchaseOrderStatus.DRAFT,
-                    draftItems = currentState.tempItems.map { item ->
+                    status = PurchaseOrderStatus.ORDER,
+                    orderItems = currentState.tempItems.map { item ->
                         PurchaseOrderItem(
                             productId = item.productId,
                             productName = item.productName,
@@ -168,7 +167,7 @@ class PurchaseOrderViewModel(
                             total = item.quantity * item.costPrice
                         )
                     },
-                    draftTotal = totalCost,
+                    orderTotal = totalCost,
                     notes = currentState.notes,
                     createdBy = "default"
                 )

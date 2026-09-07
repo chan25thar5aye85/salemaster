@@ -21,7 +21,11 @@ object Routes {
     const val PURCHASE_ORDERS = "purchase_orders"
     const val PURCHASE_ORDER_ADD = "purchase_order_add"
     const val PURCHASE_ORDER_DETAIL = "purchase_order_detail/{orderId}"
-    // RECEIVE_ORDER removed for now
+    const val PURCHASE_ORDER_RECEIPT = "purchase_order_receipt/{orderId}"
+    
+    // Purchases (Completed purchases)
+    const val PURCHASES = "purchases"
+    const val PURCHASE_DETAIL = "purchase_detail/{purchaseId}"
     
     const val CUSTOMERS = "customers"
     const val CUSTOMER_ADD = "customer_add"

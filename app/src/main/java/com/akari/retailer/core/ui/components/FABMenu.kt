@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +48,7 @@ fun FABMenu(
         FABMenuItemData(Icons.Default.PieChart, stringResource(R.string.reports), "reports"),
         FABMenuItemData(Icons.Default.Business, stringResource(R.string.suppliers), "suppliers"),
         FABMenuItemData(Icons.Default.ShoppingCart, stringResource(R.string.purchase_orders), "purchase_orders"),
+        FABMenuItemData(Icons.Default.History, "Purchases", "purchases"),
         FABMenuItemData(Icons.Default.Settings, stringResource(R.string.settings), "settings")
     )
 

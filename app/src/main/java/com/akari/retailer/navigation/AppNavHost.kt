@@ -13,6 +13,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -32,15 +33,7 @@ import com.akari.retailer.features.expense.presentation.ExpenseAddScreen
 import com.akari.retailer.features.expense.presentation.ExpenseDetailScreen
 import com.akari.retailer.features.expense.presentation.ExpenseEditScreen
 import com.akari.retailer.features.expense.presentation.ExpenseListScreen
-import com.akari.retailer.features.inventory.presentation.InventoryAddScreen
-import com.akari.retailer.features.inventory.presentation.InventoryDetailScreen
-import com.akari.retailer.features.inventory.presentation.InventoryEditScreen
-import com.akari.retailer.features.inventory.presentation.InventoryListScreen
-import com.akari.retailer.features.inventory.presentation.PurchaseOrderDetailScreen
-import com.akari.retailer.features.inventory.presentation.PurchaseOrderScreen
-import com.akari.retailer.features.inventory.presentation.PurchaseOrderTabsScreen
-import com.akari.retailer.features.inventory.presentation.StockAdjustmentScreen
-import com.akari.retailer.features.inventory.presentation.StockHistoryScreen
+import com.akari.retailer.features.inventory.presentation.*
 import com.akari.retailer.features.reports.presentation.TrendsScreen
 import com.akari.retailer.features.sales.presentation.entry.SaleEntryScreen
 import com.akari.retailer.features.sales.presentation.history.SaleHistoryScreen
@@ -277,8 +270,35 @@ fun AppNavHost() {
                     )
                 }
                 
-                // RECEIVE ORDER REMOVED FOR NOW
-                // composable(Routes.RECEIVE_ORDER) { ... }
+                composable(
+                    route = Routes.PURCHASE_ORDER_RECEIPT,
+                    arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+                    PurchaseOrderReceiptWrapper(
+                        orderId = orderId,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                
+                // PURCHASES (Completed purchases)
+                composable(Routes.PURCHASES) {
+                    PurchaseListScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(
+                    route = Routes.PURCHASE_DETAIL,
+                    arguments = listOf(navArgument("purchaseId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val purchaseId = backStackEntry.arguments?.getString("purchaseId") ?: ""
+                    PurchaseDetailScreen(
+                        purchaseId = purchaseId,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
 
             // FAB MENU
@@ -295,6 +315,7 @@ fun AppNavHost() {
                             "purchase_orders" -> navController.navigate(Routes.PURCHASE_ORDERS)
                             "expenses" -> navController.navigate(Routes.EXPENSES)
                             "inventory" -> navController.navigate(Routes.INVENTORY)
+                            "purchases" -> navController.navigate(Routes.PURCHASES)
                             else -> {
                                 scope.launch {
                                     snackbarHostState.showSnackbar("Coming soon!")

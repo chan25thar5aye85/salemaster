@@ -228,10 +228,21 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             updates["updatedAt"] = currentTime
             
             val order = getOrderSync(orderId)
-            if (order != null && newStatus == PurchaseOrderStatus.SENT) {
-                updates["sentItems"] = order.draftItems.map { itemToMap(it) }
-                updates["sentTotal"] = order.draftTotal
-                updates["sentDate"] = currentTime
+            if (order != null) {
+                when (newStatus) {
+                    PurchaseOrderStatus.RECEIVED -> {
+                        updates["receivedItems"] = order.orderItems.map { itemToMap(it) }
+                        updates["receivedTotal"] = order.orderTotal
+                        updates["receivedDate"] = currentTime
+                    }
+                    PurchaseOrderStatus.COMPLETED -> {
+                        updates["completedDate"] = currentTime
+                        Log.d(TAG, "✅ Setting order to COMPLETED")
+                    }
+                    else -> {
+                        Log.d(TAG, "No special handling for status: $newStatus")
+                    }
+                }
             }
             
             collection.document(orderId).update(updates).await()
@@ -270,12 +281,13 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             "supplierId" to order.supplierId,
             "supplierName" to order.supplierName,
             "status" to order.status.name,
-            "draftItems" to order.draftItems.map { itemToMap(it) },
-            "sentItems" to order.sentItems.map { itemToMap(it) },
-            "draftTotal" to order.draftTotal,
-            "sentTotal" to order.sentTotal,
+            "orderItems" to order.orderItems.map { itemToMap(it) },
+            "receivedItems" to order.receivedItems.map { itemToMap(it) },
+            "orderTotal" to order.orderTotal,
+            "receivedTotal" to order.receivedTotal,
             "orderDate" to order.orderDate,
-            "sentDate" to order.sentDate,
+            "receivedDate" to order.receivedDate,
+            "completedDate" to order.completedDate,
             "notes" to order.notes,
             "createdBy" to order.createdBy,
             "createdAt" to order.createdAt,
@@ -284,11 +296,11 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
     }
     
     private fun mapToOrder(id: String, data: Map<String, Any>): PurchaseOrder {
-        val draftItems = (data["draftItems"] as? List<*>)?.mapNotNull { 
+        val orderItems = (data["orderItems"] as? List<*>)?.mapNotNull { 
             if (it is Map<*, *>) itemFromMap(it as Map<String, Any>) else null
         } ?: emptyList()
         
-        val sentItems = (data["sentItems"] as? List<*>)?.mapNotNull { 
+        val receivedItems = (data["receivedItems"] as? List<*>)?.mapNotNull { 
             if (it is Map<*, *>) itemFromMap(it as Map<String, Any>) else null
         } ?: emptyList()
         
@@ -299,16 +311,17 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             supplierId = data["supplierId"] as? String ?: "",
             supplierName = data["supplierName"] as? String ?: "",
             status = try {
-                PurchaseOrderStatus.valueOf(data["status"] as? String ?: "DRAFT")
+                PurchaseOrderStatus.valueOf(data["status"] as? String ?: "ORDER")
             } catch (e: Exception) {
-                PurchaseOrderStatus.DRAFT
+                PurchaseOrderStatus.ORDER
             },
-            draftItems = draftItems,
-            sentItems = sentItems,
-            draftTotal = (data["draftTotal"] as? Number)?.toInt() ?: 0,
-            sentTotal = (data["sentTotal"] as? Number)?.toInt() ?: 0,
+            orderItems = orderItems,
+            receivedItems = receivedItems,
+            orderTotal = (data["orderTotal"] as? Number)?.toInt() ?: 0,
+            receivedTotal = (data["receivedTotal"] as? Number)?.toInt() ?: 0,
             orderDate = (data["orderDate"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-            sentDate = (data["sentDate"] as? Number)?.toLong() ?: 0,
+            receivedDate = (data["receivedDate"] as? Number)?.toLong() ?: 0,
+            completedDate = (data["completedDate"] as? Number)?.toLong() ?: 0,
             notes = data["notes"] as? String ?: "",
             createdBy = data["createdBy"] as? String ?: "",
             createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),

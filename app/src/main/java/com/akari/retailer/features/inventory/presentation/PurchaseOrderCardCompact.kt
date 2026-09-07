@@ -29,13 +29,15 @@ fun PurchaseOrderCardCompact(
     val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())
     
     val statusColor = when (order.status) {
-        PurchaseOrderStatus.DRAFT -> Color(0xFFFF9800)
-        PurchaseOrderStatus.SENT -> Color(0xFF2196F3)
+        PurchaseOrderStatus.ORDER -> Color(0xFFFF9800)
+        PurchaseOrderStatus.RECEIVED -> Color(0xFF4CAF50)
+        PurchaseOrderStatus.COMPLETED -> Color(0xFF78909C)
     }
     
     val statusText = when (order.status) {
-        PurchaseOrderStatus.DRAFT -> "Draft"
-        PurchaseOrderStatus.SENT -> "Sent"
+        PurchaseOrderStatus.ORDER -> "Order"
+        PurchaseOrderStatus.RECEIVED -> "Received"
+        PurchaseOrderStatus.COMPLETED -> "Completed"
     }
     
     // Get items and total for current status
@@ -131,8 +133,8 @@ fun PurchaseOrderCardCompact(
                 )
             }
             
-            // Delete button - only for DRAFT orders
-            if (order.status == PurchaseOrderStatus.DRAFT) {
+            // Delete button - only for ORDER status
+            if (order.status == PurchaseOrderStatus.ORDER) {
                 IconButton(
                     onClick = onDelete,
                     modifier = Modifier.size(40.dp)

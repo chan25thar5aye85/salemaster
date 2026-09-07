@@ -18,14 +18,19 @@ fun PurchaseOrderItemsList(
     items: List<PurchaseOrderItem>,
     status: PurchaseOrderStatus,
     total: Int,
-    selectedIndices: Set<Int>,
-    onItemSelect: (Int) -> Unit,
+    selectedIndices: Set<Int> = emptySet(),
+    isEditable: Boolean = true,
+    onItemSelect: (Int) -> Unit = {},
     onItemClick: (Int) -> Unit,
-    onItemDelete: (Int) -> Unit,
-    onAddClick: () -> Unit,
-    onSendClick: (() -> Unit)? = null,
+    onItemDelete: (Int) -> Unit = {},
+    onAddClick: () -> Unit = {},
+    onReceiveClick: (() -> Unit)? = null,
     isUpdating: Boolean = false,
-    onSelectAll: () -> Unit = {}
+    onSelectAll: () -> Unit = {},
+    showReceiveButton: Boolean = true,
+    showAddButton: Boolean = true,
+    showDeleteButton: Boolean = true,
+    isReadOnly: Boolean = false
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -40,25 +45,29 @@ fun PurchaseOrderItemsList(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val statusLabel = when (status) {
+                    PurchaseOrderStatus.ORDER -> "ORDER"
+                    PurchaseOrderStatus.RECEIVED -> "RECEIVED"
+                    PurchaseOrderStatus.COMPLETED -> "COMPLETED"
+                }
                 Text(
-                    text = "Items (${status.name})",
+                    text = "Items ($statusLabel)",
                     style = AppTypography.title
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Send button (only for DRAFT)
-                    if (status == PurchaseOrderStatus.DRAFT && onSendClick != null) {
+                    if (showReceiveButton && onReceiveClick != null && !isReadOnly) {
                         val selectedCount = selectedIndices.size
                         TextButton(
-                            onClick = onSendClick,
+                            onClick = onReceiveClick,
                             enabled = !isUpdating && selectedCount > 0
                         ) {
-                            Text(if (selectedCount > 0) "📤 Send ($selectedCount)" else "📤 Send")
+                            Text(if (selectedCount > 0) "📦 Receive ($selectedCount)" else "📦 Receive")
                         }
                     }
-                    if (status == PurchaseOrderStatus.DRAFT) {
+                    if (showAddButton && !isReadOnly) {
                         TextButton(onClick = onAddClick) {
                             Text("+ Add")
                         }
@@ -76,8 +85,8 @@ fun PurchaseOrderItemsList(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             } else {
-                // Select All / Deselect All row
-                if (status == PurchaseOrderStatus.DRAFT) {
+                // Select All / Deselect All row (only for ORDER and not read-only)
+                if (showReceiveButton && !isReadOnly) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -96,9 +105,12 @@ fun PurchaseOrderItemsList(
                     Spacer(modifier = Modifier.height(Spacing.small))
                 }
                 
+                val isReceivedTab = status == PurchaseOrderStatus.RECEIVED
+                
                 items.forEachIndexed { index, item ->
-                    if (status == PurchaseOrderStatus.DRAFT) {
-                        DraftItemRow(
+                    if (showDeleteButton && !isReadOnly && !isReceivedTab) {
+                        // ORDER items - full editable with checkbox and delete
+                        OrderItemRow(
                             index = index,
                             item = item,
                             isSelected = selectedIndices.contains(index),
@@ -107,7 +119,11 @@ fun PurchaseOrderItemsList(
                             onItemDelete = { onItemDelete(index) }
                         )
                     } else {
-                        ReadOnlyItemRow(index = index, item = item)
+                        // RECEIVED or COMPLETED items - no checkbox, no delete, read-only
+                        ReadOnlyItemRow(
+                            index = index,
+                            item = item
+                        )
                     }
                 }
                 
@@ -130,7 +146,7 @@ fun PurchaseOrderItemsList(
 }
 
 @Composable
-fun DraftItemRow(
+fun OrderItemRow(
     index: Int,
     item: PurchaseOrderItem,
     isSelected: Boolean,
@@ -150,7 +166,6 @@ fun DraftItemRow(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Checkbox for selection
             Checkbox(
                 checked = isSelected,
                 onCheckedChange = { _ ->
@@ -159,7 +174,6 @@ fun DraftItemRow(
                 modifier = Modifier.size(20.dp)
             )
             
-            // Click to edit
             Row(
                 modifier = Modifier.clickable { onItemClick() },
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -198,12 +212,16 @@ fun DraftItemRow(
 }
 
 @Composable
-fun ReadOnlyItemRow(index: Int, item: PurchaseOrderItem) {
+fun ReadOnlyItemRow(
+    index: Int,
+    item: PurchaseOrderItem
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 2.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = "${index + 1}. ${item.productName}",
@@ -213,7 +231,7 @@ fun ReadOnlyItemRow(index: Int, item: PurchaseOrderItem) {
         Text(
             text = "${item.quantity} x ${item.costPrice} = ${item.total}",
             style = AppTypography.body,
-            fontSize = 13.sp,
+            fontSize = 12.sp,
             color = MaterialTheme.colorScheme.primary
         )
     }

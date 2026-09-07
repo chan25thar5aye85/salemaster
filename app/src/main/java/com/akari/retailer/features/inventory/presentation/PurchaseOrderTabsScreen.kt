@@ -125,7 +125,7 @@ fun PurchaseOrderTabsScreen(
                         navController = navController,
                         orderName = order.orderName,
                         onDelete = {
-                            if (order.status == com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus.DRAFT) {
+                            if (order.status == com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus.ORDER) {
                                 pendingDeleteId = order.id
                                 showDeleteDialog = true
                             }

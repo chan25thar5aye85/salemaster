@@ -1,8 +1,9 @@
 package com.akari.retailer.features.inventory.domain.models
 
 enum class PurchaseOrderStatus {
-    DRAFT,
-    SENT
+    ORDER,      // Creating/editing the order
+    RECEIVED,   // Items received, ready for purchase
+    COMPLETED   // Purchase created, order is done
 }
 
 data class PurchaseOrderItem(
@@ -19,19 +20,20 @@ data class PurchaseOrder(
     val orderNumber: String = "",
     val supplierId: String = "",
     val supplierName: String = "",
-    val status: PurchaseOrderStatus = PurchaseOrderStatus.DRAFT,
+    val status: PurchaseOrderStatus = PurchaseOrderStatus.ORDER,
     
     // Each status has its own items
-    val draftItems: List<PurchaseOrderItem> = emptyList(),
-    val sentItems: List<PurchaseOrderItem> = emptyList(),
+    val orderItems: List<PurchaseOrderItem> = emptyList(),
+    val receivedItems: List<PurchaseOrderItem> = emptyList(),
     
     // Each status has its own total
-    val draftTotal: Int = 0,
-    val sentTotal: Int = 0,
+    val orderTotal: Int = 0,
+    val receivedTotal: Int = 0,
     
     // Timeline
     val orderDate: Long = System.currentTimeMillis(),
-    val sentDate: Long = 0,
+    val receivedDate: Long = 0,
+    val completedDate: Long = 0,
     
     val notes: String = "",
     val createdBy: String = "",
@@ -40,22 +42,25 @@ data class PurchaseOrder(
 ) {
     fun getItemsForStatus(status: PurchaseOrderStatus): List<PurchaseOrderItem> {
         return when (status) {
-            PurchaseOrderStatus.DRAFT -> draftItems
-            PurchaseOrderStatus.SENT -> sentItems
+            PurchaseOrderStatus.ORDER -> orderItems
+            PurchaseOrderStatus.RECEIVED -> receivedItems
+            PurchaseOrderStatus.COMPLETED -> receivedItems // Show received items as final
         }
     }
     
     fun getTotalForStatus(status: PurchaseOrderStatus): Int {
         return when (status) {
-            PurchaseOrderStatus.DRAFT -> draftTotal
-            PurchaseOrderStatus.SENT -> sentTotal
+            PurchaseOrderStatus.ORDER -> orderTotal
+            PurchaseOrderStatus.RECEIVED -> receivedTotal
+            PurchaseOrderStatus.COMPLETED -> receivedTotal
         }
     }
     
     fun canTransitionTo(newStatus: PurchaseOrderStatus): Boolean {
         return when (newStatus) {
-            PurchaseOrderStatus.DRAFT -> status == PurchaseOrderStatus.DRAFT
-            PurchaseOrderStatus.SENT -> status == PurchaseOrderStatus.DRAFT
+            PurchaseOrderStatus.ORDER -> status == PurchaseOrderStatus.ORDER
+            PurchaseOrderStatus.RECEIVED -> status == PurchaseOrderStatus.ORDER
+            PurchaseOrderStatus.COMPLETED -> status == PurchaseOrderStatus.RECEIVED
         }
     }
 }
