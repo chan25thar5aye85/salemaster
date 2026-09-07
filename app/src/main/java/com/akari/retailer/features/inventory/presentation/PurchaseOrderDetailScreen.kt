@@ -1,5 +1,6 @@
 package com.akari.retailer.features.inventory.presentation
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppPrimaryButton
@@ -17,8 +19,12 @@ import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
+import com.akari.retailer.features.inventory.data.repository.FirestoreInventoryRepository
+import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
+import com.akari.retailer.features.inventory.domain.models.PurchaseOrderItem
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus
 import com.akari.retailer.navigation.Routes
+import kotlinx.coroutines.launch
 
 @Composable
 fun PurchaseOrderDetailScreen(
@@ -27,39 +33,51 @@ fun PurchaseOrderDetailScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     
     val repository = remember { FirestorePurchaseOrderRepository() }
+    val inventoryService = remember { FirestoreInventoryService() }
+    val inventoryRepository = remember { FirestoreInventoryRepository(inventoryService) }
     
-    var order by remember { mutableStateOf<com.akari.retailer.features.inventory.domain.models.PurchaseOrder?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    
-    var selectedTab by remember { mutableStateOf(0) }
-    
-    val statusTabs = listOf(
-        "DRAFT" to PurchaseOrderStatus.DRAFT,
-        "SENT" to PurchaseOrderStatus.SENT,
-        "RECEIVED" to PurchaseOrderStatus.RECEIVED
+    val viewModel: PurchaseOrderDetailViewModel = viewModel(
+        factory = PurchaseOrderDetailViewModelFactory(repository)
     )
     
+    val state by viewModel.state.collectAsState()
+    
+    var selectedTab by remember { mutableStateOf(0) }
+    var products by remember { mutableStateOf<List<com.akari.retailer.features.inventory.domain.models.Product>>(emptyList()) }
+    
+    // Dialog states
+    var showEditDialog by remember { mutableStateOf(false) }
+    var editingIndex by remember { mutableStateOf(-1) }
+    var editQuantity by remember { mutableStateOf("") }
+    var editPrice by remember { mutableStateOf("") }
+    var editProductName by remember { mutableStateOf("") }
+    
+    var showAddDialog by remember { mutableStateOf(false) }
+    
+    // Load products
+    LaunchedEffect(Unit) {
+        inventoryRepository.getProducts().collect { productList ->
+            products = productList
+        }
+    }
+    
+    // Load order
     LaunchedEffect(orderId) {
-        isLoading = true
-        try {
-            repository.getOrder(orderId).collect { loadedOrder ->
-                order = loadedOrder
-                isLoading = false
-                if (loadedOrder == null) {
-                    error = "Order not found"
-                }
-            }
-        } catch (e: Exception) {
-            isLoading = false
-            error = e.message ?: "Failed to load order"
+        viewModel.loadOrder(orderId)
+    }
+    
+    // When order loads, update editable items
+    LaunchedEffect(state.order) {
+        state.order?.let {
+            viewModel.updateDraftItems(it.draftItems, orderId)
         }
     }
 
     AppScreen(
-        title = order?.orderName ?: "Order Detail",
+        title = state.order?.orderName ?: "Order Detail",
         showBackButton = true,
         onBackClick = onBack
     ) {
@@ -69,7 +87,7 @@ fun PurchaseOrderDetailScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             when {
-                isLoading -> {
+                state.isLoading -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -78,21 +96,21 @@ fun PurchaseOrderDetailScreen(
                     }
                 }
                 
-                error != null -> {
+                state.error != null -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("❌", fontSize = 48.sp)
-                            Text(error!!, style = AppTypography.body, color = MaterialTheme.colorScheme.error)
+                            Text(state.error!!, style = AppTypography.body, color = MaterialTheme.colorScheme.error)
                             Spacer(modifier = Modifier.height(Spacing.medium))
                             AppPrimaryButton(text = "Go Back", onClick = onBack)
                         }
                     }
                 }
                 
-                order == null -> {
+                state.order == null -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -107,106 +125,109 @@ fun PurchaseOrderDetailScreen(
                 }
                 
                 else -> {
-                    val currentOrder = order!!
+                    val currentOrder = state.order!!
+                    val statusTabs = listOf(
+                        "DRAFT" to PurchaseOrderStatus.DRAFT,
+                        "SENT" to PurchaseOrderStatus.SENT,
+                        "RECEIVED" to PurchaseOrderStatus.RECEIVED
+                    )
                     
-                    // Status Filter Tabs
-                    ScrollableTabRow(
-                        selectedTabIndex = selectedTab,
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                        edgePadding = 0.dp
-                    ) {
-                        statusTabs.forEachIndexed { index, (label, status) ->
-                            val items = currentOrder.getItemsForStatus(status)
-                            val count = items.size
-                            
-                            Tab(
-                                selected = selectedTab == index,
-                                onClick = { selectedTab = index },
-                                text = {
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(label, style = AppTypography.label)
-                                        if (count > 0) {
-                                            Badge(
-                                                containerColor = if (selectedTab == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                                                contentColor = if (selectedTab == index) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-                                            ) {
-                                                Text("$count", style = AppTypography.small)
-                                            }
-                                        }
-                                    }
-                                }
+                    val selectedStatus = statusTabs[selectedTab].second
+                    val displayItems = if (selectedStatus == PurchaseOrderStatus.DRAFT) {
+                        state.editableDraftItems
+                    } else {
+                        currentOrder.getItemsForStatus(selectedStatus)
+                    }
+                    
+                    val displayTotal = if (selectedStatus == PurchaseOrderStatus.DRAFT) {
+                        state.editableDraftItems.sumOf { it.total }
+                    } else {
+                        currentOrder.getTotalForStatus(selectedStatus)
+                    }
+                    
+                    // Status Tabs
+                    PurchaseOrderStatusTabs(
+                        selectedTab = selectedTab,
+                        onTabSelected = { selectedTab = it },
+                        order = currentOrder
+                    )
+                    
+                    Spacer(modifier = Modifier.height(Spacing.small))
+                    
+                    // Items List with Send button next to Add
+                    PurchaseOrderItemsList(
+                        items = displayItems,
+                        status = selectedStatus,
+                        total = displayTotal,
+                        onItemClick = { index ->
+                            if (selectedStatus == PurchaseOrderStatus.DRAFT) {
+                                val item = state.editableDraftItems[index]
+                                editingIndex = index
+                                editQuantity = item.quantity.toString()
+                                editPrice = item.costPrice.toString()
+                                editProductName = item.productName
+                                showEditDialog = true
+                            }
+                        },
+                        onItemDelete = { index ->
+                            if (selectedStatus == PurchaseOrderStatus.DRAFT) {
+                                val newItems = state.editableDraftItems.filterIndexed { i, _ -> i != index }
+                                viewModel.updateDraftItems(newItems, orderId)
+                            }
+                        },
+                        onAddClick = { showAddDialog = true },
+                        onSendClick = {
+                            if (selectedStatus == PurchaseOrderStatus.DRAFT) {
+                                viewModel.updateStatus(orderId, PurchaseOrderStatus.SENT)
+                            }
+                        },
+                        isUpdating = state.isUpdating
+                    )
+                    
+                    // Actions for SENT and RECEIVED (only)
+                    if (selectedStatus == PurchaseOrderStatus.SENT) {
+                        Spacer(modifier = Modifier.height(Spacing.medium))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                        ) {
+                            AppPrimaryButton(
+                                text = "📦 Receive",
+                                onClick = {
+                                    navController.navigate(Routes.RECEIVE_ORDER.replace("{orderId}", orderId))
+                                },
+                                modifier = Modifier.weight(1f)
                             )
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.updateStatus(orderId, PurchaseOrderStatus.DRAFT)
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.error
+                                )
+                            ) {
+                                Text("↩️ Back")
+                            }
                         }
                     }
                     
-                    Spacer(modifier = Modifier.height(Spacing.medium))
-                    
-                    // Show items for selected status
-                    val selectedStatus = statusTabs[selectedTab].second
-                    val currentItems = currentOrder.getItemsForStatus(selectedStatus)
-                    val currentTotal = currentOrder.getTotalForStatus(selectedStatus)
-                    
-                    Card(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(Spacing.medium)
+                    if (selectedStatus == PurchaseOrderStatus.RECEIVED) {
+                        Spacer(modifier = Modifier.height(Spacing.medium))
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
                         ) {
                             Text(
-                                text = "Items (${selectedStatus.name})",
-                                style = AppTypography.title,
-                                modifier = Modifier.padding(bottom = Spacing.small)
+                                text = "✅ Order Received",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(Spacing.medium)
                             )
-                            
-                            if (currentItems.isEmpty()) {
-                                Text(
-                                    text = "No items in ${selectedStatus.name}",
-                                    style = AppTypography.body,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                )
-                            } else {
-                                currentItems.forEachIndexed { index, item ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 4.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            text = "${index + 1}. ${item.productName}",
-                                            style = AppTypography.body,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        Text(
-                                            text = "${item.quantity} x ${item.costPrice} = ${item.total}",
-                                            style = AppTypography.body,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
-                                
-                                Divider(
-                                    modifier = Modifier.padding(vertical = Spacing.small)
-                                )
-                                
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Total", style = AppTypography.title)
-                                    Text(
-                                        "$currentTotal",
-                                        style = AppTypography.header,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
                         }
                     }
                     
@@ -214,5 +235,74 @@ fun PurchaseOrderDetailScreen(
                 }
             }
         }
+    }
+    
+    // Edit Dialog
+    EditItemDialog(
+        showDialog = showEditDialog,
+        itemIndex = editingIndex,
+        productName = editProductName,
+        currentQuantity = editQuantity,
+        currentPrice = editPrice,
+        onDismiss = { showEditDialog = false },
+        onSave = { qty, price ->
+            if (editingIndex >= 0 && editingIndex < state.editableDraftItems.size) {
+                val newItems = state.editableDraftItems.toMutableList()
+                val current = newItems[editingIndex]
+                newItems[editingIndex] = current.copy(
+                    quantity = qty,
+                    costPrice = price,
+                    total = qty * price
+                )
+                viewModel.updateDraftItems(newItems, orderId)
+                showEditDialog = false
+                Toast.makeText(context, "Updated!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    )
+    
+    // Add Dialog
+    AddItemDialog(
+        showDialog = showAddDialog,
+        products = products,
+        onDismiss = { showAddDialog = false },
+        onAdd = { product, qty ->
+            val existing = state.editableDraftItems.find { it.productId == product.id }
+            val newItems = state.editableDraftItems.toMutableList()
+            
+            if (existing != null) {
+                val index = newItems.indexOf(existing)
+                newItems[index] = existing.copy(
+                    quantity = existing.quantity + qty,
+                    total = (existing.quantity + qty) * existing.costPrice
+                )
+            } else {
+                newItems.add(
+                    PurchaseOrderItem(
+                        productId = product.id,
+                        productName = product.name,
+                        quantity = qty,
+                        costPrice = product.sellPrice,
+                        total = qty * product.sellPrice
+                    )
+                )
+            }
+            
+            viewModel.updateDraftItems(newItems, orderId)
+            showAddDialog = false
+            Toast.makeText(context, "Item added!", Toast.LENGTH_SHORT).show()
+        }
+    )
+}
+
+class PurchaseOrderDetailViewModelFactory(
+    private val repository: FirestorePurchaseOrderRepository
+) : androidx.lifecycle.ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(PurchaseOrderDetailViewModel::class.java)) {
+            return PurchaseOrderDetailViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
