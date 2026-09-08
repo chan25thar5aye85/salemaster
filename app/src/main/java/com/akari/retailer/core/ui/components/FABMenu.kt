@@ -2,10 +2,9 @@ package com.akari.retailer.core.ui.components
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -29,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -52,51 +52,91 @@ fun FABMenu(
         FABMenuItemData(Icons.Default.Settings, stringResource(R.string.fab_settings), "settings")
     )
 
+    // Split into two columns
+    val firstColumn = menuItems.take(4)
+    val secondColumn = menuItems.drop(4)
+
     Box(
-        modifier = modifier,
-        contentAlignment = Alignment.BottomEnd
+        modifier = modifier
     ) {
-        Column(
-            horizontalAlignment = Alignment.End,
-            modifier = Modifier.padding(bottom = 70.dp)
-        ) {
-            menuItems.forEachIndexed { index, item ->
-                AnimatedVisibility(
-                    visible = isExpanded,
-                    enter = fadeIn() + slideInVertically(
-                        initialOffsetY = { it / 2 },
-                        animationSpec = tween(durationMillis = 150 + index * 50)
-                    ),
-                    exit = fadeOut() + slideOutVertically(
-                        targetOffsetY = { it / 2 },
-                        animationSpec = tween(durationMillis = 100)
-                    )
-                ) {
-                    FABMenuItem(
-                        icon = item.icon,
-                        label = item.label,
-                        onClick = {
-                            onMenuItemClick(item.route)
-                            isExpanded = false
-                        },
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
-            }
+        // Scrim layer - dims the background when menu is expanded
+        if (isExpanded) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable { isExpanded = false }
+            )
         }
 
-        FloatingActionButton(
-            onClick = { isExpanded = !isExpanded },
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-            modifier = Modifier
-                .size(56.dp)
-                .clip(CircleShape)
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomStart
         ) {
-            Icon(
-                imageVector = if (isExpanded) Icons.Default.Close else Icons.Default.Add,
-                contentDescription = if (isExpanded) "Close menu" else "Open menu"
-            )
+            // Two-column grid - positioned on the left
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = fadeIn() + slideInHorizontally(
+                    initialOffsetX = { -it },
+                    animationSpec = tween(durationMillis = 200)
+                ),
+                exit = fadeOut() + slideOutHorizontally(
+                    targetOffsetX = { -it },
+                    animationSpec = tween(durationMillis = 100)
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(start = 16.dp, bottom = 80.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        firstColumn.forEach { item ->
+                            FABMenuItem(
+                                icon = item.icon,
+                                label = item.label,
+                                onClick = {
+                                    onMenuItemClick(item.route)
+                                    isExpanded = false
+                                }
+                            )
+                        }
+                    }
+                    Column(
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        secondColumn.forEach { item ->
+                            FABMenuItem(
+                                icon = item.icon,
+                                label = item.label,
+                                onClick = {
+                                    onMenuItemClick(item.route)
+                                    isExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // FAB button - moved to bottom left
+            FloatingActionButton(
+                onClick = { isExpanded = !isExpanded },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier
+                    .padding(start = 16.dp, bottom = 16.dp)
+                    .size(56.dp)
+                    .clip(CircleShape)
+            ) {
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.Close else Icons.Default.Add,
+                    contentDescription = if (isExpanded) "Close menu" else "Open menu"
+                )
+            }
         }
     }
 }
