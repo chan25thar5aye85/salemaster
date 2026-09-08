@@ -21,6 +21,7 @@ import com.akari.retailer.features.supplier.data.remote.FirestoreSupplierService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -91,7 +92,6 @@ class PurchaseOrderDetailViewModel(
             
             val currentOrder = _state.value.order ?: return@launch
             
-            // Receive only selected items
             val currentReceivedItems = currentOrder.receivedItems.toMutableList()
             selectedItems.forEach { item ->
                 if (!currentReceivedItems.any { it.productId == item.productId }) {
@@ -207,19 +207,21 @@ class PurchaseOrderDetailViewModel(
                 Log.w(TAG, "⚠️ Failed to create expense: ${expenseResult.exceptionOrNull()?.message}")
             }
             
-            // 4. Update supplier stats
+            // 4. Update supplier stats - Use getSuppliers().first() to get once
             Log.d(TAG, "📊 Updating supplier stats...")
             try {
-                val supplierResult = supplierRepository.getSupplierById(currentOrder.supplierId).collect { supplier ->
-                    if (supplier != null) {
-                        val updatedSupplier = supplier.copy(
-                            totalPurchased = supplier.totalPurchased + totalCost,
-                            lastOrderDate = System.currentTimeMillis(),
-                            updatedAt = System.currentTimeMillis()
-                        )
-                        supplierRepository.updateSupplier(updatedSupplier)
-                        Log.d(TAG, "✅ Supplier stats updated: ${supplier.name} total: ${supplier.totalPurchased} → ${updatedSupplier.totalPurchased}")
-                    }
+                val suppliers = supplierRepository.getSuppliers().first()
+                val supplier = suppliers.find { it.id == currentOrder.supplierId }
+                if (supplier != null) {
+                    val updatedSupplier = supplier.copy(
+                        totalPurchased = supplier.totalPurchased + totalCost,
+                        lastOrderDate = System.currentTimeMillis(),
+                        updatedAt = System.currentTimeMillis()
+                    )
+                    supplierRepository.updateSupplier(updatedSupplier)
+                    Log.d(TAG, "✅ Supplier stats updated: ${supplier.name} total: ${supplier.totalPurchased} → ${updatedSupplier.totalPurchased}")
+                } else {
+                    Log.w(TAG, "⚠️ Supplier not found: ${currentOrder.supplierId}")
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "⚠️ Failed to update supplier stats: ${e.message}")

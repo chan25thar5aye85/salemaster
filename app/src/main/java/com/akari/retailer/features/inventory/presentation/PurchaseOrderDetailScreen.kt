@@ -340,6 +340,7 @@ fun PurchaseOrderDetailScreen(
                         showCreatePurchaseDialog = false
                         scope.launch {
                             val result = viewModel.createPurchase(orderId)
+                            // Always reset loading state regardless of result
                             isCreatingPurchase = false
                             if (result.isSuccess) {
                                 Toast.makeText(context, purchaseCreatedSuccess, Toast.LENGTH_LONG).show()
@@ -576,7 +577,6 @@ fun PurchaseOrderDetailScreen(
     
     // Add Dialog
     if (showAddDialog) {
-        // Get string outside the lambda
         val addItemToOrderText = stringResource(R.string.add_item_to_order)
         
         AddItemDialog(

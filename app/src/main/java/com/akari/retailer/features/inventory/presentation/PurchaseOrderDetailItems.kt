@@ -42,6 +42,7 @@ fun PurchaseOrderItemsList(
                 .fillMaxWidth()
                 .padding(Spacing.medium)
         ) {
+            // Compact header row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -54,7 +55,8 @@ fun PurchaseOrderItemsList(
                 }
                 Text(
                     text = "${stringResource(R.string.order_items)} ($statusLabel)",
-                    style = AppTypography.title
+                    style = AppTypography.title,
+                    modifier = Modifier.padding(vertical = 4.dp)
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -64,20 +66,28 @@ fun PurchaseOrderItemsList(
                         val selectedCount = selectedIndices.size
                         TextButton(
                             onClick = onReceiveClick,
-                            enabled = !isUpdating && selectedCount > 0
+                            enabled = !isUpdating && selectedCount > 0,
+                            modifier = Modifier.height(36.dp)
                         ) {
-                            Text(if (selectedCount > 0) "📦 ${stringResource(R.string.receive_items)} ($selectedCount)" else "📦 ${stringResource(R.string.receive_items)}")
+                            Text(
+                                if (selectedCount > 0) "📦 ${stringResource(R.string.receive_items)} ($selectedCount)" 
+                                else "📦 ${stringResource(R.string.receive_items)}",
+                                fontSize = 13.sp
+                            )
                         }
                     }
                     if (showAddButton && !isReadOnly) {
-                        TextButton(onClick = onAddClick) {
-                            Text("+ ${stringResource(R.string.add_items)}")
+                        TextButton(
+                            onClick = onAddClick,
+                            modifier = Modifier.height(36.dp)
+                        ) {
+                            Text("+ ${stringResource(R.string.add_items)}", fontSize = 13.sp)
                         }
                     }
                 }
             }
             
-            Spacer(modifier = Modifier.height(Spacing.small))
+            Spacer(modifier = Modifier.height(4.dp))
             
             if (items.isEmpty()) {
                 Text(
@@ -87,7 +97,7 @@ fun PurchaseOrderItemsList(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             } else {
-                // Select All / Deselect All row (only for ORDER and not read-only)
+                // Select All / Deselect All row - compact
                 if (showReceiveButton && !isReadOnly) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -98,21 +108,28 @@ fun PurchaseOrderItemsList(
                         Text(
                             text = if (selectedCount == items.size) stringResource(R.string.all_selected) else "$selectedCount/${items.size} ${stringResource(R.string.items_selected)}",
                             style = AppTypography.small,
+                            fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
-                        TextButton(onClick = onSelectAll) {
-                            Text(if (selectedCount == items.size) stringResource(R.string.deselect_all) else stringResource(R.string.select_all))
+                        TextButton(
+                            onClick = onSelectAll,
+                            modifier = Modifier.height(28.dp)
+                        ) {
+                            Text(
+                                if (selectedCount == items.size) stringResource(R.string.deselect_all) else stringResource(R.string.select_all),
+                                fontSize = 12.sp
+                            )
                         }
                     }
-                    Spacer(modifier = Modifier.height(Spacing.small))
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
                 
                 val isReceivedTab = status == PurchaseOrderStatus.RECEIVED
                 val isCompletedTab = status == PurchaseOrderStatus.COMPLETED
                 
                 items.forEachIndexed { index, item ->
-                    if (!isReadOnly && !isCompletedTab) {
-                        // ORDER and RECEIVED items - editable with checkbox and delete
+                    if (!isReadOnly && !isCompletedTab && !isReceivedTab) {
+                        // ORDER items - editable with checkbox and delete
                         OrderItemRow(
                             index = index,
                             item = item,
@@ -122,7 +139,7 @@ fun PurchaseOrderItemsList(
                             onItemDelete = { onItemDelete(index) }
                         )
                     } else {
-                        // COMPLETED items - read-only
+                        // RECEIVED and COMPLETED items - read-only, no checkbox
                         ReadOnlyItemRow(
                             index = index,
                             item = item
@@ -174,7 +191,7 @@ fun OrderItemRow(
                 onCheckedChange = { _ ->
                     onItemSelect()
                 },
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(18.dp)
             )
             
             Row(
@@ -206,9 +223,9 @@ fun OrderItemRow(
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = MaterialTheme.colorScheme.error
                 ),
-                modifier = Modifier.size(width = 32.dp, height = 32.dp)
+                modifier = Modifier.size(width = 28.dp, height = 28.dp)
             ) {
-                Text("✕", fontSize = 12.sp)
+                Text("✕", fontSize = 11.sp)
             }
         }
     }

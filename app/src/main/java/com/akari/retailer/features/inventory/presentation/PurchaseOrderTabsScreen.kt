@@ -19,6 +19,7 @@ import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
+import com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus
 import com.akari.retailer.navigation.Routes
 
 @Composable
@@ -63,15 +64,30 @@ fun PurchaseOrderTabsScreen(
                 return@Column
             }
 
-            if (state.orders.isEmpty()) {
+            // Filter out COMPLETED orders - only show ORDER and RECEIVED
+            val activeOrders = state.orders.filter { 
+                it.status != PurchaseOrderStatus.COMPLETED 
+            }
+
+            if (activeOrders.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("📦", fontSize = 48.sp)
-                        Text(stringResource(R.string.no_purchase_orders), style = AppTypography.header)
-                        Text(stringResource(R.string.tap_add_purchase_order), style = AppTypography.body, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Text("No active orders", style = AppTypography.header)
+                        Text(
+                            "Create a new order or check purchases",
+                            style = AppTypography.body,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                        Spacer(modifier = Modifier.height(Spacing.medium))
+                        TextButton(
+                            onClick = { navController.navigate(Routes.PURCHASES) }
+                        ) {
+                            Text("View Purchases")
+                        }
                     }
                 }
                 return@Column
@@ -82,7 +98,7 @@ fun PurchaseOrderTabsScreen(
                 verticalArrangement = Arrangement.spacedBy(Spacing.medium),
                 contentPadding = PaddingValues(bottom = Spacing.xxlarge)
             ) {
-                items(state.orders, key = { it.id }) { order ->
+                items(activeOrders, key = { it.id }) { order ->
                     PurchaseOrderCardCompact(
                         order = order,
                         navController = navController,
