@@ -6,6 +6,7 @@ import com.akari.retailer.features.expense.data.repository.CategoryRepository
 import com.akari.retailer.features.expense.data.repository.ExpenseRepository
 import com.akari.retailer.features.expense.domain.models.Expense
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
+import com.akari.retailer.features.expense.domain.models.ExpenseType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +17,8 @@ data class ExpenseAddState(
     val amount: String = "",
     val selectedCategory: ExpenseCategory? = null,
     val categories: List<ExpenseCategory> = emptyList(),
+    val expenseType: ExpenseType = ExpenseType.BUSINESS,  // ✅ NEW
+    val businessPercentage: String = "100",  // ✅ NEW
     val description: String = "",
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
@@ -26,6 +29,8 @@ sealed class ExpenseAddEvent {
     data class TitleChanged(val value: String) : ExpenseAddEvent()
     data class AmountChanged(val value: String) : ExpenseAddEvent()
     data class CategorySelected(val category: ExpenseCategory) : ExpenseAddEvent()
+    data class ExpenseTypeChanged(val type: ExpenseType) : ExpenseAddEvent()  // ✅ NEW
+    data class BusinessPercentageChanged(val value: String) : ExpenseAddEvent()  // ✅ NEW
     data class DescriptionChanged(val value: String) : ExpenseAddEvent()
     data object SaveExpense : ExpenseAddEvent()
     data object ClearError : ExpenseAddEvent()
@@ -49,6 +54,8 @@ class ExpenseAddViewModel(
             is ExpenseAddEvent.TitleChanged -> _state.value = _state.value.copy(title = event.value)
             is ExpenseAddEvent.AmountChanged -> _state.value = _state.value.copy(amount = event.value)
             is ExpenseAddEvent.CategorySelected -> _state.value = _state.value.copy(selectedCategory = event.category)
+            is ExpenseAddEvent.ExpenseTypeChanged -> _state.value = _state.value.copy(expenseType = event.type)
+            is ExpenseAddEvent.BusinessPercentageChanged -> _state.value = _state.value.copy(businessPercentage = event.value)
             is ExpenseAddEvent.DescriptionChanged -> _state.value = _state.value.copy(description = event.value)
             ExpenseAddEvent.SaveExpense -> saveExpense()
             ExpenseAddEvent.ClearError -> _state.value = _state.value.copy(error = null)
@@ -87,13 +94,26 @@ class ExpenseAddViewModel(
             return
         }
         
+        // Validate business percentage for MIXED type
+        if (currentState.expenseType == ExpenseType.MIXED) {
+            val percentage = currentState.businessPercentage.toIntOrNull()
+            if (percentage == null || percentage < 0 || percentage > 100) {
+                _state.value = _state.value.copy(error = "Business percentage must be between 0 and 100")
+                return
+            }
+        }
+        
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
+            
+            val percentage = currentState.businessPercentage.toIntOrNull() ?: 100
             
             val expense = Expense(
                 title = currentState.title.trim(),
                 amount = amountInt,
-                categoryId = currentState.selectedCategory.id,  // ✅ Fixed
+                categoryId = currentState.selectedCategory.id,
+                type = currentState.expenseType,
+                businessPercentage = if (currentState.expenseType == ExpenseType.MIXED) percentage else 100,
                 description = currentState.description.trim()
             )
             

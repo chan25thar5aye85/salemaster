@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.expense.data.repository.CategoryRepository
 import com.akari.retailer.features.expense.data.repository.ExpenseRepository
-import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +30,8 @@ class ExpenseListViewModel(
             is ExpenseListEvent.ClearError -> clearError()
             is ExpenseListEvent.SearchQueryChanged -> searchQueryChanged(event.query)
             is ExpenseListEvent.ClearSearch -> clearSearch()
+            is ExpenseListEvent.ToggleCategoryFilter -> toggleCategoryFilter(event.categoryId)
+            is ExpenseListEvent.ClearCategoryFilters -> clearCategoryFilters()
         }
     }
 
@@ -57,7 +58,7 @@ class ExpenseListViewModel(
                         error = null,
                         totalExpenses = expenses.sumOf { it.amount }
                     )
-                    applySearch()
+                    applyFilters()
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
@@ -94,25 +95,50 @@ class ExpenseListViewModel(
         }
     }
 
+    private fun toggleCategoryFilter(categoryId: String) {
+        val currentSelected = _state.value.selectedCategoryIds.toMutableSet()
+        if (currentSelected.contains(categoryId)) {
+            currentSelected.remove(categoryId)
+        } else {
+            currentSelected.add(categoryId)
+        }
+        _state.value = _state.value.copy(selectedCategoryIds = currentSelected.toSet())
+        applyFilters()
+    }
+
+    private fun clearCategoryFilters() {
+        _state.value = _state.value.copy(selectedCategoryIds = emptySet())
+        applyFilters()
+    }
+
     private fun searchQueryChanged(query: String) {
         _state.value = _state.value.copy(searchQuery = query)
-        applySearch()
+        applyFilters()
     }
 
     private fun clearSearch() {
         _state.value = _state.value.copy(searchQuery = "")
-        applySearch()
+        applyFilters()
     }
 
-    private fun applySearch() {
+    private fun applyFilters() {
         val query = _state.value.searchQuery.lowercase().trim()
         val allExpenses = _state.value.allExpenses
         val categories = _state.value.categories
+        val selectedCategoryIds = _state.value.selectedCategoryIds
         
-        val filtered = if (query.isEmpty()) {
-            allExpenses
-        } else {
-            allExpenses.filter { expense ->
+        var filtered = allExpenses
+        
+        // Apply category filter
+        if (selectedCategoryIds.isNotEmpty()) {
+            filtered = filtered.filter { expense ->
+                selectedCategoryIds.contains(expense.categoryId)
+            }
+        }
+        
+        // Apply search filter
+        if (query.isNotEmpty()) {
+            filtered = filtered.filter { expense ->
                 expense.title.lowercase().contains(query) ||
                 categories.find { it.id == expense.categoryId }?.name?.lowercase()?.contains(query) == true
             }

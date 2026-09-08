@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -32,11 +34,15 @@ fun AppScreen(
     onHistoryClick: (() -> Unit)? = null,
     showAddButton: Boolean = false,
     onAddClick: (() -> Unit)? = null,
+    showAnalyticsButton: Boolean = false,
+    onAnalyticsClick: (() -> Unit)? = null,
+    showFilterButton: Boolean = false,
+    onFilterClick: (() -> Unit)? = null,
     showTopBar: Boolean = false,
     floatingActionButton: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
-    val hasTopBar = showBackButton || showSearchButton || showDateFilter || showHistoryButton || showTopBar || showAddButton
+    val hasTopBar = showBackButton || showSearchButton || showDateFilter || showHistoryButton || showTopBar || showAddButton || showAnalyticsButton || showFilterButton
 
     Scaffold(
         topBar = {
@@ -60,6 +66,24 @@ fun AppScreen(
                         }
                     },
                     actions = {
+                        if (showFilterButton) {
+                            IconButton(onClick = { onFilterClick?.invoke() }) {
+                                Icon(
+                                    Icons.Default.FilterList,
+                                    contentDescription = "Filter",
+                                    tint = Color.Black
+                                )
+                            }
+                        }
+                        if (showAnalyticsButton) {
+                            IconButton(onClick = { onAnalyticsClick?.invoke() }) {
+                                Icon(
+                                    Icons.Default.Analytics,
+                                    contentDescription = "Analytics",
+                                    tint = Color.Black
+                                )
+                            }
+                        }
                         if (showAddButton) {
                             IconButton(onClick = { onAddClick?.invoke() }) {
                                 Icon(
@@ -100,7 +124,7 @@ fun AppScreen(
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent
                     ),
-                    windowInsets = TopAppBarDefaults.windowInsets  // ✅ Fixed: respect status bar
+                    windowInsets = TopAppBarDefaults.windowInsets
                 )
             }
         },

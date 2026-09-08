@@ -28,6 +28,7 @@ import com.akari.retailer.features.customer.presentation.CustomerEditScreen
 import com.akari.retailer.features.customer.presentation.CustomerListScreen
 import com.akari.retailer.features.expense.presentation.CategoryManagementScreen
 import com.akari.retailer.features.expense.presentation.ExpenseAddScreen
+import com.akari.retailer.features.expense.presentation.ExpenseAnalyticsScreen
 import com.akari.retailer.features.expense.presentation.ExpenseDetailScreen
 import com.akari.retailer.features.expense.presentation.ExpenseEditScreen
 import com.akari.retailer.features.expense.presentation.ExpenseListScreen
@@ -195,6 +196,11 @@ fun AppNavHost() {
                         navController = navController,
                         onBack = { navController.popBackStack() }
                     )
+                }
+                
+                // ✅ EXPENSE ANALYTICS
+                composable(Routes.EXPENSE_ANALYTICS) {
+                    ExpenseAnalyticsScreen(onBack = { navController.popBackStack() })
                 }
                 
                 // INVENTORY MODULE

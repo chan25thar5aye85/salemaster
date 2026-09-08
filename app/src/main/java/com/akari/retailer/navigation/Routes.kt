@@ -10,6 +10,7 @@ object Routes {
     const val EXPENSE_ADD = "expense_add"
     const val EXPENSE_DETAIL = "expense_detail/{expenseId}"
     const val EXPENSE_EDIT = "expense_edit/{expenseId}"
+    const val EXPENSE_ANALYTICS = "expense_analytics"
     
     // Categories
     const val CATEGORIES = "categories"

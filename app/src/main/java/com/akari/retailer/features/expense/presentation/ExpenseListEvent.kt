@@ -7,4 +7,6 @@ sealed class ExpenseListEvent {
     data object ClearError : ExpenseListEvent()
     data class SearchQueryChanged(val query: String) : ExpenseListEvent()
     data object ClearSearch : ExpenseListEvent()
+    data class ToggleCategoryFilter(val categoryId: String) : ExpenseListEvent()
+    data object ClearCategoryFilters : ExpenseListEvent()
 }

@@ -3,6 +3,7 @@ package com.akari.retailer.features.expense.data.remote
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.akari.retailer.features.expense.domain.models.Expense
+import com.akari.retailer.features.expense.domain.models.ExpenseType
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -40,7 +41,9 @@ class FirestoreExpenseService {
             val data = mapOf(
                 "title" to expense.title,
                 "amount" to expense.amount,
-                "categoryId" to expense.categoryId,  // ✅ Fixed
+                "categoryId" to expense.categoryId,
+                "type" to expense.type.name,
+                "businessPercentage" to expense.businessPercentage,
                 "description" to expense.description,
                 "date" to expense.date,
                 "createdAt" to expense.createdAt,
@@ -65,7 +68,9 @@ class FirestoreExpenseService {
             val data = mapOf(
                 "title" to expense.title,
                 "amount" to expense.amount,
-                "categoryId" to expense.categoryId,  // ✅ Fixed
+                "categoryId" to expense.categoryId,
+                "type" to expense.type.name,
+                "businessPercentage" to expense.businessPercentage,
                 "description" to expense.description,
                 "date" to expense.date,
                 "updatedAt" to System.currentTimeMillis()
@@ -120,7 +125,13 @@ class FirestoreExpenseService {
                         id = doc.id,
                         title = data["title"] as? String ?: "",
                         amount = (data["amount"] as? Number)?.toInt() ?: 0,
-                        categoryId = data["categoryId"] as? String ?: "default_other",  // ✅ Fixed
+                        categoryId = data["categoryId"] as? String ?: "default_other",
+                        type = try {
+                            ExpenseType.valueOf(data["type"] as? String ?: "BUSINESS")
+                        } catch (e: Exception) {
+                            ExpenseType.BUSINESS
+                        },
+                        businessPercentage = (data["businessPercentage"] as? Number)?.toInt() ?: 100,
                         description = data["description"] as? String ?: "",
                         date = (data["date"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                         createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
@@ -162,7 +173,13 @@ class FirestoreExpenseService {
                     id = snapshot.id,
                     title = data["title"] as? String ?: "",
                     amount = (data["amount"] as? Number)?.toInt() ?: 0,
-                    categoryId = data["categoryId"] as? String ?: "default_other",  // ✅ Fixed
+                    categoryId = data["categoryId"] as? String ?: "default_other",
+                    type = try {
+                        ExpenseType.valueOf(data["type"] as? String ?: "BUSINESS")
+                    } catch (e: Exception) {
+                        ExpenseType.BUSINESS
+                    },
+                    businessPercentage = (data["businessPercentage"] as? Number)?.toInt() ?: 100,
                     description = data["description"] as? String ?: "",
                     date = (data["date"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                     createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),

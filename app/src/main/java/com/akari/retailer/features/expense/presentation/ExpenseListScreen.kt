@@ -29,6 +29,7 @@ import com.akari.retailer.features.expense.data.repository.FirestoreExpenseRepos
 import com.akari.retailer.features.expense.data.remote.FirestoreCategoryService
 import com.akari.retailer.features.expense.data.remote.FirestoreExpenseService
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
+import com.akari.retailer.features.expense.domain.models.ExpenseType
 import com.akari.retailer.navigation.Routes
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -55,6 +56,7 @@ fun ExpenseListScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var pendingDeleteId by remember { mutableStateOf<String?>(null) }
     var showSearch by remember { mutableStateOf(false) }
+    var showFilterDialog by remember { mutableStateOf(false) }
 
     if (showDeleteDialog && pendingDeleteId != null) {
         AlertDialog(
@@ -96,7 +98,11 @@ fun ExpenseListScreen(
         showSearchButton = true,
         onSearchClick = { showSearch = !showSearch },
         showAddButton = true,
-        onAddClick = { navController.navigate(Routes.EXPENSE_ADD) }
+        onAddClick = { navController.navigate(Routes.EXPENSE_ADD) },
+        showAnalyticsButton = true,
+        onAnalyticsClick = { navController.navigate(Routes.EXPENSE_ANALYTICS) },
+        showFilterButton = true,
+        onFilterClick = { showFilterDialog = true }
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
@@ -127,6 +133,43 @@ fun ExpenseListScreen(
                         contentDescription = "Manage Categories",
                         modifier = Modifier.size(20.dp)
                     )
+                }
+            }
+
+            // Filter status bar
+            if (state.selectedCategoryIds.isNotEmpty()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Spacing.medium),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("🔍", fontSize = 16.sp)
+                            Text(
+                                text = "${state.selectedCategoryIds.size} category${if (state.selectedCategoryIds.size > 1) "ies" else ""} selected",
+                                style = AppTypography.small,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        TextButton(
+                            onClick = { viewModel.handleEvent(ExpenseListEvent.ClearCategoryFilters) }
+                        ) {
+                            Text("Clear")
+                        }
+                    }
                 }
             }
 
@@ -288,6 +331,26 @@ fun ExpenseListScreen(
             }
         }
     }
+
+    // Filter Dialog
+    if (showFilterDialog) {
+        ExpenseFilterDialog(
+            categories = state.categories,
+            selectedCategories = state.selectedCategoryIds,
+            onCategoryToggle = { categoryId ->
+                viewModel.handleEvent(ExpenseListEvent.ToggleCategoryFilter(categoryId))
+            },
+            onClearAll = {
+                viewModel.handleEvent(ExpenseListEvent.ClearCategoryFilters)
+            },
+            onApply = {
+                showFilterDialog = false
+            },
+            onDismiss = {
+                showFilterDialog = false
+            }
+        )
+    }
 }
 
 @Composable
@@ -319,34 +382,81 @@ fun ExpenseCard(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
+                // Title
                 Text(
                     text = expense.title,
                     style = AppTypography.title
                 )
                 
+                Spacer(modifier = Modifier.height(2.dp))
+                
+                // Category and Type badges
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
+                    // Category badge
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            text = categoryName,
+                            style = AppTypography.small,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                    
+                    // ✅ Type badge
+                    Surface(
+                        color = when (expense.type) {
+                            ExpenseType.BUSINESS -> MaterialTheme.colorScheme.primaryContainer
+                            ExpenseType.PERSONAL -> MaterialTheme.colorScheme.secondaryContainer
+                            ExpenseType.MIXED -> MaterialTheme.colorScheme.tertiaryContainer
+                        },
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            text = when (expense.type) {
+                                ExpenseType.BUSINESS -> "💼 Business"
+                                ExpenseType.PERSONAL -> "👤 Personal"
+                                ExpenseType.MIXED -> "🔄 ${expense.businessPercentage}%"
+                            },
+                            style = AppTypography.small,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(2.dp))
+                
+                // Date
+                Text(
+                    text = dateFormat.format(expense.date),
+                    style = AppTypography.small,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+            }
+            
+            // Amount
+            Column(
+                horizontalAlignment = Alignment.End
+            ) {
+                Text(
+                    text = "${expense.amount}",
+                    style = AppTypography.header,
+                    color = MaterialTheme.colorScheme.error
+                )
+                
+                // Show business amount if different
+                if (expense.type == ExpenseType.MIXED) {
                     Text(
-                        text = categoryName,
-                        style = AppTypography.body,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                    Text(
-                        text = dateFormat.format(expense.date),
-                        style = AppTypography.body,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        text = "Business: ${expense.getBusinessAmount()}",
+                        style = AppTypography.small,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
-            
-            Text(
-                text = "${expense.amount}",
-                style = AppTypography.header,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(start = Spacing.medium)
-            )
             
             IconButton(onClick = onDelete) {
                 Icon(

@@ -1,6 +1,7 @@
 package com.akari.retailer.features.expense.presentation
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -40,6 +43,7 @@ import com.akari.retailer.features.expense.data.repository.FirestoreExpenseRepos
 import com.akari.retailer.features.expense.data.remote.FirestoreCategoryService
 import com.akari.retailer.features.expense.data.remote.FirestoreExpenseService
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
+import com.akari.retailer.features.expense.domain.models.ExpenseType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,6 +75,7 @@ fun ExpenseAddScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
+            // Title
             OutlinedTextField(
                 value = state.title,
                 onValueChange = { viewModel.handleEvent(ExpenseAddEvent.TitleChanged(it)) },
@@ -81,6 +86,7 @@ fun ExpenseAddScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
+            // Amount
             OutlinedTextField(
                 value = state.amount,
                 onValueChange = { viewModel.handleEvent(ExpenseAddEvent.AmountChanged(it)) },
@@ -93,10 +99,10 @@ fun ExpenseAddScreen(
             Spacer(modifier = Modifier.height(Spacing.medium))
             
             // Category Dropdown
-            var expanded by remember { mutableStateOf(false) }
+            var categoryExpanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = it }
+                expanded = categoryExpanded,
+                onExpandedChange = { categoryExpanded = it }
             ) {
                 OutlinedTextField(
                     value = state.selectedCategory?.name ?: "Select Category",
@@ -106,18 +112,18 @@ fun ExpenseAddScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) }
                 )
                 ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
+                    expanded = categoryExpanded,
+                    onDismissRequest = { categoryExpanded = false }
                 ) {
                     state.categories.forEach { category ->
                         DropdownMenuItem(
                             text = { Text(category.name) },
                             onClick = {
                                 viewModel.handleEvent(ExpenseAddEvent.CategorySelected(category))
-                                expanded = false
+                                categoryExpanded = false
                             }
                         )
                     }
@@ -126,6 +132,65 @@ fun ExpenseAddScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
+            // Expense Type Selector
+            Text(
+                text = "Expense Type",
+                style = AppTypography.label,
+                modifier = Modifier.padding(bottom = Spacing.small)
+            )
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+            ) {
+                ExpenseTypeButton(
+                    type = ExpenseType.BUSINESS,
+                    label = "💼 Business",
+                    isSelected = state.expenseType == ExpenseType.BUSINESS,
+                    onClick = { viewModel.handleEvent(ExpenseAddEvent.ExpenseTypeChanged(ExpenseType.BUSINESS)) },
+                    modifier = Modifier.weight(1f)
+                )
+                ExpenseTypeButton(
+                    type = ExpenseType.PERSONAL,
+                    label = "👤 Personal",
+                    isSelected = state.expenseType == ExpenseType.PERSONAL,
+                    onClick = { viewModel.handleEvent(ExpenseAddEvent.ExpenseTypeChanged(ExpenseType.PERSONAL)) },
+                    modifier = Modifier.weight(1f)
+                )
+                ExpenseTypeButton(
+                    type = ExpenseType.MIXED,
+                    label = "🔄 Mixed",
+                    isSelected = state.expenseType == ExpenseType.MIXED,
+                    onClick = { viewModel.handleEvent(ExpenseAddEvent.ExpenseTypeChanged(ExpenseType.MIXED)) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            
+            // Business Percentage (only for MIXED)
+            if (state.expenseType == ExpenseType.MIXED) {
+                Spacer(modifier = Modifier.height(Spacing.small))
+                OutlinedTextField(
+                    value = state.businessPercentage,
+                    onValueChange = { 
+                        if (it.isEmpty() || it.toIntOrNull()?.let { it in 0..100 } == true) {
+                            viewModel.handleEvent(ExpenseAddEvent.BusinessPercentageChanged(it))
+                        }
+                    },
+                    label = { Text("Business % (0-100)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                Text(
+                    text = "Percentage of this expense that is business-related",
+                    style = AppTypography.small,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.medium))
+            
+            // Description
             OutlinedTextField(
                 value = state.description,
                 onValueChange = { viewModel.handleEvent(ExpenseAddEvent.DescriptionChanged(it)) },
@@ -163,5 +228,31 @@ fun ExpenseAddScreen(
             
             Spacer(modifier = Modifier.height(Spacing.xxlarge))
         }
+    }
+}
+
+@Composable
+fun ExpenseTypeButton(
+    type: ExpenseType,
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected) 
+                MaterialTheme.colorScheme.primary 
+            else 
+                MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = if (isSelected) 
+                MaterialTheme.colorScheme.onPrimary 
+            else 
+                MaterialTheme.colorScheme.onSurface
+        )
+    ) {
+        Text(label)
     }
 }
