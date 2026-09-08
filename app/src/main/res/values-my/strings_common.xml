@@ -57,6 +57,7 @@
     <string name="updating">ပြင်နေသည်...</string>
     
     <!-- FAB Menu -->
+    <string name="fab_sale_entry">အရောင်းထည့်ရန်</string>
     <string name="fab_expenses">အသုံးစရိတ်များ</string>
     <string name="fab_inventory">ပစ္စည်းစာရင်း</string>
     <string name="fab_customers">ဖောက်သည်များ</string>

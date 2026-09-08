@@ -57,6 +57,7 @@
     <string name="updating">Updating...</string>
     
     <!-- FAB Menu -->
+    <string name="fab_sale_entry">Sale Entry</string>
     <string name="fab_expenses">Expenses</string>
     <string name="fab_inventory">Inventory</string>
     <string name="fab_customers">Customers</string>

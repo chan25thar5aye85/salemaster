@@ -24,6 +24,7 @@ data class PurchaseOrderState(
     val products: List<Product> = emptyList(),
     val selectedSupplier: Supplier? = null,
     val orderName: String = "",
+    val expectedDeliveryDate: Long = 0,
     val tempItems: List<PurchaseOrderItem> = emptyList(),
     val notes: String = "",
     val isLoading: Boolean = false,
@@ -35,6 +36,7 @@ data class PurchaseOrderState(
 sealed class PurchaseOrderEvent {
     data class SupplierSelected(val supplier: Supplier) : PurchaseOrderEvent()
     data class OrderNameChanged(val value: String) : PurchaseOrderEvent()
+    data class ExpectedDeliveryDateChanged(val timestamp: Long) : PurchaseOrderEvent()
     data object AddItem : PurchaseOrderEvent()
     data class UpdateItem(
         val index: Int,
@@ -71,6 +73,9 @@ class PurchaseOrderViewModel(
             }
             is PurchaseOrderEvent.OrderNameChanged -> {
                 _state.value = _state.value.copy(orderName = event.value)
+            }
+            is PurchaseOrderEvent.ExpectedDeliveryDateChanged -> {
+                _state.value = _state.value.copy(expectedDeliveryDate = event.timestamp, error = null)
             }
             PurchaseOrderEvent.AddItem -> {
                 val newItem = PurchaseOrderItem()
@@ -137,6 +142,11 @@ class PurchaseOrderViewModel(
             return
         }
         
+        if (currentState.expectedDeliveryDate == 0L) {
+            _state.value = _state.value.copy(error = "Select expected delivery date")
+            return
+        }
+        
         val invalidItems = currentState.tempItems.filter { 
             it.productId.isEmpty() || it.quantity <= 0 || it.costPrice <= 0 
         }
@@ -168,6 +178,7 @@ class PurchaseOrderViewModel(
                         )
                     },
                     orderTotal = totalCost,
+                    expectedDeliveryDate = currentState.expectedDeliveryDate,
                     notes = currentState.notes,
                     createdBy = "default"
                 )

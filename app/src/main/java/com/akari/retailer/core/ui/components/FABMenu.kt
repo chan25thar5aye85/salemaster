@@ -43,7 +43,7 @@ fun FABMenu(
     var isExpanded by remember { mutableStateOf(false) }
 
     val menuItems = listOf(
-        FABMenuItemData(Icons.Default.PointOfSale, "Sale Entry", "sale_entry"),
+        FABMenuItemData(Icons.Default.PointOfSale, stringResource(R.string.fab_sale_entry), "sale_entry"),
         FABMenuItemData(Icons.Default.Receipt, stringResource(R.string.fab_expenses), "expenses"),
         FABMenuItemData(Icons.Default.Inventory, stringResource(R.string.fab_inventory), "inventory"),
         FABMenuItemData(Icons.Default.People, stringResource(R.string.fab_customers), "customers"),

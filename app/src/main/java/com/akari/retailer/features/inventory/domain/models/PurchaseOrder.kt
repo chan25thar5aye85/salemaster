@@ -1,9 +1,9 @@
 package com.akari.retailer.features.inventory.domain.models
 
 enum class PurchaseOrderStatus {
-    ORDER,      // Creating/editing the order
-    RECEIVED,   // Items received, ready for purchase
-    COMPLETED   // Purchase created, order is done
+    ORDER,
+    RECEIVED,
+    COMPLETED
 }
 
 data class PurchaseOrderItem(
@@ -22,16 +22,15 @@ data class PurchaseOrder(
     val supplierName: String = "",
     val status: PurchaseOrderStatus = PurchaseOrderStatus.ORDER,
     
-    // Each status has its own items
     val orderItems: List<PurchaseOrderItem> = emptyList(),
     val receivedItems: List<PurchaseOrderItem> = emptyList(),
     
-    // Each status has its own total
     val orderTotal: Int = 0,
     val receivedTotal: Int = 0,
     
-    // Timeline
+    // Dates
     val orderDate: Long = System.currentTimeMillis(),
+    val expectedDeliveryDate: Long = 0,  // NEW: User sets this
     val receivedDate: Long = 0,
     val completedDate: Long = 0,
     
@@ -44,7 +43,7 @@ data class PurchaseOrder(
         return when (status) {
             PurchaseOrderStatus.ORDER -> orderItems
             PurchaseOrderStatus.RECEIVED -> receivedItems
-            PurchaseOrderStatus.COMPLETED -> receivedItems // Show received items as final
+            PurchaseOrderStatus.COMPLETED -> receivedItems
         }
     }
     

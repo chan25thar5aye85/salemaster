@@ -1,5 +1,6 @@
 package com.akari.retailer.features.inventory.presentation
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -7,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +30,9 @@ import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryServi
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderItem
 import com.akari.retailer.features.supplier.data.repository.FirestoreSupplierRepository
 import com.akari.retailer.features.supplier.data.remote.FirestoreSupplierService
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +57,9 @@ fun PurchaseOrderScreen(
     )
     
     val state by viewModel.state.collectAsState()
+    
+    var showDatePicker by remember { mutableStateOf(false) }
+    val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     
     // Reset success state after navigation
     LaunchedEffect(state.saveSuccess) {
@@ -146,6 +154,25 @@ fun PurchaseOrderScreen(
                     }
                 }
             }
+            
+            Spacer(modifier = Modifier.height(Spacing.medium))
+            
+            // Expected Delivery Date
+            OutlinedTextField(
+                value = if (state.expectedDeliveryDate > 0) dateFormat.format(Date(state.expectedDeliveryDate)) else "",
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Expected Delivery Date") },
+                placeholder = { Text("Select date") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showDatePicker = true },
+                trailingIcon = {
+                    IconButton(onClick = { showDatePicker = true }) {
+                        Icon(Icons.Default.Event, contentDescription = "Select date")
+                    }
+                }
+            )
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
@@ -276,6 +303,7 @@ fun PurchaseOrderScreen(
             val buttonEnabled = state.selectedSupplier != null && 
                                 state.tempItems.isNotEmpty() && 
                                 state.orderName.isNotBlank() &&
+                                state.expectedDeliveryDate > 0 &&
                                 !state.isSaving
             
             if (!buttonEnabled && state.error == null) {
@@ -284,6 +312,7 @@ fun PurchaseOrderScreen(
                         state.orderName.isBlank() -> "⚠️ ${stringResource(R.string.order_name_label)}"
                         state.selectedSupplier == null -> "⚠️ ${stringResource(R.string.supplier_label)}"
                         state.tempItems.isEmpty() -> "⚠️ ${stringResource(R.string.add_items)}"
+                        state.expectedDeliveryDate == 0L -> "⚠️ Select expected delivery date"
                         else -> ""
                     },
                     style = AppTypography.small,
@@ -302,6 +331,36 @@ fun PurchaseOrderScreen(
             )
             
             Spacer(modifier = Modifier.height(Spacing.xxlarge))
+        }
+    }
+    
+    // Date Picker Dialog
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = if (state.expectedDeliveryDate > 0) state.expectedDeliveryDate else System.currentTimeMillis()
+        )
+        
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { timestamp ->
+                            viewModel.handleEvent(PurchaseOrderEvent.ExpectedDeliveryDateChanged(timestamp))
+                        }
+                        showDatePicker = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 }

@@ -62,7 +62,6 @@ fun AppNavHost() {
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Navigation Host
             NavHost(
                 navController = navController,
                 startDestination = Routes.SALE_ENTRY
@@ -264,6 +263,21 @@ fun AppNavHost() {
                     PurchaseOrderDetailScreen(
                         navController = navController,
                         orderId = orderId,
+                        isReadOnly = false,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                
+                // Read-only order detail for history
+                composable(
+                    route = Routes.PURCHASE_ORDER_DETAIL_READONLY,
+                    arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+                    PurchaseOrderDetailScreen(
+                        navController = navController,
+                        orderId = orderId,
+                        isReadOnly = true,
                         onBack = { navController.popBackStack() }
                     )
                 }
@@ -294,6 +308,7 @@ fun AppNavHost() {
                     val purchaseId = backStackEntry.arguments?.getString("purchaseId") ?: ""
                     PurchaseDetailScreen(
                         purchaseId = purchaseId,
+                        navController = navController,
                         onBack = { navController.popBackStack() }
                     )
                 }

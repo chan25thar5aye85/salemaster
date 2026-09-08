@@ -237,11 +237,8 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
                     }
                     PurchaseOrderStatus.COMPLETED -> {
                         updates["completedDate"] = currentTime
-                        Log.d(TAG, "✅ Setting order to COMPLETED")
                     }
-                    else -> {
-                        Log.d(TAG, "No special handling for status: $newStatus")
-                    }
+                    else -> {}
                 }
             }
             
@@ -286,6 +283,7 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             "orderTotal" to order.orderTotal,
             "receivedTotal" to order.receivedTotal,
             "orderDate" to order.orderDate,
+            "expectedDeliveryDate" to order.expectedDeliveryDate,
             "receivedDate" to order.receivedDate,
             "completedDate" to order.completedDate,
             "notes" to order.notes,
@@ -320,6 +318,7 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             orderTotal = (data["orderTotal"] as? Number)?.toInt() ?: 0,
             receivedTotal = (data["receivedTotal"] as? Number)?.toInt() ?: 0,
             orderDate = (data["orderDate"] as? Number)?.toLong() ?: System.currentTimeMillis(),
+            expectedDeliveryDate = (data["expectedDeliveryDate"] as? Number)?.toLong() ?: 0,
             receivedDate = (data["receivedDate"] as? Number)?.toLong() ?: 0,
             completedDate = (data["completedDate"] as? Number)?.toLong() ?: 0,
             notes = data["notes"] as? String ?: "",

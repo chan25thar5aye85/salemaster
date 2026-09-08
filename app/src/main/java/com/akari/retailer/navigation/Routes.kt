@@ -21,6 +21,7 @@ object Routes {
     const val PURCHASE_ORDERS = "purchase_orders"
     const val PURCHASE_ORDER_ADD = "purchase_order_add"
     const val PURCHASE_ORDER_DETAIL = "purchase_order_detail/{orderId}"
+    const val PURCHASE_ORDER_DETAIL_READONLY = "purchase_order_detail_readonly/{orderId}"
     const val PURCHASE_ORDER_RECEIPT = "purchase_order_receipt/{orderId}"
     
     // Purchases (Completed purchases)

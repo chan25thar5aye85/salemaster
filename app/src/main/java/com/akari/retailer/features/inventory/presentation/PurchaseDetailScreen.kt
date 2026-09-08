@@ -11,20 +11,24 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
+import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseRepository
 import com.akari.retailer.features.inventory.domain.models.Purchase
+import com.akari.retailer.navigation.Routes
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Composable
 fun PurchaseDetailScreen(
     purchaseId: String,
+    navController: NavController,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -37,6 +41,13 @@ fun PurchaseDetailScreen(
     var error by remember { mutableStateOf<String?>(null) }
     
     val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+    val purchaseNotFound = context.getString(R.string.purchase_not_found)
+    val loadingPurchases = context.getString(R.string.loading_purchases)
+    val backText = context.getString(R.string.back)
+    val orderNumberLabel = context.getString(R.string.order_number_label)
+    val itemsCount = context.getString(R.string.items_count)
+    val totalCost = context.getString(R.string.total_cost)
+    val notesText = context.getString(R.string.notes)
     
     LaunchedEffect(purchaseId) {
         isLoading = true
@@ -45,12 +56,12 @@ fun PurchaseDetailScreen(
                 purchase = loadedPurchase
                 isLoading = false
                 if (loadedPurchase == null) {
-                    error = context.getString(R.string.purchase_not_found)
+                    error = purchaseNotFound
                 }
             }
         } catch (e: Exception) {
             isLoading = false
-            error = e.message ?: context.getString(R.string.purchase_not_found)
+            error = e.message ?: purchaseNotFound
         }
     }
 
@@ -73,7 +84,7 @@ fun PurchaseDetailScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             CircularProgressIndicator()
                             Text(
-                                text = stringResource(R.string.loading_purchases),
+                                text = loadingPurchases,
                                 style = AppTypography.body,
                                 modifier = Modifier.padding(top = Spacing.medium)
                             )
@@ -91,7 +102,7 @@ fun PurchaseDetailScreen(
                             Text(error!!, style = AppTypography.body, color = MaterialTheme.colorScheme.error)
                             Spacer(modifier = Modifier.height(Spacing.medium))
                             TextButton(onClick = onBack) {
-                                Text(stringResource(R.string.back))
+                                Text(backText)
                             }
                         }
                     }
@@ -104,10 +115,10 @@ fun PurchaseDetailScreen(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("📭", fontSize = 48.sp)
-                            Text(stringResource(R.string.purchase_not_found), style = AppTypography.header)
+                            Text(purchaseNotFound, style = AppTypography.header)
                             Spacer(modifier = Modifier.height(Spacing.medium))
                             TextButton(onClick = onBack) {
-                                Text(stringResource(R.string.back))
+                                Text(backText)
                             }
                         }
                     }
@@ -147,7 +158,7 @@ fun PurchaseDetailScreen(
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
                             Text(
-                                text = "${stringResource(R.string.order_number)}: ${currentPurchase.orderNumber}",
+                                text = "$orderNumberLabel: ${currentPurchase.orderNumber}",
                                 style = AppTypography.small,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
@@ -162,7 +173,7 @@ fun PurchaseDetailScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "${stringResource(R.string.items_count)} (${currentPurchase.items.size})",
+                                text = "$itemsCount (${currentPurchase.items.size})",
                                 style = AppTypography.title,
                                 modifier = Modifier.padding(bottom = Spacing.medium)
                             )
@@ -196,7 +207,7 @@ fun PurchaseDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = stringResource(R.string.total_cost),
+                                    text = totalCost,
                                     style = AppTypography.title
                                 )
                                 Text(
@@ -215,7 +226,7 @@ fun PurchaseDetailScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    text = stringResource(R.string.notes),
+                                    text = notesText,
                                     style = AppTypography.title,
                                     modifier = Modifier.padding(bottom = Spacing.medium)
                                 )
@@ -226,6 +237,18 @@ fun PurchaseDetailScreen(
                             }
                         }
                     }
+                    
+                    Spacer(modifier = Modifier.height(Spacing.medium))
+                    
+                    // View Order Button
+                    AppPrimaryButton(
+                        text = "📋 View Original Order",
+                        onClick = {
+                            navController.navigate(
+                                Routes.PURCHASE_ORDER_DETAIL_READONLY.replace("{orderId}", currentPurchase.orderId)
+                            )
+                        }
+                    )
                     
                     Spacer(modifier = Modifier.height(Spacing.xxlarge))
                 }
