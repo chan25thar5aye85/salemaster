@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +43,7 @@ fun FABMenu(
     var isExpanded by remember { mutableStateOf(false) }
 
     val menuItems = listOf(
+        FABMenuItemData(Icons.Default.PointOfSale, "Sale Entry", "sale_entry"),
         FABMenuItemData(Icons.Default.Receipt, stringResource(R.string.fab_expenses), "expenses"),
         FABMenuItemData(Icons.Default.Inventory, stringResource(R.string.fab_inventory), "inventory"),
         FABMenuItemData(Icons.Default.People, stringResource(R.string.fab_customers), "customers"),
@@ -52,9 +54,9 @@ fun FABMenu(
         FABMenuItemData(Icons.Default.Settings, stringResource(R.string.fab_settings), "settings")
     )
 
-    // Split into two columns
-    val firstColumn = menuItems.take(4)
-    val secondColumn = menuItems.drop(4)
+    // Split into two columns: first 5, last 4
+    val firstColumn = menuItems.take(5)
+    val secondColumn = menuItems.drop(5)
 
     Box(
         modifier = modifier
@@ -122,7 +124,7 @@ fun FABMenu(
                 }
             }
 
-            // FAB button - moved to bottom left
+            // FAB button - bottom left, always visible
             FloatingActionButton(
                 onClick = { isExpanded = !isExpanded },
                 containerColor = MaterialTheme.colorScheme.primary,

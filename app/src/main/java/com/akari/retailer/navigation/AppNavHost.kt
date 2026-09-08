@@ -13,7 +13,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -61,10 +60,9 @@ fun AppNavHost() {
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier = Modifier.fillMaxSize()
         ) {
+            // Navigation Host
             NavHost(
                 navController = navController,
                 startDestination = Routes.SALE_ENTRY
@@ -301,34 +299,33 @@ fun AppNavHost() {
                 }
             }
 
-            // FAB MENU
-            val currentRoute = navController.currentBackStackEntry?.destination?.route
-            if (currentRoute == Routes.SALE_ENTRY) {
-                FABMenu(
-                    onMenuItemClick = { route ->
-                        when (route) {
-                            "settings" -> navController.navigate(Routes.SETTINGS)
-                            "history" -> navController.navigate(Routes.HISTORY)
-                            "reports" -> navController.navigate(Routes.TRENDS)
-                            "customers" -> navController.navigate(Routes.CUSTOMERS)
-                            "suppliers" -> navController.navigate(Routes.SUPPLIERS)
-                            "purchase_orders" -> navController.navigate(Routes.PURCHASE_ORDERS)
-                            "expenses" -> navController.navigate(Routes.EXPENSES)
-                            "inventory" -> navController.navigate(Routes.INVENTORY)
-                            "purchases" -> navController.navigate(Routes.PURCHASES)
-                            else -> {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar("Coming soon!")
-                                }
+            // FAB Menu - Always on top, visible on ALL screens
+            FABMenu(
+                onMenuItemClick = { route ->
+                    when (route) {
+                        "sale_entry" -> navController.navigate(Routes.SALE_ENTRY) {
+                            popUpTo(Routes.SALE_ENTRY) { inclusive = true }
+                        }
+                        "settings" -> navController.navigate(Routes.SETTINGS)
+                        "history" -> navController.navigate(Routes.HISTORY)
+                        "reports" -> navController.navigate(Routes.TRENDS)
+                        "customers" -> navController.navigate(Routes.CUSTOMERS)
+                        "suppliers" -> navController.navigate(Routes.SUPPLIERS)
+                        "purchase_orders" -> navController.navigate(Routes.PURCHASE_ORDERS)
+                        "expenses" -> navController.navigate(Routes.EXPENSES)
+                        "inventory" -> navController.navigate(Routes.INVENTORY)
+                        "purchases" -> navController.navigate(Routes.PURCHASES)
+                        else -> {
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Coming soon!")
                             }
                         }
-                    },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = bottomPadding + 16.dp)
-                        .padding(horizontal = 16.dp)
-                )
-            }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = bottomPadding)
+            )
         }
     }
 }
