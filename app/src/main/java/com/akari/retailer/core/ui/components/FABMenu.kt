@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PointOfSale
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,24 +45,25 @@ fun FABMenu(
 
     val menuItems = listOf(
         FABMenuItemData(Icons.Default.PointOfSale, stringResource(R.string.fab_sale_entry), "sale_entry"),
+        FABMenuItemData(Icons.Default.AttachMoney, "💰 Add Income", "income_entry"),
         FABMenuItemData(Icons.Default.Receipt, stringResource(R.string.fab_expenses), "expenses"),
         FABMenuItemData(Icons.Default.Inventory, stringResource(R.string.fab_inventory), "inventory"),
         FABMenuItemData(Icons.Default.People, stringResource(R.string.fab_customers), "customers"),
         FABMenuItemData(Icons.Default.PieChart, stringResource(R.string.fab_reports), "reports"),
+        FABMenuItemData(Icons.Default.PieChart, "Profit & Loss", "profit_loss"),
         FABMenuItemData(Icons.Default.Business, stringResource(R.string.fab_suppliers), "suppliers"),
         FABMenuItemData(Icons.Default.ShoppingCart, stringResource(R.string.fab_purchase_orders), "purchase_orders"),
         FABMenuItemData(Icons.Default.History, stringResource(R.string.fab_purchases), "purchases"),
         FABMenuItemData(Icons.Default.Settings, stringResource(R.string.fab_settings), "settings")
     )
 
-    // Split into two columns: first 5, last 4
+    // Split into two columns
     val firstColumn = menuItems.take(5)
     val secondColumn = menuItems.drop(5)
 
     Box(
         modifier = modifier
     ) {
-        // Scrim layer - dims the background when menu is expanded
         if (isExpanded) {
             Box(
                 modifier = Modifier
@@ -75,7 +77,6 @@ fun FABMenu(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomStart
         ) {
-            // Two-column grid - positioned on the left
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = fadeIn() + slideInHorizontally(
@@ -124,7 +125,6 @@ fun FABMenu(
                 }
             }
 
-            // FAB button - bottom left, always visible
             FloatingActionButton(
                 onClick = { isExpanded = !isExpanded },
                 containerColor = MaterialTheme.colorScheme.primary,

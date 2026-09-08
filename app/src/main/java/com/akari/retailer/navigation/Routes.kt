@@ -15,6 +15,15 @@ object Routes {
     // Categories
     const val CATEGORIES = "categories"
     
+    // Profit & Loss
+    const val PROFIT_LOSS = "profit_loss"
+    
+    // Income
+    const val INCOME_ENTRY = "income_entry"
+    const val INCOME_LIST = "income_list"
+    const val INCOME_STREAMS = "income_streams"
+    const val INCOME_ANALYTICS = "income_analytics"
+    
     const val INVENTORY = "inventory"
     const val INVENTORY_ADD = "inventory_add"
     const val INVENTORY_DETAIL = "inventory_detail/{productId}"

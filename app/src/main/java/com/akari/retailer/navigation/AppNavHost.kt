@@ -33,7 +33,12 @@ import com.akari.retailer.features.expense.presentation.ExpenseDetailScreen
 import com.akari.retailer.features.expense.presentation.ExpenseEditScreen
 import com.akari.retailer.features.expense.presentation.ExpenseListScreen
 import com.akari.retailer.features.inventory.presentation.*
+import com.akari.retailer.features.reports.presentation.ProfitLossScreen
 import com.akari.retailer.features.reports.presentation.TrendsScreen
+import com.akari.retailer.features.sales.presentation.income.IncomeAnalyticsScreen
+import com.akari.retailer.features.sales.presentation.income.IncomeEntryScreen
+import com.akari.retailer.features.sales.presentation.income.IncomeListScreen
+import com.akari.retailer.features.sales.presentation.stream.IncomeStreamManagementScreen
 import com.akari.retailer.features.sales.presentation.entry.SaleEntryScreen
 import com.akari.retailer.features.sales.presentation.history.SaleHistoryScreen
 import com.akari.retailer.features.settings.presentation.SettingsScreen
@@ -75,6 +80,34 @@ fun AppNavHost() {
                     SaleHistoryScreen(onBack = { navController.popBackStack() })
                 }
                 
+                // INCOME MODULE
+    composable(Routes.INCOME_ENTRY) {
+        IncomeEntryScreen(
+            navController = navController,
+            onBack = { navController.popBackStack() },
+            onIncomeAdded = { navController.popBackStack() }
+        )
+    }
+                
+                composable(Routes.INCOME_LIST) {
+                    IncomeListScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(Routes.INCOME_STREAMS) {
+                    IncomeStreamManagementScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                
+                // ✅ INCOME ANALYTICS
+                composable(Routes.INCOME_ANALYTICS) {
+                    IncomeAnalyticsScreen(onBack = { navController.popBackStack() })
+                }
+                
                 // SETTINGS MODULE
                 composable(Routes.SETTINGS) {
                     SettingsScreen(onBack = { navController.popBackStack() })
@@ -83,6 +116,14 @@ fun AppNavHost() {
                 // REPORTS MODULE
                 composable(Routes.TRENDS) {
                     TrendsScreen(onBack = { navController.popBackStack() })
+                }
+                
+                // PROFIT & LOSS
+                composable(Routes.PROFIT_LOSS) {
+                    ProfitLossScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
                 
                 // CUSTOMER MODULE
@@ -190,7 +231,7 @@ fun AppNavHost() {
                     )
                 }
                 
-                // ✅ CATEGORY MANAGEMENT
+                // CATEGORY MANAGEMENT
                 composable(Routes.CATEGORIES) {
                     CategoryManagementScreen(
                         navController = navController,
@@ -198,7 +239,7 @@ fun AppNavHost() {
                     )
                 }
                 
-                // ✅ EXPENSE ANALYTICS
+                // EXPENSE ANALYTICS
                 composable(Routes.EXPENSE_ANALYTICS) {
                     ExpenseAnalyticsScreen(onBack = { navController.popBackStack() })
                 }
@@ -333,9 +374,12 @@ fun AppNavHost() {
                         "sale_entry" -> navController.navigate(Routes.SALE_ENTRY) {
                             popUpTo(Routes.SALE_ENTRY) { inclusive = true }
                         }
+                        "income_entry" -> navController.navigate(Routes.INCOME_ENTRY)
+                        "income_list" -> navController.navigate(Routes.INCOME_LIST)
                         "settings" -> navController.navigate(Routes.SETTINGS)
                         "history" -> navController.navigate(Routes.HISTORY)
                         "reports" -> navController.navigate(Routes.TRENDS)
+                        "profit_loss" -> navController.navigate(Routes.PROFIT_LOSS)
                         "customers" -> navController.navigate(Routes.CUSTOMERS)
                         "suppliers" -> navController.navigate(Routes.SUPPLIERS)
                         "purchase_orders" -> navController.navigate(Routes.PURCHASE_ORDERS)

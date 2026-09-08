@@ -11,6 +11,7 @@ class CalculateBusinessProfitUseCase(
 ) {
     suspend fun invoke(): Result<ProfitData> {
         return try {
+            // Get first emission from flows (one-time fetch)
             val sales = saleRepository.getSales().first()
             val expenses = expenseRepository.getExpenses().first()
             

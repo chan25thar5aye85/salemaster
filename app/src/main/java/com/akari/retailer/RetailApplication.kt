@@ -22,9 +22,10 @@ class RetailApplication : Application() {
         // Initialize DI container
         container = AppContainer()
         
-        // Seed default categories
+        // Seed default categories and income streams
         CoroutineScope(Dispatchers.IO).launch {
             container.categoryRepository.seedDefaultCategories()
+            container.incomeStreamRepository.seedDefaultIncomeStreams()
         }
         
         // Apply saved language

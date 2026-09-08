@@ -19,6 +19,12 @@ import com.akari.retailer.features.inventory.data.repository.InventoryRepository
 import com.akari.retailer.features.inventory.data.repository.PurchaseOrderRepository
 import com.akari.retailer.features.inventory.data.repository.PurchaseRepository
 import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
+import com.akari.retailer.features.sales.data.remote.FirestoreIncomeEntryService
+import com.akari.retailer.features.sales.data.remote.FirestoreIncomeStreamService
+import com.akari.retailer.features.sales.data.repository.FirestoreIncomeEntryRepository
+import com.akari.retailer.features.sales.data.repository.FirestoreIncomeStreamRepository
+import com.akari.retailer.features.sales.data.repository.IncomeEntryRepository
+import com.akari.retailer.features.sales.data.repository.IncomeStreamRepository
 import com.akari.retailer.features.supplier.data.remote.FirestoreSupplierService
 import com.akari.retailer.features.supplier.data.repository.FirestoreSupplierRepository
 import com.akari.retailer.features.supplier.data.repository.SupplierRepository
@@ -29,6 +35,18 @@ class AppContainer {
     private val firestoreService by lazy { FirestoreService() }
     val saleRepository: SaleRepository by lazy { 
         FirestoreSaleRepository(firestoreService)
+    }
+    
+    // Income Streams
+    private val incomeStreamService by lazy { FirestoreIncomeStreamService() }
+    val incomeStreamRepository: IncomeStreamRepository by lazy {
+        FirestoreIncomeStreamRepository(incomeStreamService)
+    }
+    
+    // Income Entries
+    private val incomeEntryService by lazy { FirestoreIncomeEntryService() }
+    val incomeEntryRepository: IncomeEntryRepository by lazy {
+        FirestoreIncomeEntryRepository(incomeEntryService)
     }
     
     // Customers
