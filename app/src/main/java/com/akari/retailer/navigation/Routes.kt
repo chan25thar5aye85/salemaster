@@ -10,6 +10,10 @@ object Routes {
     const val EXPENSE_ADD = "expense_add"
     const val EXPENSE_DETAIL = "expense_detail/{expenseId}"
     const val EXPENSE_EDIT = "expense_edit/{expenseId}"
+    
+    // Categories
+    const val CATEGORIES = "categories"
+    
     const val INVENTORY = "inventory"
     const val INVENTORY_ADD = "inventory_add"
     const val INVENTORY_DETAIL = "inventory_detail/{productId}"
@@ -24,7 +28,7 @@ object Routes {
     const val PURCHASE_ORDER_DETAIL_READONLY = "purchase_order_detail_readonly/{orderId}"
     const val PURCHASE_ORDER_RECEIPT = "purchase_order_receipt/{orderId}"
     
-    // Purchases (Completed purchases)
+    // Purchases
     const val PURCHASES = "purchases"
     const val PURCHASE_DETAIL = "purchase_detail/{purchaseId}"
     

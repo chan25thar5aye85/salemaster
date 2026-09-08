@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,9 +24,11 @@ import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.components.SearchBox
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
+import com.akari.retailer.features.expense.data.repository.FirestoreCategoryRepository
 import com.akari.retailer.features.expense.data.repository.FirestoreExpenseRepository
+import com.akari.retailer.features.expense.data.remote.FirestoreCategoryService
 import com.akari.retailer.features.expense.data.remote.FirestoreExpenseService
-import com.akari.retailer.features.expense.domain.models.Expense
+import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 import com.akari.retailer.navigation.Routes
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -38,11 +41,13 @@ fun ExpenseListScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val service = remember { FirestoreExpenseService() }
-    val repository = remember { FirestoreExpenseRepository(service) }
+    val expenseService = remember { FirestoreExpenseService() }
+    val expenseRepository = remember { FirestoreExpenseRepository(expenseService) }
+    val categoryService = remember { FirestoreCategoryService() }
+    val categoryRepository = remember { FirestoreCategoryRepository(categoryService) }
     
     val viewModel: ExpenseListViewModel = viewModel(
-        factory = ExpenseListViewModelFactory(repository)
+        factory = ExpenseListViewModelFactory(expenseRepository, categoryRepository)
     )
     
     val state by viewModel.state.collectAsState()
@@ -96,6 +101,35 @@ fun ExpenseListScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
+            // Manage Categories Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Spacing.medium)
+                    .clickable { navController.navigate(Routes.CATEGORIES) },
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Spacing.medium),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "⚙️ Manage Categories",
+                        style = AppTypography.body
+                    )
+                    Icon(
+                        Icons.Default.Settings,
+                        contentDescription = "Manage Categories",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
             if (showSearch) {
                 SearchBox(
                     query = state.searchQuery,
@@ -241,6 +275,7 @@ fun ExpenseListScreen(
                 ) { expense ->
                     ExpenseCard(
                         expense = expense,
+                        categories = state.categories,
                         onDelete = {
                             pendingDeleteId = expense.id
                             showDeleteDialog = true
@@ -257,11 +292,14 @@ fun ExpenseListScreen(
 
 @Composable
 fun ExpenseCard(
-    expense: Expense,
+    expense: com.akari.retailer.features.expense.domain.models.Expense,
+    categories: List<ExpenseCategory>,
     onDelete: () -> Unit,
     onClick: () -> Unit
 ) {
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    val category = categories.find { it.id == expense.categoryId }
+    val categoryName = category?.name ?: "Other"
     
     Card(
         modifier = Modifier
@@ -291,7 +329,7 @@ fun ExpenseCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = expense.category.name,
+                        text = categoryName,
                         style = AppTypography.body,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )

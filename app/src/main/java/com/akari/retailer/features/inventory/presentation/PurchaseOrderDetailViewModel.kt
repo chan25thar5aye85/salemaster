@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.expense.data.repository.FirestoreExpenseRepository
 import com.akari.retailer.features.expense.data.remote.FirestoreExpenseService
 import com.akari.retailer.features.expense.domain.models.Expense
-import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 import com.akari.retailer.features.inventory.data.repository.FirestoreInventoryRepository
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseRepository
@@ -190,13 +189,13 @@ class PurchaseOrderDetailViewModel(
                 }
             }
             
-            // 3. Create expense record
+            // 3. Create expense record using categoryId (string) instead of enum
             Log.d(TAG, "💰 Creating expense...")
             val totalCost = currentOrder.receivedItems.sumOf { it.total }
             val expense = Expense(
                 title = "Purchase Order: ${currentOrder.orderName}",
                 amount = totalCost,
-                category = ExpenseCategory.INVENTORY,
+                categoryId = "default_inventory",  // ✅ Fixed - using categoryId string
                 description = "PO #${currentOrder.orderNumber} from ${currentOrder.supplierName}",
                 date = System.currentTimeMillis()
             )
@@ -207,7 +206,7 @@ class PurchaseOrderDetailViewModel(
                 Log.w(TAG, "⚠️ Failed to create expense: ${expenseResult.exceptionOrNull()?.message}")
             }
             
-            // 4. Update supplier stats - Use getSuppliers().first() to get once
+            // 4. Update supplier stats
             Log.d(TAG, "📊 Updating supplier stats...")
             try {
                 val suppliers = supplierRepository.getSuppliers().first()

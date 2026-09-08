@@ -4,10 +4,12 @@ import android.app.Application
 import com.akari.retailer.di.AppContainer
 import com.akari.retailer.core.utils.LanguageManager
 import com.google.firebase.FirebaseApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class RetailApplication : Application() {
     
-    // Dependency container - accessible from anywhere
     lateinit var container: AppContainer
         private set
 
@@ -19,6 +21,11 @@ class RetailApplication : Application() {
         
         // Initialize DI container
         container = AppContainer()
+        
+        // Seed default categories
+        CoroutineScope(Dispatchers.IO).launch {
+            container.categoryRepository.seedDefaultCategories()
+        }
         
         // Apply saved language
         val languageCode = LanguageManager.getCurrentLanguage(this)

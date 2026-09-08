@@ -22,12 +22,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.akari.retailer.core.ui.components.FABMenu
-import com.akari.retailer.data.remote.FirestoreService
-import com.akari.retailer.data.repository.FirestoreSaleRepository
 import com.akari.retailer.features.customer.presentation.CustomerAddScreen
 import com.akari.retailer.features.customer.presentation.CustomerDetailScreen
 import com.akari.retailer.features.customer.presentation.CustomerEditScreen
 import com.akari.retailer.features.customer.presentation.CustomerListScreen
+import com.akari.retailer.features.expense.presentation.CategoryManagementScreen
 import com.akari.retailer.features.expense.presentation.ExpenseAddScreen
 import com.akari.retailer.features.expense.presentation.ExpenseDetailScreen
 import com.akari.retailer.features.expense.presentation.ExpenseEditScreen
@@ -190,6 +189,14 @@ fun AppNavHost() {
                     )
                 }
                 
+                // ✅ CATEGORY MANAGEMENT
+                composable(Routes.CATEGORIES) {
+                    CategoryManagementScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                
                 // INVENTORY MODULE
                 composable(Routes.INVENTORY) {
                     InventoryListScreen(navController = navController, onBack = { navController.popBackStack() })
@@ -268,7 +275,6 @@ fun AppNavHost() {
                     )
                 }
                 
-                // Read-only order detail for history
                 composable(
                     route = Routes.PURCHASE_ORDER_DETAIL_READONLY,
                     arguments = listOf(navArgument("orderId") { type = NavType.StringType })
@@ -293,7 +299,7 @@ fun AppNavHost() {
                     )
                 }
                 
-                // PURCHASES (Completed purchases)
+                // PURCHASES
                 composable(Routes.PURCHASES) {
                     PurchaseListScreen(
                         navController = navController,
@@ -314,7 +320,7 @@ fun AppNavHost() {
                 }
             }
 
-            // FAB Menu - Always on top, visible on ALL screens
+            // FAB Menu - Always on top
             FABMenu(
                 onMenuItemClick = { route ->
                     when (route) {

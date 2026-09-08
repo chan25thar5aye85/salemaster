@@ -1,10 +1,12 @@
 package com.akari.retailer.features.expense.presentation
 
 import com.akari.retailer.features.expense.domain.models.Expense
+import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 
 data class ExpenseListState(
     val expenses: List<Expense> = emptyList(),
     val allExpenses: List<Expense> = emptyList(),
+    val categories: List<ExpenseCategory> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null,
     val searchQuery: String = "",

@@ -2,14 +2,17 @@ package com.akari.retailer.features.expense.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.akari.retailer.features.expense.data.repository.CategoryRepository
 import com.akari.retailer.features.expense.data.repository.ExpenseRepository
+import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class ExpenseListViewModel(
-    private val repository: ExpenseRepository
+    private val expenseRepository: ExpenseRepository,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ExpenseListState())
@@ -17,6 +20,7 @@ class ExpenseListViewModel(
 
     init {
         loadExpenses()
+        loadCategories()
     }
 
     fun handleEvent(event: ExpenseListEvent) {
@@ -30,11 +34,23 @@ class ExpenseListViewModel(
         }
     }
 
+    private fun loadCategories() {
+        viewModelScope.launch {
+            try {
+                categoryRepository.getCategories().collect { categories ->
+                    _state.value = _state.value.copy(categories = categories)
+                }
+            } catch (e: Exception) {
+                // Handle silently
+            }
+        }
+    }
+
     private fun loadExpenses() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                repository.getExpenses().collect { expenses ->
+                expenseRepository.getExpenses().collect { expenses ->
                     _state.value = _state.value.copy(
                         allExpenses = expenses,
                         isLoading = false,
@@ -60,7 +76,7 @@ class ExpenseListViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
-                val result = repository.deleteExpense(expenseId)
+                val result = expenseRepository.deleteExpense(expenseId)
                 if (result.isSuccess) {
                     loadExpenses()
                 } else {
@@ -91,13 +107,14 @@ class ExpenseListViewModel(
     private fun applySearch() {
         val query = _state.value.searchQuery.lowercase().trim()
         val allExpenses = _state.value.allExpenses
+        val categories = _state.value.categories
         
         val filtered = if (query.isEmpty()) {
             allExpenses
         } else {
             allExpenses.filter { expense ->
                 expense.title.lowercase().contains(query) ||
-                expense.category.name.lowercase().contains(query)
+                categories.find { it.id == expense.categoryId }?.name?.lowercase()?.contains(query) == true
             }
         }
         
@@ -106,5 +123,18 @@ class ExpenseListViewModel(
 
     private fun clearError() {
         _state.value = _state.value.copy(error = null)
+    }
+}
+
+class ExpenseListViewModelFactory(
+    private val expenseRepository: ExpenseRepository,
+    private val categoryRepository: CategoryRepository
+) : androidx.lifecycle.ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ExpenseListViewModel::class.java)) {
+            return ExpenseListViewModel(expenseRepository, categoryRepository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

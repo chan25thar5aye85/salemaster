@@ -2,6 +2,7 @@ package com.akari.retailer.features.expense.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.akari.retailer.features.expense.data.repository.CategoryRepository
 import com.akari.retailer.features.expense.data.repository.ExpenseRepository
 import com.akari.retailer.features.expense.domain.models.Expense
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
@@ -14,7 +15,8 @@ data class ExpenseEditState(
     val id: String = "",
     val title: String = "",
     val amount: String = "",
-    val category: ExpenseCategory = ExpenseCategory.OTHER,
+    val selectedCategory: ExpenseCategory? = null,
+    val categories: List<ExpenseCategory> = emptyList(),
     val description: String = "",
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
@@ -25,7 +27,7 @@ data class ExpenseEditState(
 sealed class ExpenseEditEvent {
     data class TitleChanged(val value: String) : ExpenseEditEvent()
     data class AmountChanged(val value: String) : ExpenseEditEvent()
-    data class CategoryChanged(val value: ExpenseCategory) : ExpenseEditEvent()
+    data class CategorySelected(val category: ExpenseCategory) : ExpenseEditEvent()
     data class DescriptionChanged(val value: String) : ExpenseEditEvent()
     data object LoadExpense : ExpenseEditEvent()
     data object SaveExpense : ExpenseEditEvent()
@@ -34,7 +36,8 @@ sealed class ExpenseEditEvent {
 }
 
 class ExpenseEditViewModel(
-    private val repository: ExpenseRepository,
+    private val expenseRepository: ExpenseRepository,
+    private val categoryRepository: CategoryRepository,
     private val expenseId: String
 ) : ViewModel() {
 
@@ -42,6 +45,7 @@ class ExpenseEditViewModel(
     val state: StateFlow<ExpenseEditState> = _state.asStateFlow()
 
     init {
+        loadCategories()
         loadExpense()
     }
 
@@ -49,7 +53,7 @@ class ExpenseEditViewModel(
         when (event) {
             is ExpenseEditEvent.TitleChanged -> _state.value = _state.value.copy(title = event.value)
             is ExpenseEditEvent.AmountChanged -> _state.value = _state.value.copy(amount = event.value)
-            is ExpenseEditEvent.CategoryChanged -> _state.value = _state.value.copy(category = event.value)
+            is ExpenseEditEvent.CategorySelected -> _state.value = _state.value.copy(selectedCategory = event.category)
             is ExpenseEditEvent.DescriptionChanged -> _state.value = _state.value.copy(description = event.value)
             ExpenseEditEvent.LoadExpense -> loadExpense()
             ExpenseEditEvent.SaveExpense -> saveExpense()
@@ -58,17 +62,30 @@ class ExpenseEditViewModel(
         }
     }
 
+    private fun loadCategories() {
+        viewModelScope.launch {
+            try {
+                categoryRepository.getCategories().collect { categories ->
+                    _state.value = _state.value.copy(categories = categories)
+                }
+            } catch (e: Exception) {
+                // Handle silently
+            }
+        }
+    }
+
     private fun loadExpense() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                repository.getExpenseById(expenseId).collect { expense ->
+                expenseRepository.getExpenseById(expenseId).collect { expense ->
                     if (expense != null) {
+                        val category = _state.value.categories.find { it.id == expense.categoryId }
                         _state.value = _state.value.copy(
                             id = expense.id,
                             title = expense.title,
                             amount = expense.amount.toString(),
-                            category = expense.category,
+                            selectedCategory = category,
                             description = expense.description,
                             isLoading = false,
                             error = null
@@ -103,6 +120,11 @@ class ExpenseEditViewModel(
             return
         }
         
+        if (currentState.selectedCategory == null) {
+            _state.value = _state.value.copy(error = "Select a category")
+            return
+        }
+        
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
             
@@ -110,11 +132,11 @@ class ExpenseEditViewModel(
                 id = currentState.id,
                 title = currentState.title.trim(),
                 amount = amountInt,
-                category = currentState.category,
+                categoryId = currentState.selectedCategory.id,  // ✅ Fixed
                 description = currentState.description.trim()
             )
             
-            val result = repository.updateExpense(expense)
+            val result = expenseRepository.updateExpense(expense)
             
             if (result.isSuccess) {
                 _state.value = _state.value.copy(
@@ -133,13 +155,14 @@ class ExpenseEditViewModel(
 }
 
 class ExpenseEditViewModelFactory(
-    private val repository: ExpenseRepository,
+    private val expenseRepository: ExpenseRepository,
+    private val categoryRepository: CategoryRepository,
     private val expenseId: String
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ExpenseEditViewModel::class.java)) {
-            return ExpenseEditViewModel(repository, expenseId) as T
+            return ExpenseEditViewModel(expenseRepository, categoryRepository, expenseId) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

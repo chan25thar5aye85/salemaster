@@ -19,7 +19,9 @@ import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
+import com.akari.retailer.features.expense.data.repository.FirestoreCategoryRepository
 import com.akari.retailer.features.expense.data.repository.FirestoreExpenseRepository
+import com.akari.retailer.features.expense.data.remote.FirestoreCategoryService
 import com.akari.retailer.features.expense.data.remote.FirestoreExpenseService
 import com.akari.retailer.features.expense.domain.models.Expense
 import java.text.SimpleDateFormat
@@ -35,11 +37,13 @@ fun ExpenseDetailScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val service = remember { FirestoreExpenseService() }
-    val repository = remember { FirestoreExpenseRepository(service) }
+    val expenseService = remember { FirestoreExpenseService() }
+    val expenseRepository = remember { FirestoreExpenseRepository(expenseService) }
+    val categoryService = remember { FirestoreCategoryService() }
+    val categoryRepository = remember { FirestoreCategoryRepository(categoryService) }
     
     val viewModel: ExpenseDetailViewModel = viewModel(
-        factory = ExpenseDetailViewModelFactory(repository, expenseId)
+        factory = ExpenseDetailViewModelFactory(expenseRepository, categoryRepository, expenseId)
     )
     
     val state by viewModel.state.collectAsState()
@@ -100,6 +104,8 @@ fun ExpenseDetailScreen(
             }
 
             state.expense?.let { expense ->
+                val categoryName = state.categories.find { it.id == expense.categoryId }?.name ?: "Other"
+                
                 AppCard {
                     Column(
                         modifier = Modifier.fillMaxWidth()
@@ -139,7 +145,7 @@ fun ExpenseDetailScreen(
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
                             Text(
-                                text = expense.category.name,
+                                text = categoryName,
                                 style = AppTypography.body
                             )
                         }

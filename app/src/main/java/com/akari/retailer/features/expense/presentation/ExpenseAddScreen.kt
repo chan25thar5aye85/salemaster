@@ -35,7 +35,9 @@ import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
+import com.akari.retailer.features.expense.data.repository.FirestoreCategoryRepository
 import com.akari.retailer.features.expense.data.repository.FirestoreExpenseRepository
+import com.akari.retailer.features.expense.data.remote.FirestoreCategoryService
 import com.akari.retailer.features.expense.data.remote.FirestoreExpenseService
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 
@@ -48,11 +50,13 @@ fun ExpenseAddScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val service = remember { FirestoreExpenseService() }
-    val repository = remember { FirestoreExpenseRepository(service) }
+    val expenseService = remember { FirestoreExpenseService() }
+    val expenseRepository = remember { FirestoreExpenseRepository(expenseService) }
+    val categoryService = remember { FirestoreCategoryService() }
+    val categoryRepository = remember { FirestoreCategoryRepository(categoryService) }
     
     val viewModel: ExpenseAddViewModel = viewModel(
-        factory = ExpenseAddViewModelFactory(repository)
+        factory = ExpenseAddViewModelFactory(expenseRepository, categoryRepository)
     )
     
     val state by viewModel.state.collectAsState()
@@ -88,13 +92,14 @@ fun ExpenseAddScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
+            // Category Dropdown
             var expanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = it }
             ) {
                 OutlinedTextField(
-                    value = state.category.name,
+                    value = state.selectedCategory?.name ?: "Select Category",
                     onValueChange = {},
                     readOnly = true,
                     label = { Text(stringResource(R.string.category)) },
@@ -107,11 +112,11 @@ fun ExpenseAddScreen(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
-                    ExpenseCategory.values().forEach { category ->
+                    state.categories.forEach { category ->
                         DropdownMenuItem(
                             text = { Text(category.name) },
                             onClick = {
-                                viewModel.handleEvent(ExpenseAddEvent.CategoryChanged(category))
+                                viewModel.handleEvent(ExpenseAddEvent.CategorySelected(category))
                                 expanded = false
                             }
                         )
