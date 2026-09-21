@@ -79,7 +79,7 @@ fun IncomeEntryScreen(
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
     AppScreen(
-        title = "💰 Add Income",
+        title = stringResource(R.string.add_income),
         showBackButton = true,
         onBackClick = onBack
     ) {
@@ -107,10 +107,10 @@ fun IncomeEntryScreen(
                 onExpandedChange = { streamExpanded = it }
             ) {
                 OutlinedTextField(
-                    value = state.selectedStream?.getDisplayName() ?: "Select Income Type",
+                    value = state.selectedStream?.getDisplayName() ?: stringResource(R.string.select_income_type),
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Income Type") },
+                    label = { Text(stringResource(R.string.income_type)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
@@ -136,7 +136,7 @@ fun IncomeEntryScreen(
             
             // Entry Type Selector
             Text(
-                text = "Income Type",
+                text = stringResource(R.string.income_type),
                 style = AppTypography.label,
                 modifier = Modifier.padding(bottom = Spacing.small)
             )
@@ -198,7 +198,7 @@ fun IncomeEntryScreen(
             }
             
             AppPrimaryButton(
-                text = if (state.isSaving) "Saving..." else "Save Income",
+                text = if (state.isSaving) stringResource(R.string.saving) else stringResource(R.string.save_income),
                 onClick = {
                     viewModel.handleEvent(IncomeEntryEvent.SaveIncome)
                 },
@@ -206,7 +206,7 @@ fun IncomeEntryScreen(
                 enabled = state.amount.isNotEmpty() && state.selectedStream != null && !state.isSaving
             )
             
-            // ✅ "View Income List" Button
+            // "View Income List" Button
             Spacer(modifier = Modifier.height(Spacing.medium))
             
             OutlinedButton(
@@ -215,7 +215,7 @@ fun IncomeEntryScreen(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("📋 View Income List")
+                Text(stringResource(R.string.view_income_list))
             }
             
             if (state.saveSuccess) {
@@ -247,7 +247,7 @@ fun IncomeEntryScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         ) {

@@ -64,7 +64,7 @@ fun IncomeListScreen(
                 showDeleteDialog = false
                 pendingDeleteId = null
             },
-            title = { Text("Delete Income") },
+            title = { Text(stringResource(R.string.delete)) },
             text = { Text("Are you sure you want to delete this income entry?") },
             confirmButton = {
                 Button(
@@ -92,7 +92,7 @@ fun IncomeListScreen(
     }
 
     AppScreen(
-        title = "💰 Income",
+        title = stringResource(R.string.income_list),
         showBackButton = true,
         onBackClick = onBack,
         showSearchButton = true,
@@ -121,7 +121,7 @@ fun IncomeListScreen(
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                text = "Total Income",
+                                text = stringResource(R.string.total_income),
                                 style = AppTypography.small,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
@@ -135,7 +135,7 @@ fun IncomeListScreen(
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                text = "Business",
+                                text = stringResource(R.string.business_income),
                                 style = AppTypography.small,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
@@ -149,7 +149,7 @@ fun IncomeListScreen(
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                text = "Personal",
+                                text = stringResource(R.string.personal_income),
                                 style = AppTypography.small,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
@@ -176,7 +176,7 @@ fun IncomeListScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "⚙️ Manage Income Streams",
+                        text = stringResource(R.string.manage_income_streams),
                         style = AppTypography.body
                     )
                     Icon(
@@ -194,7 +194,7 @@ fun IncomeListScreen(
                         viewModel.handleEvent(IncomeListEvent.SearchQueryChanged(it))
                     },
                     onSearch = {},
-                    placeholder = "Search income..."
+                    placeholder = stringResource(R.string.search_income)
                 )
             }
 
@@ -206,7 +206,7 @@ fun IncomeListScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator()
                         Text(
-                            text = "Loading income...",
+                            text = stringResource(R.string.loading),
                             style = AppTypography.body,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
@@ -249,17 +249,17 @@ fun IncomeListScreen(
                         Text("💰", fontSize = 48.sp)
                         Text(
                             text = if (state.searchQuery.isNotEmpty()) 
-                                "No income found for '${state.searchQuery}'"
+                                "${stringResource(R.string.no_income_found)} '${state.searchQuery}'"
                             else 
-                                "No income yet",
+                                stringResource(R.string.no_income_yet),
                             style = AppTypography.header,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
                         Text(
                             text = if (state.searchQuery.isNotEmpty()) 
-                                "Try a different search"
+                                stringResource(R.string.try_different_search)
                             else 
-                                "Tap + to add your first income",
+                                stringResource(R.string.tap_add_expense),
                             style = AppTypography.body,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -277,9 +277,9 @@ fun IncomeListScreen(
             ) {
                 Text(
                     text = if (state.searchQuery.isNotEmpty()) 
-                        "${state.entries.size} results for '${state.searchQuery}'" 
+                        "${state.entries.size} ${stringResource(R.string.results)} for '${state.searchQuery}'" 
                     else 
-                        "${state.entries.size} income entries",
+                        "${state.entries.size} ${stringResource(R.string.income)} entries",
                     style = AppTypography.label,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )

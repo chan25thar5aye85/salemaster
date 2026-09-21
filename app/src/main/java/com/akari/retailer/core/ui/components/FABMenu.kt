@@ -19,6 +19,8 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,22 +46,31 @@ fun FABMenu(
     var isExpanded by remember { mutableStateOf(false) }
 
     val menuItems = listOf(
+        // Main actions
         FABMenuItemData(Icons.Default.PointOfSale, stringResource(R.string.fab_sale_entry), "sale_entry"),
-        FABMenuItemData(Icons.Default.AttachMoney, "💰 Add Income", "income_entry"),
+        FABMenuItemData(Icons.Default.AttachMoney, stringResource(R.string.add_income), "income_entry"),
         FABMenuItemData(Icons.Default.Receipt, stringResource(R.string.fab_expenses), "expenses"),
+        
+        // Management
         FABMenuItemData(Icons.Default.Inventory, stringResource(R.string.fab_inventory), "inventory"),
         FABMenuItemData(Icons.Default.People, stringResource(R.string.fab_customers), "customers"),
-        FABMenuItemData(Icons.Default.PieChart, stringResource(R.string.fab_reports), "reports"),
-        FABMenuItemData(Icons.Default.PieChart, "Profit & Loss", "profit_loss"),
         FABMenuItemData(Icons.Default.Business, stringResource(R.string.fab_suppliers), "suppliers"),
         FABMenuItemData(Icons.Default.ShoppingCart, stringResource(R.string.fab_purchase_orders), "purchase_orders"),
         FABMenuItemData(Icons.Default.History, stringResource(R.string.fab_purchases), "purchases"),
+        
+        // Reports
+        FABMenuItemData(Icons.Default.BarChart, "📈 Sales Trends", "reports"),
+        FABMenuItemData(Icons.Default.Analytics, "📊 Expense Analytics", "expense_analytics"),
+        FABMenuItemData(Icons.Default.Analytics, "💰 Income Analytics", "income_analytics"),
+        FABMenuItemData(Icons.Default.PieChart, "📊 Profit & Loss", "profit_loss"),
+        
+        // Settings
         FABMenuItemData(Icons.Default.Settings, stringResource(R.string.fab_settings), "settings")
     )
 
     // Split into two columns
-    val firstColumn = menuItems.take(5)
-    val secondColumn = menuItems.drop(5)
+    val firstColumn = menuItems.take(6)
+    val secondColumn = menuItems.drop(6)
 
     Box(
         modifier = modifier

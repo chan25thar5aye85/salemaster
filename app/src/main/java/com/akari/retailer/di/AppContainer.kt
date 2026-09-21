@@ -12,6 +12,7 @@ import com.akari.retailer.features.expense.data.repository.CategoryRepository
 import com.akari.retailer.features.expense.data.repository.ExpenseRepository
 import com.akari.retailer.features.expense.data.repository.FirestoreCategoryRepository
 import com.akari.retailer.features.expense.data.repository.FirestoreExpenseRepository
+import com.akari.retailer.features.expense.domain.usecases.CalculateBusinessProfitUseCase
 import com.akari.retailer.features.inventory.data.repository.FirestoreInventoryRepository
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseRepository
@@ -87,5 +88,14 @@ class AppContainer {
     // Purchases (Completed purchases)
     val purchaseRepository: PurchaseRepository by lazy {
         FirestorePurchaseRepository()
+    }
+    
+    // Profit & Loss Calculation (lazy to avoid circular dependencies)
+    val calculateProfitUseCase by lazy {
+        CalculateBusinessProfitUseCase(
+            saleRepository,
+            expenseRepository,
+            incomeEntryRepository
+        )
     }
 }

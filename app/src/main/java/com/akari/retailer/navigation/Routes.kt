@@ -12,13 +12,9 @@ object Routes {
     const val EXPENSE_EDIT = "expense_edit/{expenseId}"
     const val EXPENSE_ANALYTICS = "expense_analytics"
     
-    // Categories
     const val CATEGORIES = "categories"
-    
-    // Profit & Loss
     const val PROFIT_LOSS = "profit_loss"
     
-    // Income
     const val INCOME_ENTRY = "income_entry"
     const val INCOME_LIST = "income_list"
     const val INCOME_STREAMS = "income_streams"
@@ -31,14 +27,12 @@ object Routes {
     const val STOCK_HISTORY = "stock_history/{productId}/{productName}"
     const val STOCK_ADJUSTMENT = "stock_adjustment"
     
-    // Purchase Orders
     const val PURCHASE_ORDERS = "purchase_orders"
     const val PURCHASE_ORDER_ADD = "purchase_order_add"
     const val PURCHASE_ORDER_DETAIL = "purchase_order_detail/{orderId}"
     const val PURCHASE_ORDER_DETAIL_READONLY = "purchase_order_detail_readonly/{orderId}"
     const val PURCHASE_ORDER_RECEIPT = "purchase_order_receipt/{orderId}"
     
-    // Purchases
     const val PURCHASES = "purchases"
     const val PURCHASE_DETAIL = "purchase_detail/{purchaseId}"
     

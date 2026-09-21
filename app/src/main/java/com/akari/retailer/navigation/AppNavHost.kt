@@ -81,13 +81,13 @@ fun AppNavHost() {
                 }
                 
                 // INCOME MODULE
-    composable(Routes.INCOME_ENTRY) {
-        IncomeEntryScreen(
-            navController = navController,
-            onBack = { navController.popBackStack() },
-            onIncomeAdded = { navController.popBackStack() }
-        )
-    }
+                composable(Routes.INCOME_ENTRY) {
+                    IncomeEntryScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() },
+                        onIncomeAdded = { navController.popBackStack() }
+                    )
+                }
                 
                 composable(Routes.INCOME_LIST) {
                     IncomeListScreen(
@@ -103,7 +103,6 @@ fun AppNavHost() {
                     )
                 }
                 
-                // ✅ INCOME ANALYTICS
                 composable(Routes.INCOME_ANALYTICS) {
                     IncomeAnalyticsScreen(onBack = { navController.popBackStack() })
                 }
@@ -118,7 +117,6 @@ fun AppNavHost() {
                     TrendsScreen(onBack = { navController.popBackStack() })
                 }
                 
-                // PROFIT & LOSS
                 composable(Routes.PROFIT_LOSS) {
                     ProfitLossScreen(
                         navController = navController,
@@ -231,7 +229,6 @@ fun AppNavHost() {
                     )
                 }
                 
-                // CATEGORY MANAGEMENT
                 composable(Routes.CATEGORIES) {
                     CategoryManagementScreen(
                         navController = navController,
@@ -239,7 +236,6 @@ fun AppNavHost() {
                     )
                 }
                 
-                // EXPENSE ANALYTICS
                 composable(Routes.EXPENSE_ANALYTICS) {
                     ExpenseAnalyticsScreen(onBack = { navController.popBackStack() })
                 }
@@ -367,7 +363,6 @@ fun AppNavHost() {
                 }
             }
 
-            // FAB Menu - Always on top
             FABMenu(
                 onMenuItemClick = { route ->
                     when (route) {
@@ -375,7 +370,8 @@ fun AppNavHost() {
                             popUpTo(Routes.SALE_ENTRY) { inclusive = true }
                         }
                         "income_entry" -> navController.navigate(Routes.INCOME_ENTRY)
-                        "income_list" -> navController.navigate(Routes.INCOME_LIST)
+                        "income_analytics" -> navController.navigate(Routes.INCOME_ANALYTICS)
+                        "expense_analytics" -> navController.navigate(Routes.EXPENSE_ANALYTICS)
                         "settings" -> navController.navigate(Routes.SETTINGS)
                         "history" -> navController.navigate(Routes.HISTORY)
                         "reports" -> navController.navigate(Routes.TRENDS)

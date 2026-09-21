@@ -1,6 +1,5 @@
 package com.akari.retailer.features.reports.presentation
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,35 +14,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.expense.domain.usecases.CalculateBusinessProfitUseCase
 import com.akari.retailer.features.expense.domain.usecases.ProfitData
-import com.akari.retailer.navigation.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfitLossScreen(
-    navController: NavController? = null,
+    navController: androidx.navigation.NavController? = null,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val saleRepository = application.container.saleRepository
-    val expenseRepository = application.container.expenseRepository
-    
-    val calculateProfitUseCase = remember { 
-        CalculateBusinessProfitUseCase(saleRepository, expenseRepository)
-    }
-    
     val viewModel: ProfitLossViewModel = viewModel(
-        factory = ProfitLossViewModelFactory(calculateProfitUseCase)
+        factory = ProfitLossViewModelFactory(application.container.calculateProfitUseCase)
     )
     
     val state by viewModel.state.collectAsState()
@@ -53,7 +42,7 @@ fun ProfitLossScreen(
     }
 
     AppScreen(
-        title = "📊 Profit & Loss",
+        title = stringResource(R.string.profit_loss_title),
         showBackButton = true,
         onBackClick = onBack
     ) {
@@ -79,7 +68,7 @@ fun ProfitLossScreen(
                             onClick = { viewModel.loadData() },
                             modifier = Modifier.padding(top = Spacing.medium)
                         ) {
-                            Text("Retry")
+                            Text(stringResource(R.string.retry))
                         }
                     }
                 }
@@ -110,71 +99,61 @@ fun ProfitLossScreen(
             }
 
             state.profitData?.let { data ->
-                // Summary Cards - Only Revenue and Expense are clickable
+                // Three Summary Cards: Revenue, Other Income, Expenses
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
                 ) {
-                    // ✅ Revenue Card - Click to Sales Trends
+                    // Revenue Card
                     AppCard(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                navController?.navigate(Routes.TRENDS)
-                            }
+                        modifier = Modifier.weight(1f)
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "💰",
-                                fontSize = 24.sp
-                            )
                             Text(
                                 text = "${data.revenue}",
                                 style = AppTypography.header,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                text = "Revenue",
+                                text = stringResource(R.string.revenue),
                                 style = AppTypography.small,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-                            Text(
-                                text = "📈 View Trends",
-                                style = AppTypography.small,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                                fontSize = 10.sp
                             )
                         }
                     }
                     
-                    // ✅ Expenses Card - Click to Expense Analytics
+                    // Other Income Card
                     AppCard(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                navController?.navigate(Routes.EXPENSE_ANALYTICS)
-                            }
+                        modifier = Modifier.weight(1f)
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "💳",
-                                fontSize = 24.sp
+                                text = "${data.incomeRevenue}",
+                                style = AppTypography.header,
+                                color = MaterialTheme.colorScheme.secondary
                             )
+                            Text(
+                                text = stringResource(R.string.other_income),
+                                style = AppTypography.small,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                    
+                    // Expenses Card
+                    AppCard(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = "${data.businessExpenses}",
                                 style = AppTypography.header,
                                 color = MaterialTheme.colorScheme.error
                             )
                             Text(
-                                text = "Business Expenses",
+                                text = stringResource(R.string.expenses),
                                 style = AppTypography.small,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-                            Text(
-                                text = "📊 View Analytics",
-                                style = AppTypography.small,
-                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.5f),
-                                fontSize = 10.sp
                             )
                         }
                     }
@@ -182,7 +161,7 @@ fun ProfitLossScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
-                // ✅ Profit Card - Display only (not clickable)
+                // Profit Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -199,10 +178,6 @@ fun ProfitLossScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = if (data.profit > 0) "📈" else "📉",
-                            fontSize = 32.sp
-                        )
-                        Text(
                             text = "${data.profit}",
                             style = AppTypography.header.copy(fontSize = 28.sp),
                             color = if (data.profit > 0) 
@@ -211,7 +186,7 @@ fun ProfitLossScreen(
                                 MaterialTheme.colorScheme.error
                         )
                         Text(
-                            text = "Net Profit",
+                            text = stringResource(R.string.net_profit),
                             style = AppTypography.body,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -227,7 +202,7 @@ fun ProfitLossScreen(
                             shape = MaterialTheme.shapes.small
                         ) {
                             Text(
-                                text = "Profit Margin: ${String.format("%.1f", data.profitMargin)}%",
+                                text = stringResource(R.string.profit_margin) + ": " + String.format("%.1f", data.profitMargin) + "%",
                                 style = AppTypography.small,
                                 color = if (data.profitMargin >= 20) 
                                     Color(0xFF4CAF50)
@@ -244,17 +219,18 @@ fun ProfitLossScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
-                // Detail Breakdown - Display only (not clickable)
+                // Detailed Breakdown
                 AppCard {
                     Column(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "📋 Detailed Breakdown",
+                            text = stringResource(R.string.detailed_breakdown),
                             style = AppTypography.title,
                             modifier = Modifier.padding(bottom = Spacing.medium)
                         )
                         
+                        // Sales Revenue
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -262,14 +238,35 @@ fun ProfitLossScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "💰 Total Revenue",
-                                style = AppTypography.body
+                                text = stringResource(R.string.sales_revenue),
+                                style = AppTypography.body,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                             )
                             Text(
-                                text = "${data.revenue}",
+                                text = "${data.salesRevenue}",
                                 style = AppTypography.body,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        
+                        // Other Income
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = Spacing.small),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = stringResource(R.string.other_income),
+                                style = AppTypography.body,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                            Text(
+                                text = "${data.incomeRevenue}",
+                                style = AppTypography.body,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.secondary
                             )
                         }
                         
@@ -277,6 +274,7 @@ fun ProfitLossScreen(
                         Divider()
                         Spacer(modifier = Modifier.height(Spacing.small))
                         
+                        // Business Expenses
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -284,7 +282,7 @@ fun ProfitLossScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "💳 Business Expenses",
+                                text = stringResource(R.string.business_expenses),
                                 style = AppTypography.body
                             )
                             Text(
@@ -295,6 +293,7 @@ fun ProfitLossScreen(
                             )
                         }
                         
+                        // Personal Expenses
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -302,7 +301,7 @@ fun ProfitLossScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "👤 Personal Expenses",
+                                text = stringResource(R.string.personal_expenses),
                                 style = AppTypography.body,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
@@ -317,6 +316,7 @@ fun ProfitLossScreen(
                         Divider()
                         Spacer(modifier = Modifier.height(Spacing.small))
                         
+                        // Net Profit
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -324,7 +324,7 @@ fun ProfitLossScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "📊 Net Profit",
+                                text = stringResource(R.string.net_profit),
                                 style = AppTypography.title
                             )
                             Text(
@@ -354,24 +354,24 @@ fun ProfitLossScreen(
                             .padding(Spacing.medium)
                     ) {
                         Text(
-                            text = "💡 How is this calculated?",
+                            text = stringResource(R.string.how_is_this_calculated),
                             style = AppTypography.title,
                             modifier = Modifier.padding(bottom = Spacing.small)
                         )
                         Text(
-                            text = "• Revenue: Total from all sales",
+                            text = stringResource(R.string.revenue_calculation),
                             style = AppTypography.small
                         )
                         Text(
-                            text = "• Business Expenses: Business + Mixed (business %) expenses",
+                            text = stringResource(R.string.business_expenses_calculation),
                             style = AppTypography.small
                         )
                         Text(
-                            text = "• Personal Expenses: Personal expenses only (not deducted from profit)",
+                            text = stringResource(R.string.personal_expenses_calculation),
                             style = AppTypography.small
                         )
                         Text(
-                            text = "• Profit Margin: (Profit / Revenue) × 100",
+                            text = stringResource(R.string.profit_margin_calculation),
                             style = AppTypography.small
                         )
                     }

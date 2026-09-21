@@ -4,6 +4,10 @@ import android.graphics.Color
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +32,8 @@ import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +50,13 @@ fun TrendsScreen(
     
     val state by viewModel.state.collectAsState()
     val salesLabel = stringResource(R.string.sales)
+    val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+    
+    var showRangeMenu by remember { mutableStateOf(false) }
+
+    val currentCalendar = Calendar.getInstance()
+    val currentMonth = currentCalendar.get(Calendar.MONTH)
+    val currentYear = currentCalendar.get(Calendar.YEAR)
 
     AppScreen(
         title = stringResource(R.string.monthly_sales_trend),
@@ -90,29 +103,132 @@ fun TrendsScreen(
                 return@Column
             }
 
-            if (state.dailyTotals.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+            // ✅ Time Range Selector
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Spacing.medium)
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "📊", fontSize = 40.sp)
-                        Text(
-                            text = stringResource(R.string.no_sales_data_for) + " ${state.monthYear}",
-                            style = AppTypography.body,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            modifier = Modifier.padding(top = Spacing.medium)
-                        )
-                        Text(
-                            text = stringResource(R.string.start_recording_sales),
-                            style = AppTypography.small,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                        )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Month navigation
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(
+                                onClick = { viewModel.previousMonth() },
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Previous", modifier = Modifier.size(20.dp))
+                            }
+                            
+                            Text(
+                                text = monthFormat.format(
+                                    Calendar.getInstance()
+                                        .apply { set(state.selectedYear, state.selectedMonth, 1) }
+                                        .time
+                                ),
+                                style = AppTypography.title,
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+                            
+                            val isFutureMonth = state.selectedYear > currentYear || 
+                                (state.selectedYear == currentYear && state.selectedMonth > currentMonth)
+                            
+                            IconButton(
+                                onClick = { viewModel.nextMonth() },
+                                enabled = !isFutureMonth,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.ArrowForward, 
+                                    contentDescription = "Next",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = if (isFutureMonth) 
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                        
+                        // Time range dropdown
+                        ExposedDropdownMenuBox(
+                            expanded = showRangeMenu,
+                            onExpandedChange = { showRangeMenu = it }
+                        ) {
+                            OutlinedButton(
+                                onClick = { showRangeMenu = true },
+                                modifier = Modifier.menuAnchor()
+                            ) {
+                                Text(
+                                    text = state.rangeLabel,
+                                    style = AppTypography.small
+                                )
+                                Icon(
+                                    Icons.Default.ArrowDropDown,
+                                    contentDescription = "Select range",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            
+                            ExposedDropdownMenu(
+                                expanded = showRangeMenu,
+                                onDismissRequest = { showRangeMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("📅 Today") },
+                                    onClick = {
+                                        viewModel.setTimeRange(SalesTimeRange.TODAY)
+                                        showRangeMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("📅 This Week") },
+                                    onClick = {
+                                        viewModel.setTimeRange(SalesTimeRange.THIS_WEEK)
+                                        showRangeMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("📅 This Month") },
+                                    onClick = {
+                                        viewModel.setTimeRange(SalesTimeRange.THIS_MONTH)
+                                        showRangeMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("📅 Last Month") },
+                                    onClick = {
+                                        viewModel.setTimeRange(SalesTimeRange.LAST_MONTH)
+                                        showRangeMenu = false
+                                    }
+                                )
+                            }
+                        }
                     }
+                    
+                    Text(
+                        text = "Showing: ${state.rangeLabel}",
+                        style = AppTypography.small,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
                 }
-                return@Column
             }
 
+            Spacer(modifier = Modifier.height(Spacing.medium))
+
+            // Summary Cards
             AppCard {
                 Row(
                     modifier = Modifier
@@ -122,7 +238,7 @@ fun TrendsScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = state.monthYear,
+                            text = state.rangeLabel,
                             style = AppTypography.label,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
@@ -161,72 +277,82 @@ fun TrendsScreen(
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
-            AppCard {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "${state.monthYear} ${stringResource(R.string.sales)}",
-                        style = AppTypography.title,
-                        modifier = Modifier.padding(bottom = Spacing.small)
-                    )
-                    
-                    AndroidView(
-                        factory = { context ->
-                            BarChart(context).apply {
-                                description.isEnabled = false
-                                setTouchEnabled(true)
-                                setDragEnabled(true)
-                                setScaleEnabled(true)
+            // Bar Chart
+            if (state.dailyTotals.isNotEmpty()) {
+                AppCard {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "${state.rangeLabel} ${stringResource(R.string.sales)}",
+                            style = AppTypography.title,
+                            modifier = Modifier.padding(bottom = Spacing.small)
+                        )
+                        
+                        AndroidView(
+                            factory = { context ->
+                                BarChart(context).apply {
+                                    description.isEnabled = false
+                                    setTouchEnabled(true)
+                                    setDragEnabled(true)
+                                    setScaleEnabled(true)
+                                    
+                                    legend.isEnabled = true
+                                    legend.textColor = Color.DKGRAY
+                                    legend.textSize = 10f
+                                    
+                                    xAxis.position = XAxis.XAxisPosition.BOTTOM
+                                    xAxis.setDrawGridLines(false)
+                                    xAxis.textColor = Color.DKGRAY
+                                    xAxis.textSize = 10f
+                                    xAxis.granularity = 1f
+                                    xAxis.labelCount = 5
+                                    xAxis.labelRotationAngle = 0f
+                                    
+                                    axisLeft.textColor = Color.DKGRAY
+                                    axisLeft.textSize = 10f
+                                    axisLeft.setDrawGridLines(true)
+                                    axisLeft.gridColor = Color.LTGRAY
+                                    axisLeft.axisMinimum = 0f
+                                    
+                                    axisRight.isEnabled = false
+                                }
+                            },
+                            update = { barChart ->
+                                val entries = state.dailyTotals.mapIndexed { index, value ->
+                                    BarEntry(index.toFloat(), value.toFloat())
+                                }
                                 
-                                legend.isEnabled = true
-                                legend.textColor = Color.DKGRAY
-                                legend.textSize = 10f
+                                val dataSet = BarDataSet(entries, salesLabel).apply {
+                                    color = Color.parseColor("#1976D2")
+                                    valueTextColor = Color.DKGRAY
+                                    valueTextSize = 10f
+                                    setDrawValues(true)
+                                }
                                 
-                                xAxis.position = XAxis.XAxisPosition.BOTTOM
-                                xAxis.setDrawGridLines(false)
-                                xAxis.textColor = Color.DKGRAY
-                                xAxis.textSize = 10f
-                                xAxis.granularity = 1f
-                                xAxis.labelCount = 5
-                                xAxis.labelRotationAngle = 0f
+                                val barData = BarData(dataSet).apply {
+                                    barWidth = 0.6f
+                                }
                                 
-                                axisLeft.textColor = Color.DKGRAY
-                                axisLeft.textSize = 10f
-                                axisLeft.setDrawGridLines(true)
-                                axisLeft.gridColor = Color.LTGRAY
-                                axisLeft.axisMinimum = 0f
+                                barChart.data = barData
                                 
-                                axisRight.isEnabled = false
-                            }
-                        },
-                        update = { barChart ->
-                            val entries = state.dailyTotals.mapIndexed { index, value ->
-                                BarEntry(index.toFloat(), value.toFloat())
-                            }
-                            
-                            val dataSet = BarDataSet(entries, salesLabel).apply {
-                                color = Color.parseColor("#1976D2")
-                                valueTextColor = Color.DKGRAY
-                                valueTextSize = 10f
-                                setDrawValues(true)
-                            }
-                            
-                            val barData = BarData(dataSet).apply {
-                                barWidth = 0.6f
-                            }
-                            
-                            barChart.data = barData
-                            
-                            val dayLabels = (1..state.dailyTotals.size).map { it.toString() }
-                            barChart.xAxis.valueFormatter = IndexAxisValueFormatter(dayLabels)
-                            
-                            barChart.invalidate()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(300.dp)
-                    )
+                                val dayLabels = state.dates.map { dateStr ->
+                                    try {
+                                        val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateStr)
+                                        SimpleDateFormat("dd", Locale.getDefault()).format(date!!)
+                                    } catch (e: Exception) {
+                                        dateStr
+                                    }
+                                }
+                                barChart.xAxis.valueFormatter = IndexAxisValueFormatter(dayLabels)
+                                
+                                barChart.invalidate()
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(300.dp)
+                        )
+                    }
                 }
             }
 
