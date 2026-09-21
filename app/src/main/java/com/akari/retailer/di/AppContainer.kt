@@ -129,12 +129,13 @@ class AppContainer {
         ExternalTransferUseCase(moneyAccountRepository, moneyTransactionRepository)
     }
     
-    // Profit & Loss
+    // Profit & Loss (INCLUDES FEES NOW)
     val calculateProfitUseCase by lazy {
         CalculateBusinessProfitUseCase(
             saleRepository,
             expenseRepository,
-            incomeEntryRepository
+            incomeEntryRepository,
+            moneyTransactionRepository  // ✅ NEW
         )
     }
 }

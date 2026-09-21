@@ -1,11 +1,5 @@
 package com.akari.retailer.features.sales.domain.models
 
-enum class PaymentMethod {
-    CASH,
-    KPAY,
-    WAVEPAY
-}
-
 data class SaleItem(
     val productId: String = "",
     val quantity: Int = 0,
@@ -17,8 +11,7 @@ data class Sale(
     val id: String = "",
     val items: List<SaleItem> = emptyList(),
     val total: Int = 0,
-    val paymentMethod: PaymentMethod = PaymentMethod.CASH,
-    val accountId: String = "default_cash",  // ✅ NEW - Money account
+    val accountId: String = "default_cash",
     val timestamp: Long = System.currentTimeMillis(),
     val cashierId: String = ""
 )

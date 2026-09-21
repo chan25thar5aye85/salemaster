@@ -1,7 +1,6 @@
 package com.akari.retailer.core.utils
 
 import com.google.firebase.firestore.DocumentSnapshot
-import com.akari.retailer.features.sales.domain.models.PaymentMethod
 import com.akari.retailer.features.sales.domain.models.Sale
 import com.akari.retailer.features.sales.domain.models.SaleItem
 import java.util.Date
@@ -10,7 +9,7 @@ object FirestoreMapper {
     
     private const val FIELD_ITEMS = "items"
     private const val FIELD_TOTAL = "total"
-    private const val FIELD_PAYMENT_METHOD = "paymentMethod"
+    private const val FIELD_ACCOUNT_ID = "accountId"
     private const val FIELD_TIMESTAMP = "timestamp"
     private const val FIELD_CASHIER_ID = "cashierId"
     
@@ -27,7 +26,7 @@ object FirestoreMapper {
         return mapOf(
             FIELD_ITEMS to itemsMap,
             FIELD_TOTAL to sale.total,
-            FIELD_PAYMENT_METHOD to sale.paymentMethod.name,
+            FIELD_ACCOUNT_ID to sale.accountId,
             FIELD_TIMESTAMP to sale.timestamp,
             FIELD_CASHIER_ID to sale.cashierId
         )
@@ -55,13 +54,6 @@ object FirestoreMapper {
                 else -> return null
             }
             
-            val paymentMethodName = data[FIELD_PAYMENT_METHOD] as? String ?: "CASH"
-            val paymentMethod = try {
-                PaymentMethod.valueOf(paymentMethodName)
-            } catch (e: IllegalArgumentException) {
-                PaymentMethod.CASH
-            }
-            
             val timestamp = when (val ts = data[FIELD_TIMESTAMP]) {
                 is Long -> ts
                 is Int -> ts.toLong()
@@ -69,13 +61,14 @@ object FirestoreMapper {
                 else -> System.currentTimeMillis()
             }
             
+            val accountId = data[FIELD_ACCOUNT_ID] as? String ?: "default_cash"
             val cashierId = data[FIELD_CASHIER_ID] as? String ?: "default"
             
             Sale(
                 id = documentId,
                 items = items,
                 total = total,
-                paymentMethod = paymentMethod,
+                accountId = accountId,
                 timestamp = timestamp,
                 cashierId = cashierId
             )

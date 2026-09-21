@@ -16,7 +16,6 @@ import com.akari.retailer.R
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.core.utils.MoneyFormatter
-import com.akari.retailer.features.sales.domain.models.PaymentMethod
 import com.akari.retailer.features.sales.domain.models.Sale
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,11 +39,11 @@ fun RecentSalesTable(
             )
             .padding(Spacing.medium)
     ) {
-        // Header - Increased height with more padding
+        // Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp) // ✅ Increased from default to 56dp
+                .height(56.dp)
                 .padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -53,16 +52,16 @@ fun RecentSalesTable(
                 text = "📋 ${stringResource(R.string.recent_sales)}",
                 style = AppTypography.title,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(vertical = 8.dp) // ✅ Added vertical padding
+                modifier = Modifier.padding(vertical = 8.dp)
             )
             
             TextButton(
                 onClick = onViewAllClick,
-                modifier = Modifier.height(40.dp) // ✅ Increased from 32dp to 40dp
+                modifier = Modifier.height(40.dp)
             ) {
                 Text(
                     text = stringResource(R.string.view_all),
-                    fontSize = 13.sp, // ✅ Increased from 12sp to 13sp
+                    fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -74,7 +73,7 @@ fun RecentSalesTable(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(40.dp) // ✅ Added explicit height for table header
+                .height(40.dp)
                 .background(
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(8.dp)
@@ -92,14 +91,13 @@ fun RecentSalesTable(
                 isHeader = true
             )
             TableCell(
-                text = "Payment",
+                text = "Items",
                 modifier = Modifier.weight(1f),
                 isHeader = true
             )
         }
         
         if (recentSales.isEmpty()) {
-            // Empty state
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -114,12 +112,11 @@ fun RecentSalesTable(
                 )
             }
         } else {
-            // Sales rows with increased height
             recentSales.forEachIndexed { index, sale ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(44.dp) // ✅ Added explicit height for each row
+                        .height(44.dp)
                         .padding(horizontal = Spacing.small, vertical = 6.dp)
                         .background(
                             color = if (index % 2 == 0) {
@@ -144,7 +141,7 @@ fun RecentSalesTable(
                         isAmount = true
                     )
                     TableCell(
-                        text = getPaymentDisplayName(sale.paymentMethod),
+                        text = "${sale.items.size}",
                         modifier = Modifier.weight(1f),
                         isHeader = false
                     )
@@ -167,17 +164,17 @@ fun TableCell(
         style = if (isHeader) {
             AppTypography.label.copy(
                 fontWeight = FontWeight.Bold,
-                fontSize = 12.sp // ✅ Increased from 11sp to 12sp
+                fontSize = 12.sp
             )
         } else if (isAmount) {
             AppTypography.body.copy(
                 fontWeight = FontWeight.Medium,
-                fontSize = 14.sp, // ✅ Increased from 13sp to 14sp
+                fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.primary
             )
         } else {
             AppTypography.body.copy(
-                fontSize = 13.sp // ✅ Increased from default to 13sp
+                fontSize = 13.sp
             )
         },
         color = if (isHeader) {
@@ -187,12 +184,4 @@ fun TableCell(
         },
         maxLines = 1
     )
-}
-
-private fun getPaymentDisplayName(method: PaymentMethod): String {
-    return when (method) {
-        PaymentMethod.CASH -> "Cash"
-        PaymentMethod.KPAY -> "KPay"
-        PaymentMethod.WAVEPAY -> "Wave"
-    }
 }

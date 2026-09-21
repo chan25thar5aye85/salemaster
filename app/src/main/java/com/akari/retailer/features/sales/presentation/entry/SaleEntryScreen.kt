@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -12,6 +11,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -167,86 +167,52 @@ fun SaleEntryScreen(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
 
-                // Payment Method Selector
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.payment),
-                        style = AppTypography.body,
-                        modifier = Modifier.width(80.dp)
-                    )
+                Spacer(modifier = Modifier.height(12.dp))
 
-                    PaymentSelector(
-                        selectedMethod = state.paymentMethod,
-                        onMethodSelected = { method ->
-                            viewModel.handleEvent(SaleEntryEvent.PaymentSelected(method))
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                // ✅ Money Account Selector
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                // Money Account Selector
+                ExposedDropdownMenuBox(
+                    expanded = accountExpanded,
+                    onExpandedChange = { accountExpanded = it }
                 ) {
-                    Text(
-                        text = "💰 " + stringResource(R.string.money_account),
-                        style = AppTypography.body,
-                        modifier = Modifier.width(120.dp)
-                    )
-                    
                     val selectedAccount = state.accounts.find { it.id == state.selectedAccountId }
                     
-                    ExposedDropdownMenuBox(
+                    OutlinedTextField(
+                        value = selectedAccount?.getDisplayName() ?: stringResource(R.string.select_account),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.money_account)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        trailingIcon = { 
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) 
+                        }
+                    )
+                    ExposedDropdownMenu(
                         expanded = accountExpanded,
-                        onExpandedChange = { accountExpanded = it },
-                        modifier = Modifier.weight(1f)
+                        onDismissRequest = { accountExpanded = false }
                     ) {
-                        OutlinedTextField(
-                            value = selectedAccount?.getDisplayName() ?: stringResource(R.string.select_account),
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text(stringResource(R.string.money_account)) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(),
-                            trailingIcon = { 
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) 
-                            }
-                        )
-                        ExposedDropdownMenu(
-                            expanded = accountExpanded,
-                            onDismissRequest = { accountExpanded = false }
-                        ) {
-                            state.accounts.forEach { account ->
-                                DropdownMenuItem(
-                                    text = { 
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text(account.getDisplayName())
-                                            Text(
-                                                text = "${account.currentBalance}",
-                                                color = MaterialTheme.colorScheme.primary,
-                                                fontSize = 12.sp
-                                            )
-                                        }
-                                    },
-                                    onClick = {
-                                        viewModel.handleEvent(SaleEntryEvent.AccountSelected(account))
-                                        accountExpanded = false
+                        state.accounts.forEach { account ->
+                            DropdownMenuItem(
+                                text = { 
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(account.getDisplayName())
+                                        Text(
+                                            text = "${account.currentBalance}",
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
                                     }
-                                )
-                            }
+                                },
+                                onClick = {
+                                    viewModel.handleEvent(SaleEntryEvent.AccountSelected(account))
+                                    accountExpanded = false
+                                }
+                            )
                         }
                     }
                 }

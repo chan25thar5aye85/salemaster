@@ -1,6 +1,5 @@
 package com.akari.retailer.features.sales.presentation.entry
 
-import com.akari.retailer.features.sales.domain.models.PaymentMethod
 import com.akari.retailer.features.sales.domain.models.Sale
 
 class SaleEntryStateManager {
@@ -84,10 +83,6 @@ class SaleEntryStateManager {
         }
 
         return state.copy(rows = focusedRows)
-    }
-
-    fun selectPaymentMethod(state: SaleEntryState, method: PaymentMethod): SaleEntryState {
-        return state.copy(paymentMethod = method)
     }
 
     fun resetState(keepRecentSales: List<Sale> = emptyList()): SaleEntryState {

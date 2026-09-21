@@ -7,7 +7,6 @@ import com.akari.retailer.data.repository.SaleRepository
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransactionUseCase
-import com.akari.retailer.features.sales.domain.models.PaymentMethod
 import com.akari.retailer.features.sales.domain.models.Sale
 import com.akari.retailer.features.sales.domain.models.SaleItem
 import com.akari.retailer.core.utils.MoneyFormatter
@@ -41,7 +40,6 @@ class SaleEntryViewModel(
             is SaleEntryEvent.RowFocused -> focusRow(event.rowId)
             is SaleEntryEvent.NextPressed -> nextRow(event.rowId)
             is SaleEntryEvent.RowDeleted -> deleteRow(event.rowId)
-            is SaleEntryEvent.PaymentSelected -> selectPaymentMethod(event.method)
             is SaleEntryEvent.AccountSelected -> selectAccount(event.account)
             SaleEntryEvent.SaveSale -> saveSale()
             SaleEntryEvent.ClearError -> clearError()
@@ -105,17 +103,6 @@ class SaleEntryViewModel(
         _state.value = stateManager.deleteRow(_state.value, rowId)
     }
 
-    private fun selectPaymentMethod(method: PaymentMethod) {
-        _state.value = stateManager.selectPaymentMethod(_state.value, method)
-        
-        val accountId = when (method) {
-            PaymentMethod.CASH -> "default_cash"
-            PaymentMethod.KPAY -> "default_kpay"
-            PaymentMethod.WAVEPAY -> "default_wave"
-        }
-        _state.value = _state.value.copy(selectedAccountId = accountId)
-    }
-
     private fun selectAccount(account: MoneyAccount) {
         _state.value = _state.value.copy(selectedAccountId = account.id)
     }
@@ -136,7 +123,6 @@ class SaleEntryViewModel(
         }
 
         val total = items.sum()
-        val paymentMethod = currentState.paymentMethod
         val accountId = currentState.selectedAccountId
         val currentRecentSales = currentState.recentSales
         val selectedAccount = currentState.accounts.find { it.id == accountId }
@@ -154,7 +140,6 @@ class SaleEntryViewModel(
             isSaving = false,
             saveSuccess = true,
             recentSales = currentRecentSales,
-            paymentMethod = paymentMethod,
             accounts = currentState.accounts,
             selectedAccountId = accountId
         )
@@ -164,7 +149,6 @@ class SaleEntryViewModel(
                 val sale = Sale(
                     items = saleItems,
                     total = total,
-                    paymentMethod = paymentMethod,
                     accountId = accountId,
                     cashierId = cashierId
                 )

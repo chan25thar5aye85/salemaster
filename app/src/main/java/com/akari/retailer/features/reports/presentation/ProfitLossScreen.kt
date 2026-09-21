@@ -60,7 +60,7 @@ fun ProfitLossScreen(
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(Spacing.medium))
                         Text(
-                            text = "Calculating...",
+                            text = stringResource(R.string.calculating),
                             style = AppTypography.body,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -99,15 +99,12 @@ fun ProfitLossScreen(
             }
 
             state.profitData?.let { data ->
-                // Three Summary Cards: Revenue, Other Income, Expenses
+                // Three Summary Cards
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
                 ) {
-                    // Revenue Card
-                    AppCard(
-                        modifier = Modifier.weight(1f)
-                    ) {
+                    AppCard(modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = "${data.revenue}",
@@ -121,11 +118,7 @@ fun ProfitLossScreen(
                             )
                         }
                     }
-                    
-                    // Other Income Card
-                    AppCard(
-                        modifier = Modifier.weight(1f)
-                    ) {
+                    AppCard(modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = "${data.incomeRevenue}",
@@ -139,11 +132,7 @@ fun ProfitLossScreen(
                             )
                         }
                     }
-                    
-                    // Expenses Card
-                    AppCard(
-                        modifier = Modifier.weight(1f)
-                    ) {
+                    AppCard(modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = "${data.businessExpenses}",
@@ -230,11 +219,20 @@ fun ProfitLossScreen(
                             modifier = Modifier.padding(bottom = Spacing.medium)
                         )
                         
+                        // Section: Revenue
+                        Text(
+                            text = "Revenue",
+                            style = AppTypography.label,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                        
                         // Sales Revenue
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = Spacing.small),
+                                .padding(vertical = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
@@ -254,7 +252,7 @@ fun ProfitLossScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = Spacing.small),
+                                .padding(vertical = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
@@ -270,15 +268,44 @@ fun ProfitLossScreen(
                             )
                         }
                         
+                        // Transfer Fees Earned (NEW)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Transfer Fees Earned",
+                                style = AppTypography.body,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                            Text(
+                                text = "${data.transferFeesEarned}",
+                                style = AppTypography.body,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        
                         Spacer(modifier = Modifier.height(Spacing.small))
                         Divider()
                         Spacer(modifier = Modifier.height(Spacing.small))
+                        
+                        // Section: Expenses
+                        Text(
+                            text = "Expenses",
+                            style = AppTypography.label,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
                         
                         // Business Expenses
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = Spacing.small),
+                                .padding(vertical = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
@@ -286,7 +313,27 @@ fun ProfitLossScreen(
                                 style = AppTypography.body
                             )
                             Text(
-                                text = "${data.businessExpenses}",
+                                text = "${data.regularBusinessExpenses}",
+                                style = AppTypography.body,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        
+                        // Transfer Fees Paid (NEW)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Transfer Fees Paid",
+                                style = AppTypography.body,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                            Text(
+                                text = "${data.transferFeesPaid}",
                                 style = AppTypography.body,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.error
@@ -297,7 +344,7 @@ fun ProfitLossScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = Spacing.small),
+                                .padding(vertical = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
@@ -359,19 +406,19 @@ fun ProfitLossScreen(
                             modifier = Modifier.padding(bottom = Spacing.small)
                         )
                         Text(
-                            text = stringResource(R.string.revenue_calculation),
+                            text = "• Revenue: Sales + Other Business Income + Fees Earned",
                             style = AppTypography.small
                         )
                         Text(
-                            text = stringResource(R.string.business_expenses_calculation),
+                            text = "• Business Expenses: Business + Mixed + Fees Paid",
                             style = AppTypography.small
                         )
                         Text(
-                            text = stringResource(R.string.personal_expenses_calculation),
+                            text = "• Personal Expenses: Not deducted from profit",
                             style = AppTypography.small
                         )
                         Text(
-                            text = stringResource(R.string.profit_margin_calculation),
+                            text = "• Profit Margin: (Profit / Revenue) × 100",
                             style = AppTypography.small
                         )
                     }

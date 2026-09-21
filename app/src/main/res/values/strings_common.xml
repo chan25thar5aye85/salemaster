@@ -96,6 +96,8 @@
     <string name="income_analytics">Income Analytics</string>
     <string name="income_streams">Income Streams</string>
     <string name="income_type">Income Type</string>
+    <string name="income_stream">Income Stream</string>
+    <string name="entry_category">Category</string>
     <string name="save_income">Save Income</string>
     <string name="view_income_list">View Income List</string>
     <string name="no_income_yet">No income yet</string>

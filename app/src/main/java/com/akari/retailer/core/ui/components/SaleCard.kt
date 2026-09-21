@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import com.akari.retailer.R
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.sales.domain.models.PaymentMethod
 import com.akari.retailer.features.sales.domain.models.Sale
 import com.akari.retailer.core.utils.MoneyFormatter
 import java.text.SimpleDateFormat
@@ -86,13 +85,6 @@ fun SaleCard(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
-                
-                // Payment method
-                Text(
-                    text = "💳 ${getPaymentDisplayName(sale.paymentMethod)}",
-                    style = AppTypography.small,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
             }
             
             // Delete button
@@ -107,13 +99,5 @@ fun SaleCard(
                 )
             }
         }
-    }
-}
-
-private fun getPaymentDisplayName(method: PaymentMethod): String {
-    return when (method) {
-        PaymentMethod.CASH -> "Cash"
-        PaymentMethod.KPAY -> "KPay"
-        PaymentMethod.WAVEPAY -> "Wave"
     }
 }

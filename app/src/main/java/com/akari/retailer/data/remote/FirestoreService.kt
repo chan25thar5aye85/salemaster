@@ -3,7 +3,7 @@ package com.akari.retailer.data.remote
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.akari.retailer.features.sales.domain.models.Sale
-import com.akari.retailer.core.utils.FirestoreMapper
+import com.akari.retailer.features.sales.domain.models.SaleItem
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -16,8 +16,7 @@ class FirestoreService {
     
     init {
         db = try {
-            val instance = FirebaseFirestore.getInstance()
-            instance
+            FirebaseFirestore.getInstance()
         } catch (e: Exception) {
             Log.e(TAG, "❌ Failed to get Firestore instance: ${e.message}")
             null
@@ -49,8 +48,7 @@ class FirestoreService {
                     )
                 },
                 "total" to sale.total,
-                "paymentMethod" to sale.paymentMethod.name,
-                "accountId" to sale.accountId,  // ✅ NEW
+                "accountId" to sale.accountId,
                 "timestamp" to sale.timestamp,
                 "cashierId" to sale.cashierId
             )
@@ -88,7 +86,7 @@ class FirestoreService {
                     val data = doc.data ?: return@mapNotNull null
                     val items = (data["items"] as? List<*>)?.mapNotNull { itemData ->
                         if (itemData is Map<*, *>) {
-                            com.akari.retailer.features.sales.domain.models.SaleItem(
+                            SaleItem(
                                 productId = itemData["productId"] as? String ?: "",
                                 quantity = (itemData["quantity"] as? Number)?.toInt() ?: 0,
                                 price = (itemData["price"] as? Number)?.toInt() ?: 0,
@@ -101,14 +99,7 @@ class FirestoreService {
                         id = doc.id,
                         items = items,
                         total = (data["total"] as? Number)?.toInt() ?: 0,
-                        paymentMethod = try {
-                            com.akari.retailer.features.sales.domain.models.PaymentMethod.valueOf(
-                                data["paymentMethod"] as? String ?: "CASH"
-                            )
-                        } catch (e: Exception) {
-                            com.akari.retailer.features.sales.domain.models.PaymentMethod.CASH
-                        },
-                        accountId = data["accountId"] as? String ?: "default_cash",  // ✅ NEW
+                        accountId = data["accountId"] as? String ?: "default_cash",
                         timestamp = (data["timestamp"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                         cashierId = data["cashierId"] as? String ?: "default"
                     )
@@ -149,7 +140,26 @@ class FirestoreService {
                 }
                 
                 val sales = snapshot.documents.mapNotNull { doc ->
-                    FirestoreMapper.documentToSale(doc)
+                    val data = doc.data ?: return@mapNotNull null
+                    val items = (data["items"] as? List<*>)?.mapNotNull { itemData ->
+                        if (itemData is Map<*, *>) {
+                            SaleItem(
+                                productId = itemData["productId"] as? String ?: "",
+                                quantity = (itemData["quantity"] as? Number)?.toInt() ?: 0,
+                                price = (itemData["price"] as? Number)?.toInt() ?: 0,
+                                total = (itemData["total"] as? Number)?.toInt() ?: 0
+                            )
+                        } else null
+                    } ?: emptyList()
+                    
+                    Sale(
+                        id = doc.id,
+                        items = items,
+                        total = (data["total"] as? Number)?.toInt() ?: 0,
+                        accountId = data["accountId"] as? String ?: "default_cash",
+                        timestamp = (data["timestamp"] as? Number)?.toLong() ?: System.currentTimeMillis(),
+                        cashierId = data["cashierId"] as? String ?: "default"
+                    )
                 }
                 trySend(sales)
             }

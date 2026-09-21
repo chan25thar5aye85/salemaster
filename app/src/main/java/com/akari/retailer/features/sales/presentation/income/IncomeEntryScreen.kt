@@ -117,7 +117,7 @@ fun IncomeEntryScreen(
                     value = state.selectedStream?.getDisplayName() ?: stringResource(R.string.select_income_type),
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text(stringResource(R.string.income_type)) },
+                    label = { Text(stringResource(R.string.income_stream)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
@@ -192,7 +192,7 @@ fun IncomeEntryScreen(
             
             // Entry Type Selector
             Text(
-                text = stringResource(R.string.income_type),
+                text = stringResource(R.string.entry_category),
                 style = AppTypography.label,
                 modifier = Modifier.padding(bottom = Spacing.small)
             )
