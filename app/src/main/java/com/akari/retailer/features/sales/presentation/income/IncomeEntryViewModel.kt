@@ -2,6 +2,8 @@ package com.akari.retailer.features.sales.presentation.income
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
+import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransactionUseCase
 import com.akari.retailer.features.sales.data.repository.IncomeEntryRepository
 import com.akari.retailer.features.sales.data.repository.IncomeStreamRepository
 import com.akari.retailer.features.sales.domain.models.IncomeEntry
@@ -13,7 +15,9 @@ import kotlinx.coroutines.launch
 
 class IncomeEntryViewModel(
     private val incomeEntryRepository: IncomeEntryRepository,
-    private val incomeStreamRepository: IncomeStreamRepository
+    private val incomeStreamRepository: IncomeStreamRepository,
+    private val moneyAccountRepository: MoneyAccountRepository,
+    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(IncomeEntryState())
@@ -21,12 +25,14 @@ class IncomeEntryViewModel(
 
     init {
         loadStreams()
+        loadAccounts()
     }
 
     fun handleEvent(event: IncomeEntryEvent) {
         when (event) {
             is IncomeEntryEvent.AmountChanged -> _state.value = _state.value.copy(amount = event.value)
             is IncomeEntryEvent.StreamSelected -> _state.value = _state.value.copy(selectedStream = event.stream)
+            is IncomeEntryEvent.AccountSelected -> _state.value = _state.value.copy(selectedAccountId = event.account.id)
             is IncomeEntryEvent.EntryTypeChanged -> _state.value = _state.value.copy(entryType = event.type)
             is IncomeEntryEvent.DescriptionChanged -> _state.value = _state.value.copy(description = event.value)
             is IncomeEntryEvent.DateChanged -> _state.value = _state.value.copy(date = event.date)
@@ -41,6 +47,19 @@ class IncomeEntryViewModel(
             try {
                 incomeStreamRepository.getIncomeStreams().collect { streams ->
                     _state.value = _state.value.copy(streams = streams)
+                }
+            } catch (e: Exception) {
+                // Handle silently
+            }
+        }
+    }
+
+    private fun loadAccounts() {
+        viewModelScope.launch {
+            try {
+                moneyAccountRepository.getAccounts().collect { accounts ->
+                    val active = accounts.filter { it.isActive }
+                    _state.value = _state.value.copy(accounts = active)
                 }
             } catch (e: Exception) {
                 // Handle silently
@@ -68,6 +87,7 @@ class IncomeEntryViewModel(
             val entry = IncomeEntry(
                 amount = amountInt,
                 incomeStreamId = currentState.selectedStream.id,
+                accountId = currentState.selectedAccountId,
                 description = currentState.description.trim(),
                 type = currentState.entryType,
                 date = currentState.date
@@ -76,6 +96,14 @@ class IncomeEntryViewModel(
             val result = incomeEntryRepository.addIncomeEntry(entry)
             
             if (result.isSuccess) {
+                val incomeId = result.getOrNull() ?: ""
+                processMoneyTransactionUseCase.processIncome(
+                    accountId = currentState.selectedAccountId,
+                    amount = amountInt,
+                    incomeId = incomeId,
+                    description = currentState.selectedStream.name
+                )
+                
                 _state.value = _state.value.copy(
                     isSaving = false,
                     saveSuccess = true,
@@ -93,12 +121,19 @@ class IncomeEntryViewModel(
 
 class IncomeEntryViewModelFactory(
     private val incomeEntryRepository: IncomeEntryRepository,
-    private val incomeStreamRepository: IncomeStreamRepository
+    private val incomeStreamRepository: IncomeStreamRepository,
+    private val moneyAccountRepository: MoneyAccountRepository,
+    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(IncomeEntryViewModel::class.java)) {
-            return IncomeEntryViewModel(incomeEntryRepository, incomeStreamRepository) as T
+            return IncomeEntryViewModel(
+                incomeEntryRepository,
+                incomeStreamRepository,
+                moneyAccountRepository,
+                processMoneyTransactionUseCase
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

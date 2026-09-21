@@ -1,11 +1,13 @@
 package com.akari.retailer.features.sales.presentation.income
 
+import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.features.sales.domain.models.IncomeEntryType
 import com.akari.retailer.features.sales.domain.models.IncomeStream
 
 sealed class IncomeEntryEvent {
     data class AmountChanged(val value: String) : IncomeEntryEvent()
     data class StreamSelected(val stream: IncomeStream) : IncomeEntryEvent()
+    data class AccountSelected(val account: MoneyAccount) : IncomeEntryEvent()  // ✅ NEW
     data class EntryTypeChanged(val type: IncomeEntryType) : IncomeEntryEvent()
     data class DescriptionChanged(val value: String) : IncomeEntryEvent()
     data class DateChanged(val date: Long) : IncomeEntryEvent()

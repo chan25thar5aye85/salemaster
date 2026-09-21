@@ -4,6 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.data.repository.SaleRepository
+import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
+import com.akari.retailer.features.money.domain.models.MoneyAccount
+import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransactionUseCase
 import com.akari.retailer.features.sales.domain.models.PaymentMethod
 import com.akari.retailer.features.sales.domain.models.Sale
 import com.akari.retailer.features.sales.domain.models.SaleItem
@@ -14,7 +17,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class SaleEntryViewModel(
-    private val repository: SaleRepository
+    private val repository: SaleRepository,
+    private val moneyAccountRepository: MoneyAccountRepository,
+    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase
 ) : ViewModel() {
 
     private val TAG = "SaleEntryViewModel"
@@ -26,8 +31,8 @@ class SaleEntryViewModel(
     val state: StateFlow<SaleEntryState> = _state.asStateFlow()
 
     init {
-        Log.d(TAG, "✅ SaleEntryViewModel initialized")
         loadRecentSales()
+        loadAccounts()
     }
 
     fun handleEvent(event: SaleEntryEvent) {
@@ -37,6 +42,7 @@ class SaleEntryViewModel(
             is SaleEntryEvent.NextPressed -> nextRow(event.rowId)
             is SaleEntryEvent.RowDeleted -> deleteRow(event.rowId)
             is SaleEntryEvent.PaymentSelected -> selectPaymentMethod(event.method)
+            is SaleEntryEvent.AccountSelected -> selectAccount(event.account)
             SaleEntryEvent.SaveSale -> saveSale()
             SaleEntryEvent.ClearError -> clearError()
             SaleEntryEvent.ResetSaveSuccess -> resetSaveSuccess()
@@ -49,6 +55,24 @@ class SaleEntryViewModel(
 
     fun getFormattedTotal(): String {
         return MoneyFormatter.formatTotal(getTotal())
+    }
+
+    private fun loadAccounts() {
+        viewModelScope.launch {
+            try {
+                moneyAccountRepository.getAccounts().collect { accounts ->
+                    val active = accounts.filter { it.isActive }
+                    _state.value = _state.value.copy(
+                        accounts = active,
+                        selectedAccountId = _state.value.selectedAccountId.ifEmpty {
+                            active.firstOrNull()?.id ?: "default_cash"
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Failed to load accounts: ${e.message}")
+            }
+        }
     }
 
     private fun loadRecentSales() {
@@ -83,6 +107,17 @@ class SaleEntryViewModel(
 
     private fun selectPaymentMethod(method: PaymentMethod) {
         _state.value = stateManager.selectPaymentMethod(_state.value, method)
+        
+        val accountId = when (method) {
+            PaymentMethod.CASH -> "default_cash"
+            PaymentMethod.KPAY -> "default_kpay"
+            PaymentMethod.WAVEPAY -> "default_wave"
+        }
+        _state.value = _state.value.copy(selectedAccountId = accountId)
+    }
+
+    private fun selectAccount(account: MoneyAccount) {
+        _state.value = _state.value.copy(selectedAccountId = account.id)
     }
 
     private fun saveSale(cashierId: String = "default") {
@@ -102,14 +137,13 @@ class SaleEntryViewModel(
 
         val total = items.sum()
         val paymentMethod = currentState.paymentMethod
+        val accountId = currentState.selectedAccountId
         val currentRecentSales = currentState.recentSales
+        val selectedAccount = currentState.accounts.find { it.id == accountId }
 
-        Log.d(TAG, "💾 Saving sale: items=$items, total=$total, payment=$paymentMethod")
-
-        // Convert items to SaleItem list
         val saleItems = items.map { amount ->
             SaleItem(
-                productId = "", // For simple sales, no product linked
+                productId = "",
                 quantity = 1,
                 price = amount,
                 total = amount
@@ -120,7 +154,9 @@ class SaleEntryViewModel(
             isSaving = false,
             saveSuccess = true,
             recentSales = currentRecentSales,
-            paymentMethod = paymentMethod
+            paymentMethod = paymentMethod,
+            accounts = currentState.accounts,
+            selectedAccountId = accountId
         )
 
         viewModelScope.launch {
@@ -129,18 +165,23 @@ class SaleEntryViewModel(
                     items = saleItems,
                     total = total,
                     paymentMethod = paymentMethod,
+                    accountId = accountId,
                     cashierId = cashierId
                 )
 
-                Log.d(TAG, "💾 Saving sale in background: $sale")
                 val result = repository.saveSale(sale)
-                if (result is com.akari.retailer.core.utils.Result.Error) {
-                    Log.e(TAG, "❌ Save error: ${result.message}")
-                    _state.value = _state.value.copy(
-                        error = result.message
+                if (result.isSuccess) {
+                    val saleId = result.getOrNull() ?: ""
+                    processMoneyTransactionUseCase.processSale(
+                        accountId = accountId,
+                        amount = total,
+                        saleId = saleId,
+                        description = "Sale via ${selectedAccount?.name ?: "Cash"}"
                     )
+                    Log.d(TAG, "✅ Sale saved and balance updated")
                 } else {
-                    Log.d(TAG, "✅ Sale saved: ${result.getOrNull()}")
+                    val errorMsg = result.exceptionOrNull()?.message ?: "Failed to save sale"
+                    _state.value = _state.value.copy(error = errorMsg)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Save error: ${e.message}")
@@ -157,5 +198,23 @@ class SaleEntryViewModel(
 
     private fun resetSaveSuccess() {
         _state.value = stateManager.setSaveSuccess(_state.value, false)
+    }
+}
+
+class SaleEntryViewModelFactory(
+    private val repository: SaleRepository,
+    private val moneyAccountRepository: MoneyAccountRepository,
+    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase
+) : androidx.lifecycle.ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SaleEntryViewModel::class.java)) {
+            return SaleEntryViewModel(
+                repository,
+                moneyAccountRepository,
+                processMoneyTransactionUseCase
+            ) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }

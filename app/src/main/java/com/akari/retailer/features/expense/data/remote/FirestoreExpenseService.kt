@@ -44,6 +44,7 @@ class FirestoreExpenseService {
                 "categoryId" to expense.categoryId,
                 "type" to expense.type.name,
                 "businessPercentage" to expense.businessPercentage,
+                "accountId" to expense.accountId,  // ✅ NEW
                 "description" to expense.description,
                 "date" to expense.date,
                 "createdAt" to expense.createdAt,
@@ -71,6 +72,7 @@ class FirestoreExpenseService {
                 "categoryId" to expense.categoryId,
                 "type" to expense.type.name,
                 "businessPercentage" to expense.businessPercentage,
+                "accountId" to expense.accountId,  // ✅ NEW
                 "description" to expense.description,
                 "date" to expense.date,
                 "updatedAt" to System.currentTimeMillis()
@@ -132,6 +134,7 @@ class FirestoreExpenseService {
                             ExpenseType.BUSINESS
                         },
                         businessPercentage = (data["businessPercentage"] as? Number)?.toInt() ?: 100,
+                        accountId = data["accountId"] as? String ?: "default_cash",  // ✅ NEW
                         description = data["description"] as? String ?: "",
                         date = (data["date"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                         createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
@@ -180,6 +183,7 @@ class FirestoreExpenseService {
                         ExpenseType.BUSINESS
                     },
                     businessPercentage = (data["businessPercentage"] as? Number)?.toInt() ?: 100,
+                    accountId = data["accountId"] as? String ?: "default_cash",  // ✅ NEW
                     description = data["description"] as? String ?: "",
                     date = (data["date"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                     createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),

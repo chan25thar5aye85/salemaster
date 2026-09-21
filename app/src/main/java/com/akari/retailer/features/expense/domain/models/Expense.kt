@@ -1,9 +1,9 @@
 package com.akari.retailer.features.expense.domain.models
 
 enum class ExpenseType {
-    BUSINESS,   // Business expense - affects profit
-    PERSONAL,   // Personal expense - doesn't affect profit
-    MIXED       // Partially business - user can decide percentage
+    BUSINESS,
+    PERSONAL,
+    MIXED
 }
 
 data class Expense(
@@ -11,14 +11,14 @@ data class Expense(
     val title: String = "",
     val amount: Int = 0,
     val categoryId: String = "default_other",
-    val type: ExpenseType = ExpenseType.BUSINESS,  // ✅ NEW
-    val businessPercentage: Int = 100,  // ✅ NEW: For MIXED expenses (0-100)
+    val type: ExpenseType = ExpenseType.BUSINESS,
+    val businessPercentage: Int = 100,
+    val accountId: String = "default_cash",  // ✅ NEW - Money account
     val description: String = "",
     val date: Long = System.currentTimeMillis(),
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 ) {
-    // Calculate business portion of the expense
     fun getBusinessAmount(): Int {
         return when (type) {
             ExpenseType.BUSINESS -> amount
@@ -27,7 +27,6 @@ data class Expense(
         }
     }
     
-    // Check if this expense affects profit
     fun affectsProfit(): Boolean {
         return type != ExpenseType.PERSONAL
     }

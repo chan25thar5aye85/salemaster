@@ -8,7 +8,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withTimeoutOrNull
 
 class FirestoreService {
     
@@ -18,7 +17,6 @@ class FirestoreService {
     init {
         db = try {
             val instance = FirebaseFirestore.getInstance()
-            Log.d(TAG, "✅ Firestore instance obtained")
             instance
         } catch (e: Exception) {
             Log.e(TAG, "❌ Failed to get Firestore instance: ${e.message}")
@@ -30,10 +28,8 @@ class FirestoreService {
     
     suspend fun saveSale(sale: Sale): Result<String> {
         return try {
-            Log.d(TAG, "Saving sale...")
             val collection = getCollection()
             if (collection == null) {
-                Log.e(TAG, "❌ Firestore not available")
                 return Result.failure(Exception("Firestore not available"))
             }
             
@@ -43,10 +39,23 @@ class FirestoreService {
                 collection.document()
             }
             
-            val data = FirestoreMapper.toMap(sale)
+            val data = mapOf(
+                "items" to sale.items.map { item ->
+                    mapOf(
+                        "productId" to item.productId,
+                        "quantity" to item.quantity,
+                        "price" to item.price,
+                        "total" to item.total
+                    )
+                },
+                "total" to sale.total,
+                "paymentMethod" to sale.paymentMethod.name,
+                "accountId" to sale.accountId,  // ✅ NEW
+                "timestamp" to sale.timestamp,
+                "cashierId" to sale.cashierId
+            )
             
             docRef.set(data).await()
-            Log.d(TAG, "✅ Sale saved successfully with ID: ${docRef.id}")
             Result.success(docRef.id)
         } catch (e: Exception) {
             Log.e(TAG, "❌ Save error: ${e.message}")
@@ -54,12 +63,9 @@ class FirestoreService {
         }
     }
     
-    // Real-time listener for all sales
     fun getSales(): Flow<List<Sale>> = callbackFlow {
-        Log.d(TAG, "📡 Starting getSales listener...")
         val collection = getCollection()
         if (collection == null) {
-            Log.e(TAG, "❌ Firestore not available")
             trySend(emptyList())
             close()
             return@callbackFlow
@@ -69,49 +75,70 @@ class FirestoreService {
             .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Log.e(TAG, "❌ Listen error: ${error.message}")
                     close(error)
                     return@addSnapshotListener
                 }
                 
                 if (snapshot == null) {
-                    Log.d(TAG, "📡 Snapshot is null, returning empty list")
                     trySend(emptyList())
                     return@addSnapshotListener
                 }
                 
                 val sales = snapshot.documents.mapNotNull { doc ->
-                    FirestoreMapper.documentToSale(doc)
+                    val data = doc.data ?: return@mapNotNull null
+                    val items = (data["items"] as? List<*>)?.mapNotNull { itemData ->
+                        if (itemData is Map<*, *>) {
+                            com.akari.retailer.features.sales.domain.models.SaleItem(
+                                productId = itemData["productId"] as? String ?: "",
+                                quantity = (itemData["quantity"] as? Number)?.toInt() ?: 0,
+                                price = (itemData["price"] as? Number)?.toInt() ?: 0,
+                                total = (itemData["total"] as? Number)?.toInt() ?: 0
+                            )
+                        } else null
+                    } ?: emptyList()
+                    
+                    Sale(
+                        id = doc.id,
+                        items = items,
+                        total = (data["total"] as? Number)?.toInt() ?: 0,
+                        paymentMethod = try {
+                            com.akari.retailer.features.sales.domain.models.PaymentMethod.valueOf(
+                                data["paymentMethod"] as? String ?: "CASH"
+                            )
+                        } catch (e: Exception) {
+                            com.akari.retailer.features.sales.domain.models.PaymentMethod.CASH
+                        },
+                        accountId = data["accountId"] as? String ?: "default_cash",  // ✅ NEW
+                        timestamp = (data["timestamp"] as? Number)?.toLong() ?: System.currentTimeMillis(),
+                        cashierId = data["cashierId"] as? String ?: "default"
+                    )
                 }
-                
-                Log.d(TAG, "📡 Got ${sales.size} sales from Firestore")
                 trySend(sales)
             }
         
-        awaitClose { 
-            Log.d(TAG, "📡 Stopped listening to sales")
-            listener.remove() 
-        }
+        awaitClose { listener.remove() }
     }
     
     fun getTodaySales(): Flow<List<Sale>> = callbackFlow {
-        Log.d(TAG, "📡 Starting getTodaySales listener...")
         val collection = getCollection()
         if (collection == null) {
-            Log.e(TAG, "❌ Firestore not available")
             trySend(emptyList())
             close()
             return@callbackFlow
         }
         
-        val todayStart = getTodayStart()
+        val calendar = java.util.Calendar.getInstance()
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        calendar.set(java.util.Calendar.MINUTE, 0)
+        calendar.set(java.util.Calendar.SECOND, 0)
+        calendar.set(java.util.Calendar.MILLISECOND, 0)
+        val todayStart = calendar.timeInMillis
         
         val listener = collection
             .whereGreaterThanOrEqualTo("timestamp", todayStart)
             .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Log.e(TAG, "❌ Today sales listen error: ${error.message}")
                     close(error)
                     return@addSnapshotListener
                 }
@@ -124,39 +151,23 @@ class FirestoreService {
                 val sales = snapshot.documents.mapNotNull { doc ->
                     FirestoreMapper.documentToSale(doc)
                 }
-                
-                Log.d(TAG, "📡 Got ${sales.size} today's sales from Firestore")
                 trySend(sales)
             }
         
-        awaitClose { 
-            Log.d(TAG, "📡 Stopped listening to today's sales")
-            listener.remove() 
-        }
+        awaitClose { listener.remove() }
     }
     
     suspend fun deleteSale(saleId: String): Result<Unit> {
         return try {
-            Log.d(TAG, "Deleting sale: $saleId")
             val collection = getCollection()
             if (collection == null) {
                 return Result.failure(Exception("Firestore not available"))
             }
             collection.document(saleId).delete().await()
-            Log.d(TAG, "✅ Sale deleted successfully")
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "❌ Delete error: ${e.message}")
             Result.failure(e)
         }
-    }
-    
-    private fun getTodayStart(): Long {
-        val calendar = java.util.Calendar.getInstance()
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        calendar.set(java.util.Calendar.MINUTE, 0)
-        calendar.set(java.util.Calendar.SECOND, 0)
-        calendar.set(java.util.Calendar.MILLISECOND, 0)
-        return calendar.timeInMillis
     }
 }

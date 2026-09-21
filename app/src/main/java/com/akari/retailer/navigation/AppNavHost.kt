@@ -33,6 +33,11 @@ import com.akari.retailer.features.expense.presentation.ExpenseDetailScreen
 import com.akari.retailer.features.expense.presentation.ExpenseEditScreen
 import com.akari.retailer.features.expense.presentation.ExpenseListScreen
 import com.akari.retailer.features.inventory.presentation.*
+import com.akari.retailer.features.money.presentation.ExternalTransferScreen
+import com.akari.retailer.features.money.presentation.MoneyAccountsScreen
+import com.akari.retailer.features.money.presentation.MoneyAnalyticsScreen
+import com.akari.retailer.features.money.presentation.MoneyTransactionsScreen
+import com.akari.retailer.features.money.presentation.TransferMoneyScreen
 import com.akari.retailer.features.reports.presentation.ProfitLossScreen
 import com.akari.retailer.features.reports.presentation.TrendsScreen
 import com.akari.retailer.features.sales.presentation.income.IncomeAnalyticsScreen
@@ -240,6 +245,36 @@ fun AppNavHost() {
                     ExpenseAnalyticsScreen(onBack = { navController.popBackStack() })
                 }
                 
+                // MONEY MODULE
+                composable(Routes.MONEY_ACCOUNTS) {
+                    MoneyAccountsScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(Routes.TRANSFER_MONEY) {
+                    TransferMoneyScreen(
+                        onBack = { navController.popBackStack() },
+                        onTransferSuccess = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(Routes.EXTERNAL_TRANSFER) {
+                    ExternalTransferScreen(
+                        onBack = { navController.popBackStack() },
+                        onTransferSuccess = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(Routes.MONEY_TRANSACTIONS) {
+                    MoneyTransactionsScreen(onBack = { navController.popBackStack() })
+                }
+                
+                composable(Routes.MONEY_ANALYTICS) {
+                    MoneyAnalyticsScreen(onBack = { navController.popBackStack() })
+                }
+                
                 // INVENTORY MODULE
                 composable(Routes.INVENTORY) {
                     InventoryListScreen(navController = navController, onBack = { navController.popBackStack() })
@@ -363,6 +398,7 @@ fun AppNavHost() {
                 }
             }
 
+            // FAB Menu
             FABMenu(
                 onMenuItemClick = { route ->
                     when (route) {
@@ -370,6 +406,7 @@ fun AppNavHost() {
                             popUpTo(Routes.SALE_ENTRY) { inclusive = true }
                         }
                         "income_entry" -> navController.navigate(Routes.INCOME_ENTRY)
+                        "income_list" -> navController.navigate(Routes.INCOME_LIST)
                         "income_analytics" -> navController.navigate(Routes.INCOME_ANALYTICS)
                         "expense_analytics" -> navController.navigate(Routes.EXPENSE_ANALYTICS)
                         "settings" -> navController.navigate(Routes.SETTINGS)
@@ -382,6 +419,11 @@ fun AppNavHost() {
                         "expenses" -> navController.navigate(Routes.EXPENSES)
                         "inventory" -> navController.navigate(Routes.INVENTORY)
                         "purchases" -> navController.navigate(Routes.PURCHASES)
+                        "money_accounts" -> navController.navigate(Routes.MONEY_ACCOUNTS)
+                        "transfer_money" -> navController.navigate(Routes.TRANSFER_MONEY)
+                        "external_transfer" -> navController.navigate(Routes.EXTERNAL_TRANSFER)
+                        "money_transactions" -> navController.navigate(Routes.MONEY_TRANSACTIONS)
+                        "money_analytics" -> navController.navigate(Routes.MONEY_ANALYTICS)
                         else -> {
                             scope.launch {
                                 snackbarHostState.showSnackbar("Coming soon!")

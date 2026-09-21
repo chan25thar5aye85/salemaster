@@ -9,6 +9,7 @@ data class IncomeEntry(
     val id: String = "",
     val amount: Int = 0,
     val incomeStreamId: String = "default_product_sales",
+    val accountId: String = "default_cash",  // ✅ NEW - Money account
     val description: String = "",
     val type: IncomeEntryType = IncomeEntryType.BUSINESS,
     val date: Long = System.currentTimeMillis(),

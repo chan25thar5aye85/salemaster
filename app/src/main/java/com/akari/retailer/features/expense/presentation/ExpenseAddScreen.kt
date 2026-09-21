@@ -60,7 +60,12 @@ fun ExpenseAddScreen(
     val categoryRepository = remember { FirestoreCategoryRepository(categoryService) }
     
     val viewModel: ExpenseAddViewModel = viewModel(
-        factory = ExpenseAddViewModelFactory(expenseRepository, categoryRepository)
+        factory = ExpenseAddViewModelFactory(
+            expenseRepository,
+            categoryRepository,
+            application.container.moneyAccountRepository,
+            application.container.processMoneyTransactionUseCase
+        )
     )
     
     val state by viewModel.state.collectAsState()

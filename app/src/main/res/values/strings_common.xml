@@ -55,6 +55,11 @@
     <string name="restart_required_message">The app needs to restart to apply the new language. Continue?</string>
     <string name="restart_confirm">Restart Now</string>
     <string name="updating">Updating...</string>
+    <string name="calculating">Calculating...</string>
+    <string name="transactions">transactions</string>
+    <string name="select_range">Select range</string>
+    <string name="showing">Showing</string>
+    <string name="view_analytics">View Analytics</string>
     
     <!-- FAB Menu -->
     <string name="fab_sale_entry">Sale Entry</string>
@@ -99,7 +104,7 @@
     <string name="personal_income">Personal Income</string>
     <string name="income_by_source">Income by Source</string>
     <string name="income_comparison">Income Comparison</string>
-    <string name="income_details">Income Details</string>
+    <string name="income_details_title">Income Details</string>
     <string name="top_income_source">Top Income Source</string>
     <string name="income_stream_name">Income Stream Name</string>
     <string name="add_income_stream">Add Income Stream</string>
@@ -125,4 +130,100 @@
     <string name="search_income">Search income...</string>
     <string name="filter_by_income_type">Filter by Income Type</string>
     <string name="no_income_found">No income found</string>
+    <string name="income_entry_delete_confirmation">Are you sure you want to delete this income entry?</string>
+    <string name="income_entry_unknown">Unknown</string>
+    <string name="income_business_label">Business</string>
+    <string name="income_personal_label">Personal</string>
+    <string name="income_business_icon">💼 Business</string>
+    <string name="income_personal_icon">👤 Personal</string>
+    <string name="no_income_period">No income for this period</string>
+    <string name="add_income_to_see_analytics">Add some income to see analytics</string>
+    
+    <!-- Expense Analytics -->
+    <string name="spending_by_category">Spending by Category</string>
+    <string name="category_comparison">Category Comparison</string>
+    <string name="category_details_title">Category Details</string>
+    <string name="top_category">Top Category</string>
+    <string name="no_expenses_period">No expenses for this period</string>
+    <string name="add_expenses_to_see_analytics">Add some expenses to see analytics</string>
+    <string name="avg_per_day">Avg per day</string>
+    
+    <!-- Common Analytics -->
+    <string name="filter_by_type">Filter by Type</string>
+    <string name="all_types">All</string>
+    <string name="business_type">Business</string>
+    <string name="personal_type">Personal</string>
+    <string name="mixed_type">Mixed</string>
+    <string name="today_range">Today</string>
+    <string name="this_week">This Week</string>
+    <string name="this_month">This Month</string>
+    <string name="last_month">Last Month</string>
+    
+    <!-- Money Accounts -->
+    <string name="money_accounts">Money Accounts</string>
+    <string name="add_account">Add Account</string>
+    <string name="edit_account">Edit Account</string>
+    <string name="delete_account">Delete Account</string>
+    <string name="delete_account_confirmation">Are you sure you want to delete this account?</string>
+    <string name="account_name">Account Name</string>
+    <string name="opening_balance">Opening Balance</string>
+    <string name="account_number">Account Number (optional)</string>
+    <string name="total_balance">Total Balance</string>
+    <string name="accounts">accounts</string>
+    <string name="balance">Balance</string>
+    <string name="default_label">Default</string>
+    <string name="no_accounts_yet">No accounts yet</string>
+    <string name="tap_add_account">Tap + to add your first account</string>
+    <string name="icon">Icon</string>
+    <string name="color">Color</string>
+    <string name="add">Add</string>
+    <string name="update">Update</string>
+    <string name="edit">Edit</string>
+    <string name="money_account">Money Account</string>
+    <string name="select_account">Select Account</string>
+    
+    <!-- Transfer Money -->
+    <string name="transfer_money">Transfer Money</string>
+    <string name="from_account">From Account</string>
+    <string name="to_account">To Account</string>
+    <string name="fee_type">Fee Type</string>
+    <string name="fee_none">No Fee</string>
+    <string name="fee_paid">Fee Paid</string>
+    <string name="fee_earned">Fee Earned</string>
+    <string name="fee_you_pay">Fee You Pay</string>
+    <string name="fee_you_earn">Fee You Earn</string>
+    <string name="description_optional">Description (optional)</string>
+    <string name="transfer_summary">Transfer Summary</string>
+    <string name="confirm_transfer">Confirm Transfer</string>
+    
+    <!-- External Transfer -->
+    <string name="external_transfer">External Transfer</string>
+    <string name="direction">Direction</string>
+    <string name="outgoing">Outgoing</string>
+    <string name="incoming">Incoming</string>
+    <string name="external_account_name">External Account Name</string>
+    <string name="external_account_number">External Account Number (optional)</string>
+    
+    <!-- Money Transactions -->
+    <string name="no_transactions">No transactions yet</string>
+    <string name="transactions_will_appear_here">Transactions will appear here</string>
+    <string name="search_transactions">Search transactions...</string>
+    <string name="money_in">Money In</string>
+    <string name="money_out">Money Out</string>
+    <string name="fees_paid">Fees Paid</string>
+    <string name="fees_earned">Fees Earned</string>
+    <string name="filters">Filters</string>
+    <string name="clear_all">Clear All</string>
+    <string name="time_range">Time Range</string>
+    <string name="transaction_type">Transaction Type</string>
+    <string name="all_accounts">All Accounts</string>
+    
+    <!-- Money Analytics -->
+    <string name="money_analytics">Money Analytics</string>
+    <string name="balance_distribution">Balance Distribution</string>
+    <string name="account_balances">Account Balances</string>
+    <string name="fee_summary">Fee Summary</string>
+    <string name="net_fee">Net Fee</string>
+    <string name="fee_comparison">Fee Comparison</string>
+    <string name="net_flow">Net Flow</string>
 </resources>

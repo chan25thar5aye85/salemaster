@@ -7,20 +7,25 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Inventory
-import androidx.compose.material.icons.filled.PieChart
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.PointOfSale
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.Inventory
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material.icons.filled.PointOfSale
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,49 +43,77 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.akari.retailer.R
 
+enum class FABSubmenu {
+    NONE,
+    REPORTS,
+    MONEY
+}
+
 @Composable
 fun FABMenu(
     onMenuItemClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+    var currentSubmenu by remember { mutableStateOf(FABSubmenu.NONE) }
 
-    val menuItems = listOf(
-        // Main actions
+    // Main menu items
+    val mainItems = listOf(
         FABMenuItemData(Icons.Default.PointOfSale, stringResource(R.string.fab_sale_entry), "sale_entry"),
         FABMenuItemData(Icons.Default.AttachMoney, stringResource(R.string.add_income), "income_entry"),
         FABMenuItemData(Icons.Default.Receipt, stringResource(R.string.fab_expenses), "expenses"),
-        
-        // Management
+        FABMenuItemData(Icons.Default.BarChart, "📈 Reports", "SUBMENU_REPORTS"),
+        FABMenuItemData(Icons.Default.AccountBalanceWallet, "💰 Money", "SUBMENU_MONEY"),
         FABMenuItemData(Icons.Default.Inventory, stringResource(R.string.fab_inventory), "inventory"),
         FABMenuItemData(Icons.Default.People, stringResource(R.string.fab_customers), "customers"),
         FABMenuItemData(Icons.Default.Business, stringResource(R.string.fab_suppliers), "suppliers"),
         FABMenuItemData(Icons.Default.ShoppingCart, stringResource(R.string.fab_purchase_orders), "purchase_orders"),
         FABMenuItemData(Icons.Default.History, stringResource(R.string.fab_purchases), "purchases"),
-        
-        // Reports
-        FABMenuItemData(Icons.Default.BarChart, "📈 Sales Trends", "reports"),
-        FABMenuItemData(Icons.Default.Analytics, "📊 Expense Analytics", "expense_analytics"),
-        FABMenuItemData(Icons.Default.Analytics, "💰 Income Analytics", "income_analytics"),
-        FABMenuItemData(Icons.Default.PieChart, "📊 Profit & Loss", "profit_loss"),
-        
-        // Settings
         FABMenuItemData(Icons.Default.Settings, stringResource(R.string.fab_settings), "settings")
     )
 
+    // Reports submenu
+    val reportsItems = listOf(
+        FABMenuItemData(Icons.Default.BarChart, "📈 Sales Trends", "reports"),
+        FABMenuItemData(Icons.Default.Insights, "📊 Expense Analytics", "expense_analytics"),
+        FABMenuItemData(Icons.Default.Insights, "💰 Income Analytics", "income_analytics"),
+        FABMenuItemData(Icons.Default.PieChart, "📊 Profit & Loss", "profit_loss")
+    )
+
+    // Money submenu
+    val moneyItems = listOf(
+        FABMenuItemData(Icons.Default.AccountBalanceWallet, "💰 Money Accounts", "money_accounts"),
+        FABMenuItemData(Icons.Default.SwapHoriz, "💸 Transfer Money", "transfer_money"),
+        FABMenuItemData(Icons.Default.Public, "🌐 External Transfer", "external_transfer"),
+        FABMenuItemData(Icons.Default.ReceiptLong, "📋 Transactions", "money_transactions"),
+        FABMenuItemData(Icons.Default.Insights, "📊 Money Analytics", "money_analytics")
+    )
+
+    // Determine which items to show
+    val currentItems = when (currentSubmenu) {
+        FABSubmenu.NONE -> mainItems
+        FABSubmenu.REPORTS -> reportsItems
+        FABSubmenu.MONEY -> moneyItems
+    }
+
     // Split into two columns
-    val firstColumn = menuItems.take(6)
-    val secondColumn = menuItems.drop(6)
+    val halfSize = (currentItems.size + 1) / 2
+    val firstColumn = currentItems.take(halfSize)
+    val secondColumn = currentItems.drop(halfSize)
 
     Box(
         modifier = modifier
     ) {
+        // Scrim layer
         if (isExpanded) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.5f))
-                    .clickable { isExpanded = false }
+                    .clickable { 
+                        isExpanded = false
+                        currentSubmenu = FABSubmenu.NONE
+                    }
             )
         }
 
@@ -88,6 +121,7 @@ fun FABMenu(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomStart
         ) {
+            // Menu items
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = fadeIn() + slideInHorizontally(
@@ -112,8 +146,12 @@ fun FABMenu(
                                 icon = item.icon,
                                 label = item.label,
                                 onClick = {
-                                    onMenuItemClick(item.route)
-                                    isExpanded = false
+                                    handleMenuClick(
+                                        item.route,
+                                        onMenuItemClick,
+                                        onSubmenuChange = { currentSubmenu = it },
+                                        onClose = { isExpanded = false }
+                                    )
                                 }
                             )
                         }
@@ -127,8 +165,12 @@ fun FABMenu(
                                 icon = item.icon,
                                 label = item.label,
                                 onClick = {
-                                    onMenuItemClick(item.route)
-                                    isExpanded = false
+                                    handleMenuClick(
+                                        item.route,
+                                        onMenuItemClick,
+                                        onSubmenuChange = { currentSubmenu = it },
+                                        onClose = { isExpanded = false }
+                                    )
                                 }
                             )
                         }
@@ -136,8 +178,20 @@ fun FABMenu(
                 }
             }
 
+            // FAB button
             FloatingActionButton(
-                onClick = { isExpanded = !isExpanded },
+                onClick = { 
+                    if (isExpanded && currentSubmenu != FABSubmenu.NONE) {
+                        // Back to main menu
+                        currentSubmenu = FABSubmenu.NONE
+                    } else {
+                        // Toggle expand
+                        isExpanded = !isExpanded
+                        if (!isExpanded) {
+                            currentSubmenu = FABSubmenu.NONE
+                        }
+                    }
+                },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier
@@ -146,10 +200,34 @@ fun FABMenu(
                     .clip(CircleShape)
             ) {
                 Icon(
-                    imageVector = if (isExpanded) Icons.Default.Close else Icons.Default.Add,
-                    contentDescription = if (isExpanded) "Close menu" else "Open menu"
+                    imageVector = when {
+                        !isExpanded -> Icons.Default.Add
+                        currentSubmenu != FABSubmenu.NONE -> Icons.Default.ArrowBack
+                        else -> Icons.Default.Close
+                    },
+                    contentDescription = when {
+                        !isExpanded -> "Open menu"
+                        currentSubmenu != FABSubmenu.NONE -> "Back"
+                        else -> "Close menu"
+                    }
                 )
             }
+        }
+    }
+}
+
+private fun handleMenuClick(
+    route: String,
+    onMenuItemClick: (String) -> Unit,
+    onSubmenuChange: (FABSubmenu) -> Unit,
+    onClose: () -> Unit
+) {
+    when (route) {
+        "SUBMENU_REPORTS" -> onSubmenuChange(FABSubmenu.REPORTS)
+        "SUBMENU_MONEY" -> onSubmenuChange(FABSubmenu.MONEY)
+        else -> {
+            onMenuItemClick(route)
+            onClose()
         }
     }
 }

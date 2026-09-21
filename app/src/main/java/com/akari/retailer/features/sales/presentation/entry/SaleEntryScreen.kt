@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +25,7 @@ import com.akari.retailer.core.utils.NetworkUtils
 import com.akari.retailer.navigation.Routes
 import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SaleEntryScreen(
     navController: NavController? = null
@@ -32,15 +34,22 @@ fun SaleEntryScreen(
     val application = context.applicationContext as RetailApplication
     
     val repository = remember { application.container.saleRepository }
+    val moneyAccountRepository = remember { application.container.moneyAccountRepository }
+    val processMoneyTransactionUseCase = remember { application.container.processMoneyTransactionUseCase }
     
     val viewModel: SaleEntryViewModel = viewModel(
-        factory = SaleEntryViewModelFactory(repository)
+        factory = SaleEntryViewModelFactory(
+            repository,
+            moneyAccountRepository,
+            processMoneyTransactionUseCase
+        )
     )
     
     val state by viewModel.state.collectAsState()
     val focusManager = LocalFocusManager.current
     
     var isOnline by remember { mutableStateOf(NetworkUtils.isNetworkAvailable(context)) }
+    var accountExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -158,6 +167,7 @@ fun SaleEntryScreen(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
 
+                // Payment Method Selector
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -178,6 +188,67 @@ fun SaleEntryScreen(
                         },
                         modifier = Modifier.weight(1f)
                     )
+                }
+
+                // ✅ Money Account Selector
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "💰 " + stringResource(R.string.money_account),
+                        style = AppTypography.body,
+                        modifier = Modifier.width(120.dp)
+                    )
+                    
+                    val selectedAccount = state.accounts.find { it.id == state.selectedAccountId }
+                    
+                    ExposedDropdownMenuBox(
+                        expanded = accountExpanded,
+                        onExpandedChange = { accountExpanded = it },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        OutlinedTextField(
+                            value = selectedAccount?.getDisplayName() ?: stringResource(R.string.select_account),
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.money_account)) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            trailingIcon = { 
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) 
+                            }
+                        )
+                        ExposedDropdownMenu(
+                            expanded = accountExpanded,
+                            onDismissRequest = { accountExpanded = false }
+                        ) {
+                            state.accounts.forEach { account ->
+                                DropdownMenuItem(
+                                    text = { 
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(account.getDisplayName())
+                                            Text(
+                                                text = "${account.currentBalance}",
+                                                color = MaterialTheme.colorScheme.primary,
+                                                fontSize = 12.sp
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        viewModel.handleEvent(SaleEntryEvent.AccountSelected(account))
+                                        accountExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
 
                 state.error?.let { error ->

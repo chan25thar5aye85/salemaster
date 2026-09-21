@@ -18,6 +18,7 @@ data class Sale(
     val items: List<SaleItem> = emptyList(),
     val total: Int = 0,
     val paymentMethod: PaymentMethod = PaymentMethod.CASH,
+    val accountId: String = "default_cash",  // ✅ NEW - Money account
     val timestamp: Long = System.currentTimeMillis(),
     val cashierId: String = ""
 )

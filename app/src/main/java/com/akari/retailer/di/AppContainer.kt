@@ -20,6 +20,15 @@ import com.akari.retailer.features.inventory.data.repository.InventoryRepository
 import com.akari.retailer.features.inventory.data.repository.PurchaseOrderRepository
 import com.akari.retailer.features.inventory.data.repository.PurchaseRepository
 import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
+import com.akari.retailer.features.money.data.remote.FirestoreMoneyService
+import com.akari.retailer.features.money.data.remote.FirestoreMoneyTransactionService
+import com.akari.retailer.features.money.data.repository.FirestoreMoneyAccountRepository
+import com.akari.retailer.features.money.data.repository.FirestoreMoneyTransactionRepository
+import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
+import com.akari.retailer.features.money.data.repository.MoneyTransactionRepository
+import com.akari.retailer.features.money.domain.usecases.ExternalTransferUseCase
+import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransactionUseCase
+import com.akari.retailer.features.money.domain.usecases.TransferMoneyUseCase
 import com.akari.retailer.features.sales.data.remote.FirestoreIncomeEntryService
 import com.akari.retailer.features.sales.data.remote.FirestoreIncomeStreamService
 import com.akari.retailer.features.sales.data.repository.FirestoreIncomeEntryRepository
@@ -85,12 +94,42 @@ class AppContainer {
         FirestorePurchaseOrderRepository()
     }
     
-    // Purchases (Completed purchases)
+    // Purchases
     val purchaseRepository: PurchaseRepository by lazy {
         FirestorePurchaseRepository()
     }
     
-    // Profit & Loss Calculation (lazy to avoid circular dependencies)
+    // Money Accounts
+    private val moneyService by lazy { FirestoreMoneyService() }
+    val moneyAccountRepository: MoneyAccountRepository by lazy {
+        FirestoreMoneyAccountRepository(moneyService)
+    }
+    
+    // Money Transactions
+    private val moneyTransactionService by lazy { FirestoreMoneyTransactionService() }
+    val moneyTransactionRepository: MoneyTransactionRepository by lazy {
+        FirestoreMoneyTransactionRepository(moneyTransactionService)
+    }
+    
+    // Process Money Transaction
+    val processMoneyTransactionUseCase by lazy {
+        ProcessMoneyTransactionUseCase(
+            moneyAccountRepository,
+            moneyTransactionRepository
+        )
+    }
+    
+    // Transfer Money
+    val transferMoneyUseCase by lazy {
+        TransferMoneyUseCase(moneyAccountRepository, moneyTransactionRepository)
+    }
+    
+    // External Transfer
+    val externalTransferUseCase by lazy {
+        ExternalTransferUseCase(moneyAccountRepository, moneyTransactionRepository)
+    }
+    
+    // Profit & Loss
     val calculateProfitUseCase by lazy {
         CalculateBusinessProfitUseCase(
             saleRepository,

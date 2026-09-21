@@ -1,5 +1,6 @@
 package com.akari.retailer.features.sales.presentation.entry
 
+import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.features.sales.domain.models.PaymentMethod
 import com.akari.retailer.features.sales.domain.models.Sale
 
@@ -11,6 +12,8 @@ data class SaleEntryState(
         )
     ),
     val paymentMethod: PaymentMethod = PaymentMethod.CASH,
+    val accounts: List<MoneyAccount> = emptyList(),          // ✅ NEW
+    val selectedAccountId: String = "default_cash",           // ✅ NEW
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
     val error: String? = null,

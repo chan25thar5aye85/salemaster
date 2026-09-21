@@ -20,6 +20,13 @@ object Routes {
     const val INCOME_STREAMS = "income_streams"
     const val INCOME_ANALYTICS = "income_analytics"
     
+    // Money
+    const val MONEY_ACCOUNTS = "money_accounts"
+    const val TRANSFER_MONEY = "transfer_money"
+    const val EXTERNAL_TRANSFER = "external_transfer"
+    const val MONEY_TRANSACTIONS = "money_transactions"
+    const val MONEY_ANALYTICS = "money_analytics"
+    
     const val INVENTORY = "inventory"
     const val INVENTORY_ADD = "inventory_add"
     const val INVENTORY_DETAIL = "inventory_detail/{productId}"

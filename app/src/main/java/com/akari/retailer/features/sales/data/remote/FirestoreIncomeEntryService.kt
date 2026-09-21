@@ -42,6 +42,7 @@ class FirestoreIncomeEntryService {
             val data = mapOf(
                 "amount" to entry.amount,
                 "incomeStreamId" to entry.incomeStreamId,
+                "accountId" to entry.accountId,  // ✅ NEW
                 "description" to entry.description,
                 "type" to entry.type.name,
                 "date" to entry.date,
@@ -67,6 +68,7 @@ class FirestoreIncomeEntryService {
             val data = mapOf(
                 "amount" to entry.amount,
                 "incomeStreamId" to entry.incomeStreamId,
+                "accountId" to entry.accountId,  // ✅ NEW
                 "description" to entry.description,
                 "type" to entry.type.name,
                 "date" to entry.date,
@@ -122,6 +124,7 @@ class FirestoreIncomeEntryService {
                         id = doc.id,
                         amount = (data["amount"] as? Number)?.toInt() ?: 0,
                         incomeStreamId = data["incomeStreamId"] as? String ?: "default_product_sales",
+                        accountId = data["accountId"] as? String ?: "default_cash",  // ✅ NEW
                         description = data["description"] as? String ?: "",
                         type = try {
                             IncomeEntryType.valueOf(data["type"] as? String ?: "BUSINESS")
@@ -168,6 +171,7 @@ class FirestoreIncomeEntryService {
                     id = snapshot.id,
                     amount = (data["amount"] as? Number)?.toInt() ?: 0,
                     incomeStreamId = data["incomeStreamId"] as? String ?: "default_product_sales",
+                    accountId = data["accountId"] as? String ?: "default_cash",  // ✅ NEW
                     description = data["description"] as? String ?: "",
                     type = try {
                         IncomeEntryType.valueOf(data["type"] as? String ?: "BUSINESS")
