@@ -26,13 +26,8 @@ class AdjustStockUseCase(
                 return Result.success(Unit)
             }
             
-            val updatedProduct = product.copy(
-                stockQuantity = params.newStock,
-                updatedAt = System.currentTimeMillis()
-            )
-            
-            // Update product
-            val updateResult = inventoryRepository.updateProduct(updatedProduct)
+            // Atomically apply the delta — no read-modify-write race.
+            val updateResult = inventoryRepository.adjustStock(params.productId, difference)
             if (updateResult.isFailure) {
                 return Result.failure(updateResult.exceptionOrNull() ?: Exception("Failed to update product"))
             }

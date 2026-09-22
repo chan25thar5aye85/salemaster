@@ -29,7 +29,6 @@ class SaleEntryViewModel(
 
     private val TAG = "SaleEntryViewModel"
     private val stateManager = SaleEntryStateManager()
-    private val validator = SaleEntryValidator()
 
     private val _state = MutableStateFlow(SaleEntryState())
     val state: StateFlow<SaleEntryState> = _state.asStateFlow()
@@ -52,28 +51,16 @@ class SaleEntryViewModel(
     fun handleEvent(event: SaleEntryEvent) {
         when (event) {
             is SaleEntryEvent.AmountChanged -> {
+                val previousTotal = getTotal()
                 updateAmount(event.rowId, event.value)
-                if (!userTouchedPaymentAmounts && _state.value.paymentRows.size == 1) {
-                    val total = getTotal()
-                    _state.value = _state.value.copy(
-                        paymentRows = listOf(
-                            _state.value.paymentRows[0].copy(amount = total.toString())
-                        )
-                    )
-                }
+                syncSinglePaymentRow(previousTotal)
             }
             is SaleEntryEvent.RowFocused -> focusRow(event.rowId)
             is SaleEntryEvent.NextPressed -> nextRow(event.rowId)
             is SaleEntryEvent.RowDeleted -> {
+                val previousTotal = getTotal()
                 deleteRow(event.rowId)
-                if (!userTouchedPaymentAmounts && _state.value.paymentRows.size == 1) {
-                    val total = getTotal()
-                    _state.value = _state.value.copy(
-                        paymentRows = listOf(
-                            _state.value.paymentRows[0].copy(amount = total.toString())
-                        )
-                    )
-                }
+                syncSinglePaymentRow(previousTotal)
             }
             is SaleEntryEvent.PaymentAccountChanged -> {
                 updatePaymentAccount(event.rowId, event.account)
@@ -115,6 +102,48 @@ class SaleEntryViewModel(
                 }
             } catch (e: Exception) { }
         }
+    }
+
+    /**
+     * If there's exactly one payment row, keep it in sync with the total —
+     * but ONLY if the row still contains the previously auto-filled value
+     * (i.e., the user hasn't manually diverged it).
+     *
+     * Fixes: after deleting a 2nd row and going back to 1 row, the payment
+     * row used to stay stale, blocking save.
+     */
+    private fun syncSinglePaymentRow(previousTotal: Int) {
+        val rows = _state.value.paymentRows
+        if (rows.size != 1) return
+
+        val currentRowAmount = rows[0].amount.toIntOrNull() ?: 0
+        val wasAutoFilled = rows[0].amount.isEmpty() ||
+                            currentRowAmount == previousTotal
+
+        if (wasAutoFilled) {
+            val newTotal = getTotal()
+            _state.value = _state.value.copy(
+                paymentRows = listOf(rows[0].copy(amount = newTotal.toString()))
+            )
+            userTouchedPaymentAmounts = false
+        }
+    }
+
+    /**
+     * If there's exactly one payment row and the user hasn't manually
+     * diverged it, keep it in sync with the current total.
+     *
+     * When [removePaymentRow] brings us back to 1 row, it resets
+     * [userTouchedPaymentAmounts] so future amount changes re-enable auto-fill.
+     */
+    private fun autoSyncSinglePaymentRow() {
+        if (userTouchedPaymentAmounts) return
+        val rows = _state.value.paymentRows
+        if (rows.size != 1) return
+        val total = getTotal()
+        _state.value = _state.value.copy(
+            paymentRows = listOf(rows[0].copy(amount = total.toString()))
+        )
     }
 
     private fun updateAmount(rowId: Long, value: String) {
@@ -162,9 +191,10 @@ class SaleEntryViewModel(
 
     private fun removePaymentRow(rowId: Long) {
         if (_state.value.paymentRows.size <= 1) return
-        _state.value = _state.value.copy(
-            paymentRows = _state.value.paymentRows.filter { it.id != rowId }
-        )
+        val updated = _state.value.paymentRows.filter { it.id != rowId }
+        // When we're back to a single row, treat it as fresh so auto-sync resumes.
+        if (updated.size == 1) userTouchedPaymentAmounts = false
+        _state.value = _state.value.copy(paymentRows = updated)
     }
 
     private fun saveSale(cashierId: String = "default") {

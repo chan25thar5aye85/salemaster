@@ -1,6 +1,7 @@
 package com.akari.retailer.features.money.data.remote
 
 import android.util.Log
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.akari.retailer.features.money.domain.models.DefaultMoneyAccounts
 import com.akari.retailer.features.money.domain.models.MoneyAccount
@@ -255,12 +256,20 @@ class FirestoreMoneyService {
         }
     }
     
+    /**
+     * Atomically increment the account balance by [amount].
+     * Uses Firestore's server-side FieldValue.increment — no read required,
+     * no lost updates under concurrent writes.
+     */
     suspend fun adjustBalance(accountId: String, amount: Int): Result<Unit> {
         return try {
-            val account = getAccountByIdSync(accountId)
-                ?: return Result.failure(Exception("Account not found"))
-            val newBalance = account.currentBalance + amount
-            updateBalance(accountId, newBalance)
+            val collection = getCollection()
+                ?: return Result.failure(Exception("Firestore not available"))
+            collection.document(accountId).update(
+                "currentBalance", FieldValue.increment(amount.toLong()),
+                "updatedAt", System.currentTimeMillis()
+            ).await()
+            Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "❌ Adjust balance error: ${e.message}")
             Result.failure(e)

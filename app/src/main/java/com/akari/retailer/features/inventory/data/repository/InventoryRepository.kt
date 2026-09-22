@@ -10,4 +10,5 @@ interface InventoryRepository {
     fun getProducts(): Flow<List<Product>>
     fun getProductById(productId: String): Flow<Product?>
     suspend fun getProductByIdSync(productId: String): Result<Product>
+    suspend fun adjustStock(productId: String, delta: Int): Result<Unit>
 }

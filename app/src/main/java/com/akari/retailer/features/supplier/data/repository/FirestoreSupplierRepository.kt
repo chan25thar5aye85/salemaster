@@ -28,7 +28,7 @@ class FirestoreSupplierRepository(
         return service.getSupplierById(supplierId)
     }
     
-    override suspend fun searchSuppliers(query: String): Result<List<Supplier>> {
-        return service.searchSuppliers(query)
+    override suspend fun incrementTotalPurchased(supplierId: String, amount: Int): Result<Unit> {
+        return service.incrementTotalPurchased(supplierId, amount)
     }
 }

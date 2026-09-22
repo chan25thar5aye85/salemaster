@@ -31,4 +31,8 @@ class FirestoreInventoryRepository(
     override suspend fun getProductByIdSync(productId: String): Result<Product> {
         return service.getProductByIdSync(productId)
     }
+
+    override suspend fun adjustStock(productId: String, delta: Int): Result<Unit> {
+        return service.adjustStock(productId, delta)
+    }
 }

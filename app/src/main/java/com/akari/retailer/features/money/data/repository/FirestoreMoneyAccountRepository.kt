@@ -43,4 +43,7 @@ class FirestoreMoneyAccountRepository(
     override suspend fun seedDefaultAccounts(): Result<Unit> {
         return service.seedDefaultAccounts()
     }
+
+    override val firestore: com.google.firebase.firestore.FirebaseFirestore
+        get() = com.google.firebase.firestore.FirebaseFirestore.getInstance()
 }

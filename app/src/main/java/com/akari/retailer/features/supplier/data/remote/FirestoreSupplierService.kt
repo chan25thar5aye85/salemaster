@@ -1,6 +1,7 @@
 package com.akari.retailer.features.supplier.data.remote
 
 import android.util.Log
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.akari.retailer.features.supplier.domain.models.Supplier
 import kotlinx.coroutines.channels.awaitClose
@@ -101,6 +102,26 @@ class FirestoreSupplierService {
         }
     }
     
+    /**
+     * Atomically add [amount] to the supplier's totalPurchased and update lastOrderDate.
+     * Uses FieldValue.increment — no read-modify-write race.
+     */
+    suspend fun incrementTotalPurchased(supplierId: String, amount: Int): Result<Unit> {
+        return try {
+            val collection = getCollection()
+                ?: return Result.failure(Exception("Firestore not available"))
+            collection.document(supplierId).update(
+                "totalPurchased", FieldValue.increment(amount.toLong()),
+                "lastOrderDate", System.currentTimeMillis(),
+                "updatedAt", System.currentTimeMillis()
+            ).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "incrementTotalPurchased error: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
     fun getSuppliers(): Flow<List<Supplier>> = callbackFlow {
         val collection = getCollection()
         if (collection == null) {
@@ -190,40 +211,4 @@ class FirestoreSupplierService {
         awaitClose { listener.remove() }
     }
     
-    suspend fun searchSuppliers(query: String): Result<List<Supplier>> {
-        return try {
-            val collection = getCollection()
-            if (collection == null) {
-                return Result.failure(Exception("Firestore not available"))
-            }
-            
-            val snapshot = collection
-                .orderBy("name")
-                .startAt(query)
-                .endAt(query + "\uf8ff")
-                .get()
-                .await()
-            
-            val suppliers = snapshot.documents.mapNotNull { doc ->
-                val data = doc.data ?: return@mapNotNull null
-                Supplier(
-                    id = doc.id,
-                    name = data["name"] as? String ?: "",
-                    company = data["company"] as? String ?: "",
-                    phone = data["phone"] as? String ?: "",
-                    email = data["email"] as? String ?: "",
-                    address = data["address"] as? String ?: "",
-                    products = (data["products"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
-                    totalPurchased = (data["totalPurchased"] as? Number)?.toInt() ?: 0,
-                    lastOrderDate = (data["lastOrderDate"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
-                    notes = data["notes"] as? String ?: ""
-                )
-            }
-            Result.success(suppliers)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 }

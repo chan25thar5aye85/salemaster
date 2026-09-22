@@ -21,18 +21,13 @@ class AddStockUseCase(
             
             val product = productResult.getOrNull() ?: return Result.failure(Exception("Product not found"))
             
-            // Calculate new stock
-            val newStock = product.stockQuantity + params.quantity
-            val updatedProduct = product.copy(
-                stockQuantity = newStock,
-                updatedAt = System.currentTimeMillis()
-            )
-            
-            // Update product
-            val updateResult = inventoryRepository.updateProduct(updatedProduct)
+            // Atomically increment stock — no read-modify-write race.
+            val updateResult = inventoryRepository.adjustStock(params.productId, params.quantity)
             if (updateResult.isFailure) {
                 return Result.failure(updateResult.exceptionOrNull() ?: Exception("Failed to update product"))
             }
+            
+            val newStock = product.stockQuantity + params.quantity
             
             // Record movement
             val movement = StockMovement(

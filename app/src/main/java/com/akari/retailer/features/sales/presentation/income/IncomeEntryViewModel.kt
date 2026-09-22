@@ -136,15 +136,31 @@ class IncomeEntryViewModel(
     }
 
     private fun handleAmountChanged(value: String) {
+        val previousTotal = _state.value.getTotalAmount()
         val digitsOnly = value.filter { it.isDigit() }
-        val shouldAutoFill = _state.value.paymentRows.size == 1 &&
-                             !_state.value.userTouchedAmounts
-        val updatedRows = if (shouldAutoFill) {
-            _state.value.paymentRows.map { it.copy(amount = digitsOnly) }
-        } else {
-            _state.value.paymentRows
+        _state.value = _state.value.copy(amount = digitsOnly)
+        syncSinglePaymentRow(previousTotal)
+    }
+
+    /**
+     * If there's exactly one payment row, keep it in sync with the total —
+     * but ONLY if the row still contains the previously auto-filled value.
+     */
+    private fun syncSinglePaymentRow(previousTotal: Int) {
+        val rows = _state.value.paymentRows
+        if (rows.size != 1) return
+
+        val currentRowAmount = rows[0].amount.toIntOrNull() ?: 0
+        val wasAutoFilled = rows[0].amount.isEmpty() ||
+                            currentRowAmount == previousTotal
+
+        if (wasAutoFilled) {
+            val newTotal = _state.value.getTotalAmount()
+            _state.value = _state.value.copy(
+                paymentRows = listOf(rows[0].copy(amount = newTotal.toString())),
+                userTouchedAmounts = false
+            )
         }
-        _state.value = _state.value.copy(amount = digitsOnly, paymentRows = updatedRows)
     }
 
     private fun updatePaymentAccount(rowId: Long, account: MoneyAccount) {
@@ -181,9 +197,11 @@ class IncomeEntryViewModel(
 
     private fun removePaymentRow(rowId: Long) {
         if (_state.value.paymentRows.size <= 1) return
+        val previousTotal = _state.value.getTotalAmount()
         _state.value = _state.value.copy(
             paymentRows = _state.value.paymentRows.filter { it.id != rowId }
         )
+        syncSinglePaymentRow(previousTotal)
     }
 
     private fun saveIncome() {

@@ -1,6 +1,7 @@
 package com.akari.retailer.features.inventory.data.remote
 
 import android.util.Log
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.akari.retailer.features.inventory.domain.models.Product
 import kotlinx.coroutines.channels.awaitClose
@@ -99,6 +100,28 @@ class FirestoreInventoryService {
         }
     }
     
+    /**
+     * Atomically adjust stock by [delta] (positive to add, negative to remove).
+     * Uses Firestore's server-side FieldValue.increment.
+     *
+     * NOTE: caller is responsible for validating sufficient stock if needed —
+     * this method only writes.
+     */
+    suspend fun adjustStock(productId: String, delta: Int): Result<Unit> {
+        return try {
+            val collection = getCollection()
+                ?: return Result.failure(Exception("Firestore not available"))
+            collection.document(productId).update(
+                "stockQuantity", FieldValue.increment(delta.toLong()),
+                "updatedAt", System.currentTimeMillis()
+            ).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "adjustStock error: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
     fun getProducts(): Flow<List<Product>> = callbackFlow {
         val collection = getCollection()
         if (collection == null) {

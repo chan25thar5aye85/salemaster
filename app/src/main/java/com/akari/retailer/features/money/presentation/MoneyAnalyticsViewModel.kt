@@ -99,12 +99,14 @@ class MoneyAnalyticsViewModel(
             )
         )
 
+        // Internal transfers (TRANSFER_IN / TRANSFER_OUT) are excluded from
+        // money-in/out summary — they move money between the user's own
+        // accounts and would otherwise inflate both gross numbers.
         val totalIn = filteredTransactions
             .filter {
                 it.type in listOf(
                     MoneyTransactionType.SALE_IN,
                     MoneyTransactionType.INCOME_IN,
-                    MoneyTransactionType.TRANSFER_IN,
                     MoneyTransactionType.EXTERNAL_IN,
                     MoneyTransactionType.FEE_IN
                 )
@@ -115,7 +117,6 @@ class MoneyAnalyticsViewModel(
                 it.type in listOf(
                     MoneyTransactionType.EXPENSE_OUT,
                     MoneyTransactionType.PURCHASE_OUT,
-                    MoneyTransactionType.TRANSFER_OUT,
                     MoneyTransactionType.EXTERNAL_OUT,
                     MoneyTransactionType.FEE_OUT
                 )

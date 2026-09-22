@@ -1,6 +1,7 @@
 package com.akari.retailer.features.money.data.repository
 
 import com.akari.retailer.features.money.domain.models.MoneyAccount
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 
 interface MoneyAccountRepository {
@@ -13,4 +14,7 @@ interface MoneyAccountRepository {
     suspend fun updateBalance(accountId: String, newBalance: Int): Result<Unit>
     suspend fun adjustBalance(accountId: String, amount: Int): Result<Unit>
     suspend fun seedDefaultAccounts(): Result<Unit>
+
+    /** Raw Firestore handle for transaction support. */
+    val firestore: FirebaseFirestore
 }

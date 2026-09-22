@@ -1,16 +1,19 @@
 package com.akari.retailer.features.money.domain.usecases
 
+import android.util.Log
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.data.repository.MoneyTransactionRepository
 import com.akari.retailer.features.money.domain.models.FeeType
-import com.akari.retailer.features.money.domain.models.MoneyTransaction
 import com.akari.retailer.features.money.domain.models.MoneyTransactionType
-import kotlinx.coroutines.flow.first
+import com.google.firebase.firestore.FieldValue
+import kotlinx.coroutines.tasks.await
 
 class TransferMoneyUseCase(
     private val accountRepository: MoneyAccountRepository,
     private val transactionRepository: MoneyTransactionRepository
 ) {
+    private val TAG = "TransferMoneyUseCase"
+
     data class Params(
         val fromAccountId: String,
         val toAccountId: String,
@@ -19,10 +22,10 @@ class TransferMoneyUseCase(
         val feeType: FeeType = FeeType.NONE,
         val description: String = ""
     )
-    
+
     suspend fun invoke(params: Params): Result<Unit> {
         return try {
-            // Validation
+            // ── Validation ────────────────────────────────────────────
             if (params.fromAccountId.isEmpty()) {
                 return Result.failure(Exception("Source account is required"))
             }
@@ -38,73 +41,104 @@ class TransferMoneyUseCase(
             if (params.fee < 0) {
                 return Result.failure(Exception("Fee cannot be negative"))
             }
-            
-            // Get accounts
-            val accounts = accountRepository.getAccounts().first()
-            val fromAccount = accounts.find { it.id == params.fromAccountId }
-                ?: return Result.failure(Exception("Source account not found"))
-            val toAccount = accounts.find { it.id == params.toAccountId }
-                ?: return Result.failure(Exception("Destination account not found"))
-            
-            // Calculate source deduction
+
+            // ── Compute deltas ────────────────────────────────────────
             val sourceDeduction = when (params.feeType) {
                 FeeType.FEE_PAID -> params.amount + params.fee
                 else -> params.amount
             }
-            
-            // Check sufficient balance
-            if (fromAccount.currentBalance < sourceDeduction) {
-                return Result.failure(
-                    Exception("Insufficient balance. Available: ${fromAccount.currentBalance}, Required: $sourceDeduction")
-                )
-            }
-            
-            // Calculate destination addition
             val destAddition = when (params.feeType) {
                 FeeType.FEE_EARNED -> params.amount + params.fee
                 else -> params.amount
             }
-            
-            // Record transaction
-            val transaction = MoneyTransaction(
-                type = MoneyTransactionType.TRANSFER_OUT,
-                fromAccountId = params.fromAccountId,
-                toAccountId = params.toAccountId,
-                amount = params.amount,
-                fee = params.fee,
-                feeType = params.feeType,
-                netAmount = destAddition,
-                description = params.description.ifEmpty {
-                    "Transfer from ${fromAccount.name} to ${toAccount.name}"
-                },
-                referenceType = "TRANSFER"
-            )
-            transactionRepository.addTransaction(transaction)
-            
-            // Update source balance
-            val newFromBalance = fromAccount.currentBalance - sourceDeduction
-            accountRepository.updateBalance(params.fromAccountId, newFromBalance)
-            
-            // Update destination balance
-            val newToBalance = toAccount.currentBalance + destAddition
-            accountRepository.updateBalance(params.toAccountId, newToBalance)
-            
-            // Record incoming transaction for destination
-            val inTransaction = MoneyTransaction(
-                type = MoneyTransactionType.TRANSFER_IN,
-                fromAccountId = params.fromAccountId,
-                toAccountId = params.toAccountId,
-                amount = params.amount,
-                fee = params.fee,
-                feeType = params.feeType,
-                netAmount = destAddition,
-                description = "Received from ${fromAccount.name}",
-                referenceType = "TRANSFER"
-            )
-            transactionRepository.addTransaction(inTransaction)
-            
+
+            val db = accountRepository.firestore
+            val accountsCol = db.collection("money_accounts")
+            val txnsCol = db.collection("money_transactions")
+            val now = System.currentTimeMillis()
+
+            // ── Atomic transaction ────────────────────────────────────
+            db.runTransaction { txn ->
+                val fromRef = accountsCol.document(params.fromAccountId)
+                val toRef = accountsCol.document(params.toAccountId)
+
+                // READ (required before any WRITE in a transaction)
+                val fromSnap = txn.get(fromRef)
+                val toSnap = txn.get(toRef)
+
+                if (!fromSnap.exists()) {
+                    throw IllegalStateException("Source account not found")
+                }
+                if (!toSnap.exists()) {
+                    throw IllegalStateException("Destination account not found")
+                }
+
+                val fromBalance = (fromSnap.getLong("currentBalance") ?: 0L).toInt()
+                val fromName = fromSnap.getString("name") ?: ""
+                val toName = toSnap.getString("name") ?: ""
+
+                if (fromBalance < sourceDeduction) {
+                    throw IllegalStateException(
+                        "Insufficient balance. Available: $fromBalance, Required: $sourceDeduction"
+                    )
+                }
+
+                // WRITE — source debit
+                txn.update(fromRef,
+                    "currentBalance", FieldValue.increment(-sourceDeduction.toLong()),
+                    "updatedAt", now
+                )
+
+                // WRITE — destination credit
+                txn.update(toRef,
+                    "currentBalance", FieldValue.increment(destAddition.toLong()),
+                    "updatedAt", now
+                )
+
+                // WRITE — outgoing transaction doc
+                val outRef = txnsCol.document()
+                txn.set(outRef, mapOf(
+                    "type" to MoneyTransactionType.TRANSFER_OUT.name,
+                    "fromAccountId" to params.fromAccountId,
+                    "toAccountId" to params.toAccountId,
+                    "amount" to params.amount,
+                    "fee" to params.fee,
+                    "feeType" to params.feeType.name,
+                    "netAmount" to destAddition,
+                    "description" to params.description.ifEmpty {
+                        "Transfer from $fromName to $toName"
+                    },
+                    "referenceId" to "",
+                    "referenceType" to "TRANSFER",
+                    "externalAccountName" to "",
+                    "externalAccountNumber" to "",
+                    "date" to now,
+                    "createdAt" to now
+                ))
+
+                // WRITE — incoming transaction doc
+                val inRef = txnsCol.document()
+                txn.set(inRef, mapOf(
+                    "type" to MoneyTransactionType.TRANSFER_IN.name,
+                    "fromAccountId" to params.fromAccountId,
+                    "toAccountId" to params.toAccountId,
+                    "amount" to params.amount,
+                    "fee" to params.fee,
+                    "feeType" to params.feeType.name,
+                    "netAmount" to destAddition,
+                    "description" to "Received from $fromName",
+                    "referenceId" to "",
+                    "referenceType" to "TRANSFER",
+                    "externalAccountName" to "",
+                    "externalAccountNumber" to "",
+                    "date" to now,
+                    "createdAt" to now
+                ))
+            }.await()
+
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e(TAG, "Transfer failed: ${e.message}")
             Result.failure(e)
         }
     }

@@ -28,12 +28,8 @@ class RemoveStockUseCase(
                 )
             }
 
-            val updatedProduct = product.copy(
-                stockQuantity = newStock,
-                updatedAt = System.currentTimeMillis()
-            )
-
-            val updateResult = inventoryRepository.updateProduct(updatedProduct)
+            // Atomically decrement — no read-modify-write race.
+            val updateResult = inventoryRepository.adjustStock(params.productId, -params.quantity)
             if (updateResult.isFailure) {
                 return Result.failure(updateResult.exceptionOrNull() ?: Exception("Failed to update product"))
             }

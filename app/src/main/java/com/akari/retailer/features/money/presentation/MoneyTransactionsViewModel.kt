@@ -135,11 +135,11 @@ class MoneyTransactionsViewModel(
             }
         }
 
+        // Internal transfers excluded from In/Out summary.
         val totalIn = filtered.filter {
             it.type in listOf(
                 MoneyTransactionType.SALE_IN,
                 MoneyTransactionType.INCOME_IN,
-                MoneyTransactionType.TRANSFER_IN,
                 MoneyTransactionType.EXTERNAL_IN,
                 MoneyTransactionType.FEE_IN
             )
@@ -149,7 +149,6 @@ class MoneyTransactionsViewModel(
             it.type in listOf(
                 MoneyTransactionType.EXPENSE_OUT,
                 MoneyTransactionType.PURCHASE_OUT,
-                MoneyTransactionType.TRANSFER_OUT,
                 MoneyTransactionType.EXTERNAL_OUT,
                 MoneyTransactionType.FEE_OUT
             )

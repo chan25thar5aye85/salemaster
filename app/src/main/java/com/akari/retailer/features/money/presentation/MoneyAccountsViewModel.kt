@@ -167,11 +167,15 @@ class MoneyAccountsViewModel(
                 val openingBalance = _state.value.dialogOpeningBalance.toIntOrNull() ?: 0
 
                 if (editing != null) {
+                    // If opening balance changed, adjust current balance by the same delta
+                    // so existing balance history stays consistent.
+                    val openingDelta = openingBalance - editing.openingBalance
                     val updated = editing.copy(
                         name = name,
                         icon = _state.value.dialogIcon,
                         color = _state.value.dialogColor,
                         openingBalance = openingBalance,
+                        currentBalance = editing.currentBalance + openingDelta,
                         accountNumber = _state.value.dialogAccountNumber,
                         notes = _state.value.dialogNotes,
                         updatedAt = System.currentTimeMillis()

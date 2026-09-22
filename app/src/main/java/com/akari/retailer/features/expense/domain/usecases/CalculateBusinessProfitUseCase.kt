@@ -33,12 +33,15 @@ class CalculateBusinessProfitUseCase(
                 .filter { it.type == IncomeEntryType.BUSINESS }
                 .sumOf { it.amount }
             
-            // 3. Transfer Fees Earned (money coming IN from fees)
+            // 3. Transfer Fees Earned.
+            // Internal transfers write BOTH a TRANSFER_OUT and a TRANSFER_IN doc,
+            // each carrying the same fee. Count only the TRANSFER_OUT side to
+            // avoid double-counting. External transfers write only one side,
+            // so they're counted as-is.
             val transferFeesEarned = moneyTransactions
-                .filter { 
-                    it.feeType == FeeType.FEE_EARNED && 
+                .filter {
+                    it.feeType == FeeType.FEE_EARNED &&
                     it.type in listOf(
-                        MoneyTransactionType.TRANSFER_IN,
                         MoneyTransactionType.TRANSFER_OUT,
                         MoneyTransactionType.EXTERNAL_IN,
                         MoneyTransactionType.EXTERNAL_OUT,
@@ -47,12 +50,13 @@ class CalculateBusinessProfitUseCase(
                 }
                 .sumOf { it.fee }
             
-            // 4. Transfer Fees Paid (money going OUT as fees - expense)
+            // 4. Transfer Fees Paid.
+            // Same dedup rule — count only the TRANSFER_OUT side of internal
+            // transfers. External transfers count as-is.
             val transferFeesPaid = moneyTransactions
-                .filter { 
-                    it.feeType == FeeType.FEE_PAID && 
+                .filter {
+                    it.feeType == FeeType.FEE_PAID &&
                     it.type in listOf(
-                        MoneyTransactionType.TRANSFER_IN,
                         MoneyTransactionType.TRANSFER_OUT,
                         MoneyTransactionType.EXTERNAL_IN,
                         MoneyTransactionType.EXTERNAL_OUT,

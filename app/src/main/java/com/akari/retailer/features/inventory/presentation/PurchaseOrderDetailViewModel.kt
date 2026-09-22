@@ -167,9 +167,34 @@ class PurchaseOrderDetailViewModel(
 
     fun removePaymentRow(rowId: Long) {
         if (_state.value.paymentRows.size <= 1) return
+        val previousTotal = _state.value.getTotalCost()
         _state.value = _state.value.copy(
             paymentRows = _state.value.paymentRows.filter { it.id != rowId }
         )
+        syncSinglePaymentRow(previousTotal)
+    }
+
+    /**
+     * If there's exactly one payment row, keep it in sync with the total —
+     * but ONLY if the row still contains the previously auto-filled value.
+     */
+    private fun syncSinglePaymentRow(previousTotal: Int) {
+        val rows = _state.value.paymentRows
+        if (rows.size != 1) return
+
+        val currentRowAmount = rows[0].amount.toIntOrNull() ?: 0
+        val wasAutoFilled = rows[0].amount.isEmpty() ||
+                            currentRowAmount == previousTotal
+
+        if (wasAutoFilled) {
+            val newTotal = _state.value.getTotalCost()
+            if (newTotal > 0) {
+                _state.value = _state.value.copy(
+                    paymentRows = listOf(rows[0].copy(amount = newTotal.toString())),
+                    userTouchedAmounts = false
+                )
+            }
+        }
     }
 
     fun updateOrderItems(items: List<PurchaseOrderItem>, orderId: String) {
@@ -266,21 +291,10 @@ class PurchaseOrderDetailViewModel(
                 return Result.failure(Exception(purchaseResult.exceptionOrNull()?.message ?: "Failed"))
             }
 
-            // Update stock
+            // Update stock atomically (FieldValue.increment — no read-modify-write).
             val inventoryRepo = FirestoreInventoryRepository(FirestoreInventoryService())
             currentOrder.receivedItems.forEach { item ->
-                val productResult = inventoryRepo.getProductByIdSync(item.productId)
-                if (productResult.isSuccess) {
-                    val product = productResult.getOrNull()
-                    if (product != null) {
-                        inventoryRepo.updateProduct(
-                            product.copy(
-                                stockQuantity = product.stockQuantity + item.quantity,
-                                updatedAt = System.currentTimeMillis()
-                            )
-                        )
-                    }
-                }
+                inventoryRepo.adjustStock(item.productId, item.quantity)
             }
 
             // Create expense
@@ -303,20 +317,10 @@ class PurchaseOrderDetailViewModel(
                 description = "PO #${currentOrder.orderNumber}"
             )
 
-            // Update supplier
+            // Update supplier atomically (increment — no read-modify-write).
             try {
                 val supplierRepo = FirestoreSupplierRepository(FirestoreSupplierService())
-                val suppliers = supplierRepo.getSuppliers().first()
-                val supplier = suppliers.find { it.id == currentOrder.supplierId }
-                if (supplier != null) {
-                    supplierRepo.updateSupplier(
-                        supplier.copy(
-                            totalPurchased = supplier.totalPurchased + totalCost,
-                            lastOrderDate = System.currentTimeMillis(),
-                            updatedAt = System.currentTimeMillis()
-                        )
-                    )
-                }
+                supplierRepo.incrementTotalPurchased(currentOrder.supplierId, totalCost)
             } catch (e: Exception) { }
 
             val statusResult = repository.updateStatus(orderId, PurchaseOrderStatus.COMPLETED)
