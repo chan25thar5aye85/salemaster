@@ -20,6 +20,7 @@ import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
+import com.akari.retailer.core.ui.components.PaymentListComponent
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
@@ -32,6 +33,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PurchaseOrderDetailScreen(
     navController: NavController,
@@ -47,14 +49,13 @@ fun PurchaseOrderDetailScreen(
     val inventoryRepository = remember { FirestoreInventoryRepository(inventoryService) }
     
     val viewModel: PurchaseOrderDetailViewModel = viewModel(
-        factory = PurchaseOrderDetailViewModelFactory(repository)
+        factory = PurchaseOrderDetailViewModelFactory(repository, context)
     )
     
     val state by viewModel.state.collectAsState()
     
     var selectedTab by remember { mutableStateOf(0) }
     var products by remember { mutableStateOf<List<com.akari.retailer.features.inventory.domain.models.Product>>(emptyList()) }
-    
     var selectedIndices by remember { mutableStateOf(setOf<Int>()) }
     
     var showEditDialog by remember { mutableStateOf(false) }
@@ -65,7 +66,6 @@ fun PurchaseOrderDetailScreen(
     var editingStatus by remember { mutableStateOf<PurchaseOrderStatus?>(null) }
     
     var showAddDialog by remember { mutableStateOf(false) }
-    
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var deleteIndex by remember { mutableStateOf(-1) }
     var deleteStatus by remember { mutableStateOf<PurchaseOrderStatus?>(null) }
@@ -80,6 +80,11 @@ fun PurchaseOrderDetailScreen(
         inventoryRepository.getProducts().collect { productList ->
             products = productList
         }
+    }
+    
+    // Load accounts
+    LaunchedEffect(Unit) {
+        viewModel.loadAccounts()
     }
     
     // Load order
@@ -140,11 +145,9 @@ fun PurchaseOrderDetailScreen(
                     }
                 }
                 
-                // If read-only, show both ORDER and RECEIVED tabs without actions
                 else -> {
                     val currentOrder = state.order!!
                     
-                    // Show both ORDER and RECEIVED tabs
                     val statusTabs = listOf(
                         stringResource(R.string.order_status_order) to PurchaseOrderStatus.ORDER,
                         stringResource(R.string.order_status_received) to PurchaseOrderStatus.RECEIVED
@@ -213,34 +216,93 @@ fun PurchaseOrderDetailScreen(
                     
                     // RECEIVED tab - Show Purchase button only if NOT read-only
                     if (isReceived && !isReadOnly) {
+                        // ✅ SPLIT PAYMENT COMPONENT
+                        PaymentListComponent(
+                            paymentRows = state.paymentRows,
+                            accounts = state.accounts,
+                            totalAmount = state.getTotalCost(),
+                            onAccountSelected = { rowId, account ->
+                                viewModel.updatePaymentAccount(rowId, account)
+                            },
+                            onAmountChanged = { rowId, amount ->
+                                viewModel.updatePaymentAmount(rowId, amount)
+                            },
+                            onAddRow = { viewModel.addPaymentRow() },
+                            onRemoveRow = { rowId -> viewModel.removePaymentRow(rowId) }
+                        )
+                        
+                        Spacer(modifier = Modifier.height(Spacing.medium))
+                        
                         AppPrimaryButton(
                             text = if (isCreatingPurchase) stringResource(R.string.saving) else stringResource(R.string.create_purchase),
                             onClick = {
                                 showCreatePurchaseDialog = true
                             },
                             isLoading = isCreatingPurchase,
-                            enabled = !isCreatingPurchase,
+                            enabled = !isCreatingPurchase && state.isFullyPaid(),
                             modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(modifier = Modifier.height(Spacing.medium))
                     }
                     
-                    // Items List - Read-only mode hides all actions
+                    // Items List
                     PurchaseOrderItemsList(
                         items = displayItems,
                         status = selectedStatus,
                         total = displayTotal,
                         selectedIndices = selectedIndices,
-                        onItemSelect = { },
-                        onItemClick = { },
-                        onItemDelete = { },
-                        onAddClick = { },
-                        onReceiveClick = null,
-                        isUpdating = false,
-                        onSelectAll = { },
-                        showReceiveButton = false,
-                        showAddButton = false,
-                        showDeleteButton = false,
+                        onItemSelect = { index ->
+                            selectedIndices = if (selectedIndices.contains(index)) {
+                                selectedIndices - index
+                            } else {
+                                selectedIndices + index
+                            }
+                        },
+                        onItemClick = { index ->
+                            if (isOrder && !isReadOnly) {
+                                val item = state.editableOrderItems[index]
+                                editingIndex = index
+                                editQuantity = item.quantity.toString()
+                                editPrice = item.costPrice.toString()
+                                editProductName = item.productName
+                                editingStatus = selectedStatus
+                                showEditDialog = true
+                            }
+                        },
+                        onItemDelete = { index ->
+                            if (isOrder && !isReadOnly) {
+                                deleteIndex = index
+                                deleteStatus = selectedStatus
+                                showDeleteConfirmation = true
+                            }
+                        },
+                        onAddClick = {
+                            if (isOrder && !isReadOnly) {
+                                showAddDialog = true
+                            }
+                        },
+                        onReceiveClick = if (isOrder && !isReadOnly) {
+                            {
+                                val selectedItems = selectedIndices
+                                    .sorted()
+                                    .mapNotNull { state.editableOrderItems.getOrNull(it) }
+                                if (selectedItems.isNotEmpty()) {
+                                    viewModel.receiveSelectedItems(orderId, selectedItems)
+                                    selectedIndices = emptySet()
+                                }
+                            }
+                        } else null,
+                        isUpdating = state.isUpdating,
+                        onSelectAll = {
+                            selectedIndices = if (selectedIndices.size == displayItems.size) {
+                                emptySet()
+                            } else {
+                                displayItems.indices.toSet()
+                            }
+                        },
+                        showReceiveButton = isOrder && !isReadOnly,
+                        showAddButton = isOrder && !isReadOnly,
+                        showDeleteButton = isOrder && !isReadOnly,
                         isReadOnly = isReadOnly
                     )
                     
@@ -270,21 +332,247 @@ fun PurchaseOrderDetailScreen(
         }
     }
     
-    // Create Purchase Confirmation Dialog (only if not read-only)
-    if (showCreatePurchaseDialog && !isReadOnly) {
-        val finalizePurchase = stringResource(R.string.finalize_purchase)
-        val createPurchaseWarning = stringResource(R.string.create_purchase_warning)
-        val purchaseWillUpdate = stringResource(R.string.purchase_will_update)
-        val purchaseUpdateStock = stringResource(R.string.purchase_update_stock)
-        val purchaseCreateExpense = stringResource(R.string.purchase_create_expense)
-        val purchaseUpdateSupplier = stringResource(R.string.purchase_update_supplier)
-        val purchaseGenerateReceipt = stringResource(R.string.purchase_generate_receipt)
-        val purchaseCannotUndo = stringResource(R.string.purchase_cannot_undo)
-        val yesCreatePurchase = stringResource(R.string.yes_create_purchase)
-        val purchaseCreatedSuccess = stringResource(R.string.purchase_created_success)
-        val purchaseFailed = stringResource(R.string.purchase_failed)
-        val cancelText = stringResource(R.string.cancel)
+    // Edit Item Dialog
+    if (showEditDialog && editingIndex >= 0 && editingStatus != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                showEditDialog = false
+                editingIndex = -1
+            },
+            title = { Text("Edit Item") },
+            text = {
+                Column {
+                    Text(
+                        text = editProductName,
+                        style = AppTypography.body,
+                        modifier = Modifier.padding(bottom = Spacing.medium)
+                    )
+                    
+                    OutlinedTextField(
+                        value = editQuantity,
+                        onValueChange = { editQuantity = it },
+                        label = { Text("Quantity") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    Spacer(modifier = Modifier.height(Spacing.medium))
+                    
+                    OutlinedTextField(
+                        value = editPrice,
+                        onValueChange = { editPrice = it },
+                        label = { Text("Price") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val qty = editQuantity.toIntOrNull() ?: 0
+                        val price = editPrice.toIntOrNull() ?: 0
+                        if (qty > 0 && price > 0 && editingStatus != null) {
+                            val updatedItems = state.editableOrderItems.toMutableList()
+                            updatedItems[editingIndex] = updatedItems[editingIndex].copy(
+                                quantity = qty,
+                                costPrice = price,
+                                total = qty * price
+                            )
+                            viewModel.updateOrderItems(updatedItems, orderId)
+                        }
+                        showEditDialog = false
+                        editingIndex = -1
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showEditDialog = false
+                    editingIndex = -1
+                }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+    
+    // Delete Confirmation Dialog
+    if (showDeleteConfirmation && deleteIndex >= 0) {
+        AlertDialog(
+            onDismissRequest = { 
+                showDeleteConfirmation = false
+                deleteIndex = -1
+            },
+            title = { Text("Delete Item") },
+            text = { Text("Are you sure you want to delete this item?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val updatedItems = state.editableOrderItems.toMutableList()
+                        if (deleteIndex in updatedItems.indices) {
+                            updatedItems.removeAt(deleteIndex)
+                            viewModel.updateOrderItems(updatedItems, orderId)
+                        }
+                        showDeleteConfirmation = false
+                        deleteIndex = -1
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(stringResource(R.string.delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showDeleteConfirmation = false
+                    deleteIndex = -1
+                }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+    
+    // Add Item Dialog
+    if (showAddDialog) {
+        var searchQuery by remember { mutableStateOf("") }
+        var selectedProduct by remember { mutableStateOf<com.akari.retailer.features.inventory.domain.models.Product?>(null) }
+        var addQuantity by remember { mutableStateOf("1") }
+        var addPrice by remember { mutableStateOf("") }
         
+        val filteredProducts = products.filter { 
+            it.name.contains(searchQuery, ignoreCase = true) || 
+            it.sku.contains(searchQuery, ignoreCase = true)
+        }
+        
+        AlertDialog(
+            onDismissRequest = { showAddDialog = false },
+            title = { Text("Add Item") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        label = { Text("Search products...") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    Spacer(modifier = Modifier.height(Spacing.small))
+                    
+                    if (filteredProducts.isEmpty()) {
+                        Text(
+                            text = "No products found",
+                            style = AppTypography.body,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    } else {
+                        filteredProducts.take(5).forEach { product ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 2.dp),
+                                onClick = {
+                                    selectedProduct = product
+                                    addPrice = product.costPrice.toString()
+                                },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (selectedProduct?.id == product.id) 
+                                        MaterialTheme.colorScheme.primaryContainer 
+                                    else 
+                                        MaterialTheme.colorScheme.surface
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(Spacing.small),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column {
+                                        Text(product.name, style = AppTypography.body)
+                                        Text(
+                                            "SKU: ${product.sku}",
+                                            style = AppTypography.small,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                        )
+                                    }
+                                    Text(
+                                        "${product.costPrice}",
+                                        style = AppTypography.body,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (selectedProduct != null) {
+                        Spacer(modifier = Modifier.height(Spacing.small))
+                        
+                        OutlinedTextField(
+                            value = addQuantity,
+                            onValueChange = { addQuantity = it },
+                            label = { Text("Quantity") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        
+                        Spacer(modifier = Modifier.height(Spacing.small))
+                        
+                        OutlinedTextField(
+                            value = addPrice,
+                            onValueChange = { addPrice = it },
+                            label = { Text("Price") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val product = selectedProduct
+                        if (product != null) {
+                            val qty = addQuantity.toIntOrNull() ?: 0
+                            val price = addPrice.toIntOrNull() ?: 0
+                            if (qty > 0 && price > 0) {
+                                val newItem = PurchaseOrderItem(
+                                    productId = product.id,
+                                    productName = product.name,
+                                    quantity = qty,
+                                    costPrice = price,
+                                    total = qty * price
+                                )
+                                val updatedItems = state.editableOrderItems + newItem
+                                viewModel.updateOrderItems(updatedItems, orderId)
+                            }
+                        }
+                        showAddDialog = false
+                    }
+                ) {
+                    Text("Add")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+    
+    // Create Purchase Confirmation Dialog
+    if (showCreatePurchaseDialog && !isReadOnly) {
         AlertDialog(
             onDismissRequest = { 
                 if (!isCreatingPurchase) {
@@ -293,23 +581,23 @@ fun PurchaseOrderDetailScreen(
             },
             title = { 
                 Text(
-                    "⚠️ $finalizePurchase",
+                    "⚠️ ${stringResource(R.string.finalize_purchase)}",
                     color = MaterialTheme.colorScheme.error
                 )
             },
             text = {
                 Column {
-                    Text(createPurchaseWarning, style = AppTypography.body)
+                    Text(stringResource(R.string.create_purchase_warning), style = AppTypography.body)
                     Spacer(modifier = Modifier.height(Spacing.small))
-                    Text(purchaseWillUpdate, style = AppTypography.body)
+                    Text(stringResource(R.string.purchase_will_update), style = AppTypography.body)
                     Spacer(modifier = Modifier.height(Spacing.small))
-                    Text(purchaseUpdateStock, style = AppTypography.small)
-                    Text(purchaseCreateExpense, style = AppTypography.small)
-                    Text(purchaseUpdateSupplier, style = AppTypography.small)
-                    Text(purchaseGenerateReceipt, style = AppTypography.small)
+                    Text(stringResource(R.string.purchase_update_stock), style = AppTypography.small)
+                    Text(stringResource(R.string.purchase_create_expense), style = AppTypography.small)
+                    Text(stringResource(R.string.purchase_update_supplier), style = AppTypography.small)
+                    Text(stringResource(R.string.purchase_generate_receipt), style = AppTypography.small)
                     Spacer(modifier = Modifier.height(Spacing.small))
                     Text(
-                        purchaseCannotUndo,
+                        stringResource(R.string.purchase_cannot_undo),
                         style = AppTypography.body,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -324,12 +612,17 @@ fun PurchaseOrderDetailScreen(
                             val result = viewModel.createPurchase(orderId)
                             isCreatingPurchase = false
                             if (result.isSuccess) {
-                                Toast.makeText(context, purchaseCreatedSuccess, Toast.LENGTH_LONG).show()
+                                Toast.makeText(
+                                    context, 
+                                    context.getString(R.string.purchase_created_success), 
+                                    Toast.LENGTH_LONG
+                                ).show()
                                 navController.navigate(Routes.PURCHASES) {
                                     popUpTo(Routes.PURCHASE_ORDER_DETAIL) { inclusive = true }
                                 }
                             } else {
-                                val errorMsg = result.exceptionOrNull()?.message ?: purchaseFailed
+                                val errorMsg = result.exceptionOrNull()?.message 
+                                    ?: context.getString(R.string.purchase_failed)
                                 Toast.makeText(context, "❌ $errorMsg", Toast.LENGTH_LONG).show()
                             }
                         }
@@ -345,7 +638,7 @@ fun PurchaseOrderDetailScreen(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text(yesCreatePurchase)
+                        Text(stringResource(R.string.yes_create_purchase))
                     }
                 }
             },
@@ -358,7 +651,7 @@ fun PurchaseOrderDetailScreen(
                     },
                     enabled = !isCreatingPurchase
                 ) {
-                    Text(cancelText)
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

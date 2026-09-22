@@ -1,6 +1,7 @@
 package com.akari.retailer.core.utils
 
 import com.google.firebase.firestore.DocumentSnapshot
+import com.akari.retailer.features.money.domain.models.PaymentEntry
 import com.akari.retailer.features.sales.domain.models.Sale
 import com.akari.retailer.features.sales.domain.models.SaleItem
 import java.util.Date
@@ -9,7 +10,7 @@ object FirestoreMapper {
     
     private const val FIELD_ITEMS = "items"
     private const val FIELD_TOTAL = "total"
-    private const val FIELD_ACCOUNT_ID = "accountId"
+    private const val FIELD_PAYMENTS = "payments"
     private const val FIELD_TIMESTAMP = "timestamp"
     private const val FIELD_CASHIER_ID = "cashierId"
     
@@ -26,7 +27,12 @@ object FirestoreMapper {
         return mapOf(
             FIELD_ITEMS to itemsMap,
             FIELD_TOTAL to sale.total,
-            FIELD_ACCOUNT_ID to sale.accountId,
+            FIELD_PAYMENTS to sale.payments.map { p ->
+                mapOf(
+                    "accountId" to p.accountId,
+                    "amount" to p.amount
+                )
+            },
             FIELD_TIMESTAMP to sale.timestamp,
             FIELD_CASHIER_ID to sale.cashierId
         )
@@ -54,6 +60,24 @@ object FirestoreMapper {
                 else -> return null
             }
             
+            // ✅ Read payments list (with backward compat)
+            val paymentsList = (data[FIELD_PAYMENTS] as? List<*>)?.mapNotNull { p ->
+                if (p is Map<*, *>) {
+                    PaymentEntry(
+                        accountId = p["accountId"] as? String ?: "default_cash",
+                        amount = (p["amount"] as? Number)?.toInt() ?: 0
+                    )
+                } else null
+            } ?: emptyList()
+            
+            // Backward compat: old sales have accountId
+            val finalPayments = if (paymentsList.isEmpty()) {
+                listOf(PaymentEntry(
+                    accountId = data["accountId"] as? String ?: "default_cash",
+                    amount = total
+                ))
+            } else paymentsList
+            
             val timestamp = when (val ts = data[FIELD_TIMESTAMP]) {
                 is Long -> ts
                 is Int -> ts.toLong()
@@ -61,14 +85,13 @@ object FirestoreMapper {
                 else -> System.currentTimeMillis()
             }
             
-            val accountId = data[FIELD_ACCOUNT_ID] as? String ?: "default_cash"
             val cashierId = data[FIELD_CASHIER_ID] as? String ?: "default"
             
             Sale(
                 id = documentId,
                 items = items,
                 total = total,
-                accountId = accountId,
+                payments = finalPayments,
                 timestamp = timestamp,
                 cashierId = cashierId
             )

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
+import com.akari.retailer.features.money.domain.models.FeeType
 import com.akari.retailer.features.money.domain.usecases.ExternalTransferUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,7 +66,6 @@ class ExternalTransferViewModel(
                 accountRepository.getAccounts().collect { accounts ->
                     val active = accounts.filter { it.isActive }
                     
-                    // Auto-select last used account if available
                     val lastUsedId = _state.value.lastUsedAccountId
                     val autoSelected = if (_state.value.selectedAccount == null && lastUsedId.isNotEmpty()) {
                         active.find { it.id == lastUsedId }
@@ -78,9 +78,7 @@ class ExternalTransferViewModel(
                         selectedAccount = autoSelected
                     )
                 }
-            } catch (e: Exception) {
-                // Handle silently
-            }
+            } catch (e: Exception) { }
         }
     }
 
@@ -131,10 +129,17 @@ class ExternalTransferViewModel(
             val result = externalTransferUseCase.invoke(params)
             
             if (result.isSuccess) {
+                // ✅ Success — reset form but keep account selected
                 _state.value = _state.value.copy(
                     isSaving = false,
                     saveSuccess = true,
-                    error = null
+                    error = null,
+                    // Reset form fields
+                    externalAccountName = "",
+                    amount = "",
+                    fee = "",
+                    feeType = FeeType.NONE,
+                    description = ""
                 )
             } else {
                 _state.value = _state.value.copy(

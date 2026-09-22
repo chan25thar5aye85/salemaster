@@ -56,11 +56,11 @@ fun TransferMoneyScreen(
     var fromExpanded by remember { mutableStateOf(false) }
     var toExpanded by remember { mutableStateOf(false) }
 
+    // ✅ Show success for 3s, then reset — NO navigation
     LaunchedEffect(state.saveSuccess) {
         if (state.saveSuccess) {
-            kotlinx.coroutines.delay(1000)
-            onTransferSuccess()
-            onBack()
+            kotlinx.coroutines.delay(3000)
+            viewModel.handleEvent(TransferMoneyEvent.ResetSuccess)
         }
     }
 
@@ -73,8 +73,9 @@ fun TransferMoneyScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .imePadding()
         ) {
-            // FROM Account Selector
+            // FROM Account
             Text(
                 text = stringResource(R.string.from_account),
                 style = AppTypography.label,
@@ -135,7 +136,7 @@ fun TransferMoneyScreen(
                 Spacer(modifier = Modifier.height(Spacing.medium))
             }
             
-            // TO Account Selector
+            // TO Account
             Text(
                 text = stringResource(R.string.to_account),
                 style = AppTypography.label,
@@ -210,7 +211,7 @@ fun TransferMoneyScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // Fee Type Selector
+            // Fee Type
             Text(
                 text = stringResource(R.string.fee_type),
                 style = AppTypography.label,
@@ -244,7 +245,7 @@ fun TransferMoneyScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // Fee Amount (only if fee type is not NONE)
+            // Fee Amount
             if (state.feeType != FeeType.NONE) {
                 OutlinedTextField(
                     value = state.fee,
@@ -347,6 +348,32 @@ fun TransferMoneyScreen(
                 Spacer(modifier = Modifier.height(Spacing.medium))
             }
             
+            // ✅ Success message
+            if (state.saveSuccess) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "✅ Transfer successful!",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = AppTypography.body,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(Spacing.medium))
+            }
+            
+            // Error
             state.error?.let { error ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),

@@ -4,6 +4,7 @@ import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.akari.retailer.features.expense.domain.models.Expense
 import com.akari.retailer.features.expense.domain.models.ExpenseType
+import com.akari.retailer.features.money.domain.models.PaymentEntry
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -18,7 +19,7 @@ class FirestoreExpenseService {
         db = try {
             FirebaseFirestore.getInstance()
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to get Firestore instance: ${e.message}")
+            Log.e(TAG, "Failed: ${e.message}")
             null
         }
     }
@@ -44,7 +45,12 @@ class FirestoreExpenseService {
                 "categoryId" to expense.categoryId,
                 "type" to expense.type.name,
                 "businessPercentage" to expense.businessPercentage,
-                "accountId" to expense.accountId,  // ✅ NEW
+                "payments" to expense.payments.map { payment ->
+                    mapOf(
+                        "accountId" to payment.accountId,
+                        "amount" to payment.amount
+                    )
+                },
                 "description" to expense.description,
                 "date" to expense.date,
                 "createdAt" to expense.createdAt,
@@ -54,7 +60,7 @@ class FirestoreExpenseService {
             docRef.set(data).await()
             Result.success(docRef.id)
         } catch (e: Exception) {
-            Log.e(TAG, "Add expense error: ${e.message}")
+            Log.e(TAG, "Add error: ${e.message}")
             Result.failure(e)
         }
     }
@@ -63,7 +69,7 @@ class FirestoreExpenseService {
         return try {
             val collection = getCollection()
             if (collection == null || expense.id.isEmpty()) {
-                return Result.failure(Exception("Invalid expense ID or Firestore not available"))
+                return Result.failure(Exception("Invalid expense"))
             }
             
             val data = mapOf(
@@ -72,7 +78,12 @@ class FirestoreExpenseService {
                 "categoryId" to expense.categoryId,
                 "type" to expense.type.name,
                 "businessPercentage" to expense.businessPercentage,
-                "accountId" to expense.accountId,  // ✅ NEW
+                "payments" to expense.payments.map { payment ->
+                    mapOf(
+                        "accountId" to payment.accountId,
+                        "amount" to payment.amount
+                    )
+                },
                 "description" to expense.description,
                 "date" to expense.date,
                 "updatedAt" to System.currentTimeMillis()
@@ -81,21 +92,17 @@ class FirestoreExpenseService {
             collection.document(expense.id).update(data).await()
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Update expense error: ${e.message}")
+            Log.e(TAG, "Update error: ${e.message}")
             Result.failure(e)
         }
     }
     
     suspend fun deleteExpense(expenseId: String): Result<Unit> {
         return try {
-            val collection = getCollection()
-            if (collection == null) {
-                return Result.failure(Exception("Firestore not available"))
-            }
+            val collection = getCollection() ?: return Result.failure(Exception("Firestore not available"))
             collection.document(expenseId).delete().await()
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Delete expense error: ${e.message}")
             Result.failure(e)
         }
     }
@@ -123,6 +130,26 @@ class FirestoreExpenseService {
                 
                 val expenses = snapshot.documents.mapNotNull { doc ->
                     val data = doc.data ?: return@mapNotNull null
+                    
+                    // ✅ Read payments list (with backward compat)
+                    val paymentsList = (data["payments"] as? List<*>)?.mapNotNull { p ->
+                        if (p is Map<*, *>) {
+                            PaymentEntry(
+                                accountId = p["accountId"] as? String ?: "default_cash",
+                                amount = (p["amount"] as? Number)?.toInt() ?: 0
+                            )
+                        } else null
+                    } ?: emptyList()
+                    
+                    // Backward compat: old expenses have accountId
+                    val finalPayments = if (paymentsList.isEmpty()) {
+                        val oldAccountId = data["accountId"] as? String ?: "default_cash"
+                        listOf(PaymentEntry(
+                            accountId = oldAccountId,
+                            amount = (data["amount"] as? Number)?.toInt() ?: 0
+                        ))
+                    } else paymentsList
+                    
                     Expense(
                         id = doc.id,
                         title = data["title"] as? String ?: "",
@@ -130,11 +157,9 @@ class FirestoreExpenseService {
                         categoryId = data["categoryId"] as? String ?: "default_other",
                         type = try {
                             ExpenseType.valueOf(data["type"] as? String ?: "BUSINESS")
-                        } catch (e: Exception) {
-                            ExpenseType.BUSINESS
-                        },
+                        } catch (e: Exception) { ExpenseType.BUSINESS },
                         businessPercentage = (data["businessPercentage"] as? Number)?.toInt() ?: 100,
-                        accountId = data["accountId"] as? String ?: "default_cash",  // ✅ NEW
+                        payments = finalPayments,
                         description = data["description"] as? String ?: "",
                         date = (data["date"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                         createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
@@ -172,6 +197,23 @@ class FirestoreExpenseService {
                     return@addSnapshotListener
                 }
                 
+                val paymentsList = (data["payments"] as? List<*>)?.mapNotNull { p ->
+                    if (p is Map<*, *>) {
+                        PaymentEntry(
+                            accountId = p["accountId"] as? String ?: "default_cash",
+                            amount = (p["amount"] as? Number)?.toInt() ?: 0
+                        )
+                    } else null
+                } ?: emptyList()
+                
+                val finalPayments = if (paymentsList.isEmpty()) {
+                    val oldAccountId = data["accountId"] as? String ?: "default_cash"
+                    listOf(PaymentEntry(
+                        accountId = oldAccountId,
+                        amount = (data["amount"] as? Number)?.toInt() ?: 0
+                    ))
+                } else paymentsList
+                
                 val expense = Expense(
                     id = snapshot.id,
                     title = data["title"] as? String ?: "",
@@ -179,11 +221,9 @@ class FirestoreExpenseService {
                     categoryId = data["categoryId"] as? String ?: "default_other",
                     type = try {
                         ExpenseType.valueOf(data["type"] as? String ?: "BUSINESS")
-                    } catch (e: Exception) {
-                        ExpenseType.BUSINESS
-                    },
+                    } catch (e: Exception) { ExpenseType.BUSINESS },
                     businessPercentage = (data["businessPercentage"] as? Number)?.toInt() ?: 100,
-                    accountId = data["accountId"] as? String ?: "default_cash",  // ✅ NEW
+                    payments = finalPayments,
                     description = data["description"] as? String ?: "",
                     date = (data["date"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                     createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),

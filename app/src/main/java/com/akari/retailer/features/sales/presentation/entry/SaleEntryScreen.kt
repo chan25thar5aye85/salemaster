@@ -11,7 +11,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -41,7 +40,8 @@ fun SaleEntryScreen(
         factory = SaleEntryViewModelFactory(
             repository,
             moneyAccountRepository,
-            processMoneyTransactionUseCase
+            processMoneyTransactionUseCase,
+        application
         )
     )
     
@@ -49,7 +49,6 @@ fun SaleEntryScreen(
     val focusManager = LocalFocusManager.current
     
     var isOnline by remember { mutableStateOf(NetworkUtils.isNetworkAvailable(context)) }
-    var accountExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -64,18 +63,13 @@ fun SaleEntryScreen(
 
     LaunchedEffect(state.rows) {
         val currentIds = state.rows.map { it.id }.toSet()
-        focusRequesters.keys
-            .filter { it !in currentIds }
-            .toList()
-            .forEach { focusRequesters.remove(it) }
+        focusRequesters.keys.filter { it !in currentIds }.toList().forEach { focusRequesters.remove(it) }
     }
 
     LaunchedEffect(state.rows) {
         val focusedRow = state.rows.firstOrNull { it.isFocused }
         if (focusedRow != null) {
-            val requester = focusRequesters.getOrPut(focusedRow.id) {
-                FocusRequester()
-            }
+            val requester = focusRequesters.getOrPut(focusedRow.id) { FocusRequester() }
             delay(100)
             requester.requestFocus()
         }
@@ -101,128 +95,70 @@ fun SaleEntryScreen(
         ) {
             if (!isOnline) {
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = Spacing.medium),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.medium),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
                     )
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(Spacing.medium),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = "📡 No internet connection. Sales will sync when online.",
-                            style = AppTypography.body,
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 13.sp
-                        )
-                    }
+                    Text(
+                        text = "📡 No internet. Sales will sync when online.",
+                        style = AppTypography.body,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(Spacing.medium)
+                    )
                 }
             }
 
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // Item rows
                 state.rows.forEachIndexed { index, row ->
                     key(row.id) {
-                        val requester = focusRequesters.getOrPut(row.id) {
-                            FocusRequester()
-                        }
-
+                        val requester = focusRequesters.getOrPut(row.id) { FocusRequester() }
                         ItemRow(
                             index = index,
                             amount = row.amount,
-                            onAmountChange = { value ->
-                                viewModel.handleEvent(
-                                    SaleEntryEvent.AmountChanged(row.id, value)
-                                )
-                            },
-                            onFocus = {
-                                viewModel.handleEvent(SaleEntryEvent.RowFocused(row.id))
-                            },
-                            onNext = {
-                                viewModel.handleEvent(SaleEntryEvent.NextPressed(row.id))
-                            },
-                            onDelete = {
-                                viewModel.handleEvent(SaleEntryEvent.RowDeleted(row.id))
-                            },
+                            onAmountChange = { viewModel.handleEvent(SaleEntryEvent.AmountChanged(row.id, it)) },
+                            onFocus = { viewModel.handleEvent(SaleEntryEvent.RowFocused(row.id)) },
+                            onNext = { viewModel.handleEvent(SaleEntryEvent.NextPressed(row.id)) },
+                            onDelete = { viewModel.handleEvent(SaleEntryEvent.RowDeleted(row.id)) },
                             focusRequester = requester,
-                            showDelete = !(state.rows.size == 1)
+                            showDelete = state.rows.size > 1
                         )
-
                         Spacer(modifier = Modifier.height(Spacing.medium))
                     }
                 }
 
-                Divider(
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
+                Divider(modifier = Modifier.padding(vertical = 16.dp))
 
                 SaleSummary(
                     total = viewModel.getFormattedTotal(),
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
+                
+                Spacer(modifier = Modifier.height(Spacing.medium))
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Money Account Selector
-                ExposedDropdownMenuBox(
-                    expanded = accountExpanded,
-                    onExpandedChange = { accountExpanded = it }
-                ) {
-                    val selectedAccount = state.accounts.find { it.id == state.selectedAccountId }
-                    
-                    OutlinedTextField(
-                        value = selectedAccount?.getDisplayName() ?: stringResource(R.string.select_account),
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text(stringResource(R.string.money_account)) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        trailingIcon = { 
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) 
-                        }
-                    )
-                    ExposedDropdownMenu(
-                        expanded = accountExpanded,
-                        onDismissRequest = { accountExpanded = false }
-                    ) {
-                        state.accounts.forEach { account ->
-                            DropdownMenuItem(
-                                text = { 
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(account.getDisplayName())
-                                        Text(
-                                            text = "${account.currentBalance}",
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
-                                },
-                                onClick = {
-                                    viewModel.handleEvent(SaleEntryEvent.AccountSelected(account))
-                                    accountExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+                // ✅ REUSABLE PAYMENT COMPONENT
+                PaymentListComponent(
+                    paymentRows = state.paymentRows,
+                    accounts = state.accounts,
+                    totalAmount = viewModel.getTotal(),
+                    onAccountSelected = { rowId, account ->
+                        viewModel.handleEvent(SaleEntryEvent.PaymentAccountChanged(rowId, account))
+                    },
+                    onAmountChanged = { rowId, amount ->
+                        viewModel.handleEvent(SaleEntryEvent.PaymentAmountChanged(rowId, amount))
+                    },
+                    onAddRow = { viewModel.handleEvent(SaleEntryEvent.AddPaymentRow) },
+                    onRemoveRow = { rowId -> viewModel.handleEvent(SaleEntryEvent.RemovePaymentRow(rowId)) }
+                )
 
                 state.error?.let { error ->
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = error,
                         color = MaterialTheme.colorScheme.error,
-                        style = AppTypography.body,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        style = AppTypography.body
                     )
                 }
 
@@ -237,24 +173,13 @@ fun SaleEntryScreen(
                     isLoading = state.isSaving,
                     enabled = !state.isSaving
                 )
-                
-                if (!isOnline && !state.saveSuccess) {
-                    Text(
-                        text = "⏳ Will save when online",
-                        style = AppTypography.small,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
             }
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
             RecentSalesTable(
                 sales = state.recentSales,
-                onViewAllClick = {
-                    navController?.navigate(Routes.HISTORY)
-                },
+                onViewAllClick = { navController?.navigate(Routes.HISTORY) },
                 maxItems = 2
             )
 

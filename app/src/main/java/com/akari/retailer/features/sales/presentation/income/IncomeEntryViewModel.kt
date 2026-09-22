@@ -1,44 +1,111 @@
 package com.akari.retailer.features.sales.presentation.income
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.akari.retailer.core.ui.components.PaymentRow
+import com.akari.retailer.core.utils.PaymentPreferences
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
+import com.akari.retailer.features.money.domain.models.MoneyAccount
+import com.akari.retailer.features.money.domain.models.PaymentEntry
 import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransactionUseCase
 import com.akari.retailer.features.sales.data.repository.IncomeEntryRepository
 import com.akari.retailer.features.sales.data.repository.IncomeStreamRepository
 import com.akari.retailer.features.sales.domain.models.IncomeEntry
 import com.akari.retailer.features.sales.domain.models.IncomeEntryType
+import com.akari.retailer.features.sales.domain.models.IncomeStream
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+data class IncomeEntryState(
+    val amount: String = "",
+    val selectedStream: IncomeStream? = null,
+    val streams: List<IncomeStream> = emptyList(),
+    val accounts: List<MoneyAccount> = emptyList(),
+    val paymentRows: List<PaymentRow> = listOf(
+        PaymentRow(id = 1L, accountId = "default_cash", amount = "")
+    ),
+    val entryType: IncomeEntryType = IncomeEntryType.BUSINESS,
+    val description: String = "",
+    val date: Long = System.currentTimeMillis(),
+    val isSaving: Boolean = false,
+    val saveSuccess: Boolean = false,
+    val error: String? = null,
+    val lastUsedAccountId: String = "default_cash",
+    val userTouchedAmounts: Boolean = false
+) {
+    fun getTotalAmount(): Int = amount.toIntOrNull() ?: 0
+    fun getTotalPaid(): Int = paymentRows.sumOf { it.amount.toIntOrNull() ?: 0 }
+    fun getRemaining(): Int = getTotalAmount() - getTotalPaid()
+    fun isFullyPaid(): Boolean = getTotalPaid() == getTotalAmount() && getTotalAmount() > 0
+    
+    fun getPayments(): List<PaymentEntry> {
+        return paymentRows
+            .filter { it.amount.toIntOrNull()?.let { it > 0 } == true }
+            .map { row ->
+                PaymentEntry(
+                    accountId = row.accountId,
+                    amount = row.amount.toIntOrNull() ?: 0
+                )
+            }
+    }
+}
+
+sealed class IncomeEntryEvent {
+    data class AmountChanged(val value: String) : IncomeEntryEvent()
+    data class StreamSelected(val stream: IncomeStream) : IncomeEntryEvent()
+    data class EntryTypeChanged(val type: IncomeEntryType) : IncomeEntryEvent()
+    data class DescriptionChanged(val value: String) : IncomeEntryEvent()
+    data class DateChanged(val date: Long) : IncomeEntryEvent()
+    data class PaymentAccountChanged(val rowId: Long, val account: MoneyAccount) : IncomeEntryEvent()
+    data class PaymentAmountChanged(val rowId: Long, val amount: String) : IncomeEntryEvent()
+    data object AddPaymentRow : IncomeEntryEvent()
+    data class RemovePaymentRow(val rowId: Long) : IncomeEntryEvent()
+    data object SaveIncome : IncomeEntryEvent()
+    data object ClearError : IncomeEntryEvent()
+    data object ResetSuccess : IncomeEntryEvent()
+}
+
 class IncomeEntryViewModel(
     private val incomeEntryRepository: IncomeEntryRepository,
     private val incomeStreamRepository: IncomeStreamRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
-    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase
+    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
+    private val appContext: Context
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(IncomeEntryState())
     val state: StateFlow<IncomeEntryState> = _state.asStateFlow()
 
+    private var nextRowId = 2L
+
     init {
+        val lastAccountId = PaymentPreferences.getLastUsedAccountId(appContext)
+        _state.value = _state.value.copy(
+            lastUsedAccountId = lastAccountId,
+            paymentRows = listOf(PaymentRow(id = 1L, accountId = lastAccountId, amount = ""))
+        )
+        
         loadStreams()
         loadAccounts()
     }
 
     fun handleEvent(event: IncomeEntryEvent) {
         when (event) {
-            is IncomeEntryEvent.AmountChanged -> _state.value = _state.value.copy(amount = event.value)
+            is IncomeEntryEvent.AmountChanged -> handleAmountChanged(event.value)
             is IncomeEntryEvent.StreamSelected -> _state.value = _state.value.copy(selectedStream = event.stream)
-            is IncomeEntryEvent.AccountSelected -> _state.value = _state.value.copy(selectedAccountId = event.account.id)
             is IncomeEntryEvent.EntryTypeChanged -> _state.value = _state.value.copy(entryType = event.type)
             is IncomeEntryEvent.DescriptionChanged -> _state.value = _state.value.copy(description = event.value)
             is IncomeEntryEvent.DateChanged -> _state.value = _state.value.copy(date = event.date)
-            IncomeEntryEvent.SaveIncome -> saveIncome()
-            IncomeEntryEvent.ClearError -> _state.value = _state.value.copy(error = null)
-            IncomeEntryEvent.ResetSuccess -> _state.value = _state.value.copy(saveSuccess = false)
+            is IncomeEntryEvent.PaymentAccountChanged -> updatePaymentAccount(event.rowId, event.account)
+            is IncomeEntryEvent.PaymentAmountChanged -> updatePaymentAmount(event.rowId, event.amount)
+            is IncomeEntryEvent.AddPaymentRow -> addPaymentRow()
+            is IncomeEntryEvent.RemovePaymentRow -> removePaymentRow(event.rowId)
+            is IncomeEntryEvent.SaveIncome -> saveIncome()
+            is IncomeEntryEvent.ClearError -> _state.value = _state.value.copy(error = null)
+            is IncomeEntryEvent.ResetSuccess -> _state.value = _state.value.copy(saveSuccess = false)
         }
     }
 
@@ -48,9 +115,7 @@ class IncomeEntryViewModel(
                 incomeStreamRepository.getIncomeStreams().collect { streams ->
                     _state.value = _state.value.copy(streams = streams)
                 }
-            } catch (e: Exception) {
-                // Handle silently
-            }
+            } catch (e: Exception) { }
         }
     }
 
@@ -61,10 +126,62 @@ class IncomeEntryViewModel(
                     val active = accounts.filter { it.isActive }
                     _state.value = _state.value.copy(accounts = active)
                 }
-            } catch (e: Exception) {
-                // Handle silently
-            }
+            } catch (e: Exception) { }
         }
+    }
+
+    private fun handleAmountChanged(value: String) {
+        val digitsOnly = value.filter { it.isDigit() }
+        val shouldAutoFill = _state.value.paymentRows.size == 1 && 
+                             !_state.value.userTouchedAmounts
+        
+        val updatedRows = if (shouldAutoFill) {
+            _state.value.paymentRows.map { it.copy(amount = digitsOnly) }
+        } else {
+            _state.value.paymentRows
+        }
+        
+        _state.value = _state.value.copy(amount = digitsOnly, paymentRows = updatedRows)
+    }
+
+    private fun updatePaymentAccount(rowId: Long, account: MoneyAccount) {
+        val updated = _state.value.paymentRows.map { row ->
+            if (row.id == rowId) row.copy(accountId = account.id) else row
+        }
+        _state.value = _state.value.copy(paymentRows = updated)
+        PaymentPreferences.setLastUsedAccountId(appContext, account.id)
+    }
+
+    private fun updatePaymentAmount(rowId: Long, amount: String) {
+        val updated = _state.value.paymentRows.map { row ->
+            if (row.id == rowId) row.copy(amount = amount) else row
+        }
+        _state.value = _state.value.copy(
+            paymentRows = updated,
+            userTouchedAmounts = true
+        )
+    }
+
+    private fun addPaymentRow() {
+        val remaining = _state.value.getRemaining()
+        val lastAccountId = _state.value.paymentRows.lastOrNull()?.accountId 
+            ?: _state.value.lastUsedAccountId
+        
+        val newRow = PaymentRow(
+            id = nextRowId++,
+            accountId = lastAccountId,
+            amount = if (remaining > 0) remaining.toString() else ""
+        )
+        _state.value = _state.value.copy(
+            paymentRows = _state.value.paymentRows + newRow
+        )
+    }
+
+    private fun removePaymentRow(rowId: Long) {
+        if (_state.value.paymentRows.size <= 1) return
+        _state.value = _state.value.copy(
+            paymentRows = _state.value.paymentRows.filter { it.id != rowId }
+        )
     }
 
     private fun saveIncome() {
@@ -81,13 +198,26 @@ class IncomeEntryViewModel(
             return
         }
         
+        val payments = currentState.getPayments()
+        if (payments.isEmpty()) {
+            _state.value = _state.value.copy(error = "Add at least one payment")
+            return
+        }
+        
+        if (currentState.getTotalPaid() != amountInt) {
+            _state.value = _state.value.copy(
+                error = "Payments (${currentState.getTotalPaid()}) must equal amount ($amountInt)"
+            )
+            return
+        }
+        
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
             
             val entry = IncomeEntry(
                 amount = amountInt,
                 incomeStreamId = currentState.selectedStream.id,
-                accountId = currentState.selectedAccountId,
+                payments = payments,
                 description = currentState.description.trim(),
                 type = currentState.entryType,
                 date = currentState.date
@@ -98,11 +228,14 @@ class IncomeEntryViewModel(
             if (result.isSuccess) {
                 val incomeId = result.getOrNull() ?: ""
                 processMoneyTransactionUseCase.processIncome(
-                    accountId = currentState.selectedAccountId,
-                    amount = amountInt,
+                    payments = payments,
                     incomeId = incomeId,
                     description = currentState.selectedStream.name
                 )
+                
+                payments.firstOrNull()?.let {
+                    PaymentPreferences.setLastUsedAccountId(appContext, it.accountId)
+                }
                 
                 _state.value = _state.value.copy(
                     isSaving = false,
@@ -123,7 +256,8 @@ class IncomeEntryViewModelFactory(
     private val incomeEntryRepository: IncomeEntryRepository,
     private val incomeStreamRepository: IncomeStreamRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
-    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase
+    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
+    private val appContext: Context
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
@@ -132,7 +266,8 @@ class IncomeEntryViewModelFactory(
                 incomeEntryRepository,
                 incomeStreamRepository,
                 moneyAccountRepository,
-                processMoneyTransactionUseCase
+                processMoneyTransactionUseCase,
+                appContext
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

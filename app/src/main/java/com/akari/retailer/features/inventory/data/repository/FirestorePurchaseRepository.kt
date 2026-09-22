@@ -6,6 +6,7 @@ import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.Query
 import com.akari.retailer.features.inventory.domain.models.Purchase
 import com.akari.retailer.features.inventory.domain.models.PurchaseItem
+import com.akari.retailer.features.money.domain.models.PaymentEntry
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -25,7 +26,7 @@ class FirestorePurchaseRepository : PurchaseRepository {
             instance.firestoreSettings = settings
             instance
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to get Firestore instance: ${e.message}")
+            Log.e(TAG, "Failed: ${e.message}")
             null
         }
     }
@@ -35,9 +36,7 @@ class FirestorePurchaseRepository : PurchaseRepository {
     override suspend fun createPurchase(purchase: Purchase): Result<String> {
         return try {
             val collection = getCollection()
-            if (collection == null) {
-                return Result.failure(Exception("Firestore not available"))
-            }
+                ?: return Result.failure(Exception("Firestore not available"))
             
             val docRef = collection.document()
             val purchaseWithId = purchase.copy(id = docRef.id)
@@ -45,7 +44,7 @@ class FirestorePurchaseRepository : PurchaseRepository {
             Log.d(TAG, "✅ Purchase created: ${docRef.id}")
             Result.success(docRef.id)
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Create purchase error: ${e.message}")
+            Log.e(TAG, "❌ Create error: ${e.message}")
             Result.failure(e)
         }
     }
@@ -53,23 +52,14 @@ class FirestorePurchaseRepository : PurchaseRepository {
     override fun getPurchases(): Flow<List<Purchase>> = callbackFlow {
         val collection = getCollection()
         if (collection == null) {
-            trySend(emptyList())
-            close()
-            return@callbackFlow
+            trySend(emptyList()); close(); return@callbackFlow
         }
         
         val listener = collection
             .orderBy("purchaseDate", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-                
-                if (snapshot == null) {
-                    trySend(emptyList())
-                    return@addSnapshotListener
-                }
+                if (error != null) { close(error); return@addSnapshotListener }
+                if (snapshot == null) { trySend(emptyList()); return@addSnapshotListener }
                 
                 val purchases = snapshot.documents.mapNotNull { doc ->
                     val data = doc.data ?: return@mapNotNull null
@@ -77,49 +67,31 @@ class FirestorePurchaseRepository : PurchaseRepository {
                 }
                 trySend(purchases)
             }
-        
         awaitClose { listener.remove() }
     }
     
     override fun getPurchaseById(purchaseId: String): Flow<Purchase?> = callbackFlow {
         val collection = getCollection()
-        if (collection == null) {
-            trySend(null)
-            close()
-            return@callbackFlow
-        }
+        if (collection == null) { trySend(null); close(); return@callbackFlow }
         
         val listener = collection.document(purchaseId)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-                
+                if (error != null) { close(error); return@addSnapshotListener }
                 if (snapshot == null || !snapshot.exists()) {
-                    trySend(null)
-                    return@addSnapshotListener
+                    trySend(null); return@addSnapshotListener
                 }
-                
                 trySend(mapToPurchase(snapshot.id, snapshot.data ?: emptyMap()))
             }
-        
         awaitClose { listener.remove() }
     }
     
     override suspend fun deletePurchase(purchaseId: String): Result<Unit> {
         return try {
             val collection = getCollection()
-            if (collection == null) {
-                return Result.failure(Exception("Firestore not available"))
-            }
+                ?: return Result.failure(Exception("Firestore not available"))
             collection.document(purchaseId).delete().await()
-            Log.d(TAG, "✅ Purchase deleted: $purchaseId")
             Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "❌ Delete purchase error: ${e.message}")
-            Result.failure(e)
-        }
+        } catch (e: Exception) { Result.failure(e) }
     }
     
     private fun purchaseToMap(purchase: Purchase): Map<String, Any> {
@@ -139,6 +111,9 @@ class FirestorePurchaseRepository : PurchaseRepository {
                 )
             },
             "totalCost" to purchase.totalCost,
+            "payments" to purchase.payments.map { p ->
+                mapOf("accountId" to p.accountId, "amount" to p.amount)
+            },
             "purchaseDate" to purchase.purchaseDate,
             "notes" to purchase.notes,
             "receiptNumber" to purchase.receiptNumber,
@@ -159,6 +134,21 @@ class FirestorePurchaseRepository : PurchaseRepository {
             } else null
         } ?: emptyList()
         
+        // Read payments (backward compat)
+        val paymentsList = (data["payments"] as? List<*>)?.mapNotNull { p ->
+            if (p is Map<*, *>) PaymentEntry(
+                accountId = p["accountId"] as? String ?: "default_cash",
+                amount = (p["amount"] as? Number)?.toInt() ?: 0
+            ) else null
+        } ?: emptyList()
+        
+        val finalPayments = if (paymentsList.isEmpty()) {
+            listOf(PaymentEntry(
+                accountId = data["accountId"] as? String ?: "default_cash",
+                amount = (data["totalCost"] as? Number)?.toInt() ?: 0
+            ))
+        } else paymentsList
+        
         return Purchase(
             id = id,
             orderId = data["orderId"] as? String ?: "",
@@ -168,6 +158,7 @@ class FirestorePurchaseRepository : PurchaseRepository {
             supplierName = data["supplierName"] as? String ?: "",
             items = items,
             totalCost = (data["totalCost"] as? Number)?.toInt() ?: 0,
+            payments = finalPayments,
             purchaseDate = (data["purchaseDate"] as? Number)?.toLong() ?: System.currentTimeMillis(),
             notes = data["notes"] as? String ?: "",
             receiptNumber = data["receiptNumber"] as? String ?: "",

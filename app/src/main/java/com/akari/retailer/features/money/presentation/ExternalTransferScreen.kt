@@ -55,11 +55,11 @@ fun ExternalTransferScreen(
     
     var accountExpanded by remember { mutableStateOf(false) }
 
+    // ✅ Show success message for 3s, then reset — NO navigation
     LaunchedEffect(state.saveSuccess) {
         if (state.saveSuccess) {
-            kotlinx.coroutines.delay(1000)
-            onTransferSuccess()
-            onBack()
+            kotlinx.coroutines.delay(3000)
+            viewModel.handleEvent(ExternalTransferEvent.ResetSuccess)
         }
     }
 
@@ -116,7 +116,7 @@ fun ExternalTransferScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.Top
             ) {
-                // Account Selector (Left side)
+                // Account Selector
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
@@ -174,7 +174,7 @@ fun ExternalTransferScreen(
                     }
                 }
                 
-                // External Account Name (Right side)
+                // External Account Name
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
@@ -200,7 +200,7 @@ fun ExternalTransferScreen(
                 }
             }
             
-            // Show balance hint below
+            // Balance hint
             if (state.selectedAccount != null) {
                 Text(
                     text = "${stringResource(R.string.balance)}: ${state.selectedAccount!!.currentBalance}",
@@ -224,7 +224,7 @@ fun ExternalTransferScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // Fee Type Selector
+            // Fee Type
             Text(
                 text = stringResource(R.string.fee_type),
                 style = AppTypography.label,
@@ -346,6 +346,32 @@ fun ExternalTransferScreen(
                 Spacer(modifier = Modifier.height(Spacing.medium))
             }
             
+            // ✅ Success message
+            if (state.saveSuccess) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "✅ Transfer successful!",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = AppTypography.body,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(Spacing.medium))
+            }
+            
+            // Error message
             state.error?.let { error ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),

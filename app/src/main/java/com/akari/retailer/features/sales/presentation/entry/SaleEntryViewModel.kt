@@ -1,11 +1,15 @@
 package com.akari.retailer.features.sales.presentation.entry
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.akari.retailer.core.ui.components.PaymentRow
+import com.akari.retailer.core.utils.PaymentPreferences
 import com.akari.retailer.data.repository.SaleRepository
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.MoneyAccount
+import com.akari.retailer.features.money.domain.models.PaymentEntry
 import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransactionUseCase
 import com.akari.retailer.features.sales.domain.models.Sale
 import com.akari.retailer.features.sales.domain.models.SaleItem
@@ -18,58 +22,84 @@ import kotlinx.coroutines.launch
 class SaleEntryViewModel(
     private val repository: SaleRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
-    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase
+    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
+    private val appContext: Context
 ) : ViewModel() {
 
     private val TAG = "SaleEntryViewModel"
-    
     private val stateManager = SaleEntryStateManager()
     private val validator = SaleEntryValidator()
 
     private val _state = MutableStateFlow(SaleEntryState())
     val state: StateFlow<SaleEntryState> = _state.asStateFlow()
 
+    private var nextPaymentRowId = 2L
+    private var userTouchedPaymentAmounts = false
+
     init {
+        val lastAccountId = PaymentPreferences.getLastUsedAccountId(appContext)
+        _state.value = _state.value.copy(
+            paymentRows = listOf(PaymentRow(id = 1L, accountId = lastAccountId, amount = ""))
+        )
         loadRecentSales()
         loadAccounts()
     }
 
     fun handleEvent(event: SaleEntryEvent) {
         when (event) {
-            is SaleEntryEvent.AmountChanged -> updateAmount(event.rowId, event.value)
+            is SaleEntryEvent.AmountChanged -> {
+                updateAmount(event.rowId, event.value)
+                // Auto-fill single payment row with total
+                if (!userTouchedPaymentAmounts && _state.value.paymentRows.size == 1) {
+                    val total = getTotal()
+                    _state.value = _state.value.copy(
+                        paymentRows = listOf(
+                            _state.value.paymentRows[0].copy(amount = total.toString())
+                        )
+                    )
+                }
+            }
             is SaleEntryEvent.RowFocused -> focusRow(event.rowId)
             is SaleEntryEvent.NextPressed -> nextRow(event.rowId)
-            is SaleEntryEvent.RowDeleted -> deleteRow(event.rowId)
-            is SaleEntryEvent.AccountSelected -> selectAccount(event.account)
+            is SaleEntryEvent.RowDeleted -> {
+                deleteRow(event.rowId)
+                // Re-sync payment amount if single row
+                if (!userTouchedPaymentAmounts && _state.value.paymentRows.size == 1) {
+                    val total = getTotal()
+                    _state.value = _state.value.copy(
+                        paymentRows = listOf(
+                            _state.value.paymentRows[0].copy(amount = total.toString())
+                        )
+                    )
+                }
+            }
+            is SaleEntryEvent.PaymentAccountChanged -> {
+                updatePaymentAccount(event.rowId, event.account)
+                PaymentPreferences.setLastUsedAccountId(appContext, event.account.id)
+            }
+            is SaleEntryEvent.PaymentAmountChanged -> {
+                updatePaymentAmount(event.rowId, event.amount)
+                userTouchedPaymentAmounts = true
+            }
+            is SaleEntryEvent.AddPaymentRow -> addPaymentRow()
+            is SaleEntryEvent.RemovePaymentRow -> removePaymentRow(event.rowId)
             SaleEntryEvent.SaveSale -> saveSale()
             SaleEntryEvent.ClearError -> clearError()
             SaleEntryEvent.ResetSaveSuccess -> resetSaveSuccess()
         }
     }
 
-    fun getTotal(): Int {
-        return stateManager.getItems(_state.value).sum()
-    }
-
-    fun getFormattedTotal(): String {
-        return MoneyFormatter.formatTotal(getTotal())
-    }
+    fun getTotal(): Int = stateManager.getItems(_state.value).sum()
+    fun getFormattedTotal(): String = MoneyFormatter.formatTotal(getTotal())
 
     private fun loadAccounts() {
         viewModelScope.launch {
             try {
                 moneyAccountRepository.getAccounts().collect { accounts ->
                     val active = accounts.filter { it.isActive }
-                    _state.value = _state.value.copy(
-                        accounts = active,
-                        selectedAccountId = _state.value.selectedAccountId.ifEmpty {
-                            active.firstOrNull()?.id ?: "default_cash"
-                        }
-                    )
+                    _state.value = _state.value.copy(accounts = active)
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "❌ Failed to load accounts: ${e.message}")
-            }
+            } catch (e: Exception) { }
         }
     }
 
@@ -77,13 +107,9 @@ class SaleEntryViewModel(
         viewModelScope.launch {
             try {
                 repository.getSales().collect { sales ->
-                    _state.value = _state.value.copy(
-                        recentSales = sales.take(2)
-                    )
+                    _state.value = _state.value.copy(recentSales = sales.take(2))
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "❌ Failed to load recent sales: ${e.message}")
-            }
+            } catch (e: Exception) { }
         }
     }
 
@@ -103,13 +129,44 @@ class SaleEntryViewModel(
         _state.value = stateManager.deleteRow(_state.value, rowId)
     }
 
-    private fun selectAccount(account: MoneyAccount) {
-        _state.value = _state.value.copy(selectedAccountId = account.id)
+    private fun updatePaymentAccount(rowId: Long, account: MoneyAccount) {
+        val updated = _state.value.paymentRows.map { row ->
+            if (row.id == rowId) row.copy(accountId = account.id) else row
+        }
+        _state.value = _state.value.copy(paymentRows = updated)
+    }
+
+    private fun updatePaymentAmount(rowId: Long, amount: String) {
+        val updated = _state.value.paymentRows.map { row ->
+            if (row.id == rowId) row.copy(amount = amount) else row
+        }
+        _state.value = _state.value.copy(paymentRows = updated)
+    }
+
+    private fun addPaymentRow() {
+        val total = getTotal()
+        val totalPaid = _state.value.paymentRows.sumOf { it.amount.toIntOrNull() ?: 0 }
+        val remaining = total - totalPaid
+        
+        val lastAccountId = _state.value.paymentRows.lastOrNull()?.accountId ?: "default_cash"
+        
+        val newRow = PaymentRow(
+            id = nextPaymentRowId++,
+            accountId = lastAccountId,
+            amount = if (remaining > 0) remaining.toString() else ""
+        )
+        _state.value = _state.value.copy(paymentRows = _state.value.paymentRows + newRow)
+    }
+
+    private fun removePaymentRow(rowId: Long) {
+        if (_state.value.paymentRows.size <= 1) return
+        _state.value = _state.value.copy(
+            paymentRows = _state.value.paymentRows.filter { it.id != rowId }
+        )
     }
 
     private fun saveSale(cashierId: String = "default") {
         val currentState = _state.value
-        
         val items = stateManager.getItems(currentState)
 
         if (items.isEmpty()) {
@@ -117,23 +174,30 @@ class SaleEntryViewModel(
             return
         }
 
-        if (items.any { it <= 0 }) {
-            _state.value = stateManager.setError(currentState, "All items must have a positive amount")
+        val total = items.sum()
+        
+        val payments = currentState.paymentRows
+            .filter { it.amount.toIntOrNull()?.let { it > 0 } == true }
+            .map { PaymentEntry(it.accountId, it.amount.toIntOrNull() ?: 0) }
+        
+        if (payments.isEmpty()) {
+            _state.value = stateManager.setError(currentState, "Add at least one payment")
+            return
+        }
+        
+        if (payments.sumOf { it.amount } != total) {
+            _state.value = stateManager.setError(
+                currentState, 
+                "Payments (${payments.sumOf { it.amount }}) must equal total ($total)"
+            )
             return
         }
 
-        val total = items.sum()
-        val accountId = currentState.selectedAccountId
         val currentRecentSales = currentState.recentSales
-        val selectedAccount = currentState.accounts.find { it.id == accountId }
+        val lastAccountId = currentState.paymentRows.firstOrNull()?.accountId ?: "default_cash"
 
         val saleItems = items.map { amount ->
-            SaleItem(
-                productId = "",
-                quantity = 1,
-                price = amount,
-                total = amount
-            )
+            SaleItem(productId = "", quantity = 1, price = amount, total = amount)
         }
 
         _state.value = stateManager.resetState().copy(
@@ -141,15 +205,17 @@ class SaleEntryViewModel(
             saveSuccess = true,
             recentSales = currentRecentSales,
             accounts = currentState.accounts,
-            selectedAccountId = accountId
+            paymentRows = listOf(PaymentRow(1L, lastAccountId, ""))
         )
+        
+        userTouchedPaymentAmounts = false
 
         viewModelScope.launch {
             try {
                 val sale = Sale(
                     items = saleItems,
                     total = total,
-                    accountId = accountId,
+                    payments = payments,
                     cashierId = cashierId
                 )
 
@@ -157,21 +223,18 @@ class SaleEntryViewModel(
                 if (result.isSuccess) {
                     val saleId = result.getOrNull() ?: ""
                     processMoneyTransactionUseCase.processSale(
-                        accountId = accountId,
-                        amount = total,
+                        payments = payments,
                         saleId = saleId,
-                        description = "Sale via ${selectedAccount?.name ?: "Cash"}"
+                        description = "Sale"
                     )
-                    Log.d(TAG, "✅ Sale saved and balance updated")
+                    Log.d(TAG, "Sale saved")
                 } else {
-                    val errorMsg = result.exceptionOrNull()?.message ?: "Failed to save sale"
-                    _state.value = _state.value.copy(error = errorMsg)
+                    _state.value = _state.value.copy(
+                        error = result.exceptionOrNull()?.message ?: "Failed"
+                    )
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "❌ Save error: ${e.message}")
-                _state.value = _state.value.copy(
-                    error = e.message ?: "Failed to save sale"
-                )
+                _state.value = _state.value.copy(error = e.message ?: "Failed")
             }
         }
     }
@@ -188,7 +251,8 @@ class SaleEntryViewModel(
 class SaleEntryViewModelFactory(
     private val repository: SaleRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
-    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase
+    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
+    private val appContext: Context
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
@@ -196,9 +260,10 @@ class SaleEntryViewModelFactory(
             return SaleEntryViewModel(
                 repository,
                 moneyAccountRepository,
-                processMoneyTransactionUseCase
+                processMoneyTransactionUseCase,
+                appContext
             ) as T
         }
-        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

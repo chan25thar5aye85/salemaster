@@ -1,5 +1,7 @@
 package com.akari.retailer.features.inventory.domain.models
 
+import com.akari.retailer.features.money.domain.models.PaymentEntry
+
 data class PurchaseItem(
     val productId: String = "",
     val productName: String = "",
@@ -17,8 +19,12 @@ data class Purchase(
     val supplierName: String = "",
     val items: List<PurchaseItem> = emptyList(),
     val totalCost: Int = 0,
+    val payments: List<PaymentEntry> = emptyList(),  // ✅ NEW - Multiple payments
     val purchaseDate: Long = System.currentTimeMillis(),
     val notes: String = "",
     val receiptNumber: String = "",
     val createdAt: Long = System.currentTimeMillis()
-)
+) {
+    val accountId: String
+        get() = payments.firstOrNull()?.accountId ?: "default_cash"
+}

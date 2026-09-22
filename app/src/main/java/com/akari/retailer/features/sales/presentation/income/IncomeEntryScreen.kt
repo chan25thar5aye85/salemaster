@@ -1,49 +1,24 @@
 package com.akari.retailer.features.sales.presentation.income
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
+import com.akari.retailer.core.ui.components.PaymentListComponent
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.sales.data.repository.FirestoreIncomeEntryRepository
@@ -76,13 +51,14 @@ fun IncomeEntryScreen(
             entryRepository,
             streamRepository,
             application.container.moneyAccountRepository,
-            application.container.processMoneyTransactionUseCase
+            application.container.processMoneyTransactionUseCase,
+        application
         )
     )
     
     val state by viewModel.state.collectAsState()
     var showDatePicker by remember { mutableStateOf(false) }
-    var accountExpanded by remember { mutableStateOf(false) }
+    var streamExpanded by remember { mutableStateOf(false) }
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
     AppScreen(
@@ -94,6 +70,7 @@ fun IncomeEntryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .imePadding()
         ) {
             // Amount
             OutlinedTextField(
@@ -108,7 +85,6 @@ fun IncomeEntryScreen(
             Spacer(modifier = Modifier.height(Spacing.medium))
             
             // Income Stream Dropdown
-            var streamExpanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
                 expanded = streamExpanded,
                 onExpandedChange = { streamExpanded = it }
@@ -141,56 +117,24 @@ fun IncomeEntryScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // Money Account Selector
-            ExposedDropdownMenuBox(
-                expanded = accountExpanded,
-                onExpandedChange = { accountExpanded = it }
-            ) {
-                val selectedAccount = state.accounts.find { it.id == state.selectedAccountId }
-                
-                OutlinedTextField(
-                    value = selectedAccount?.getDisplayName() ?: stringResource(R.string.select_account),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(stringResource(R.string.money_account)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(),
-                    trailingIcon = { 
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) 
-                    }
-                )
-                ExposedDropdownMenu(
-                    expanded = accountExpanded,
-                    onDismissRequest = { accountExpanded = false }
-                ) {
-                    state.accounts.forEach { account ->
-                        DropdownMenuItem(
-                            text = { 
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
-                                ) {
-                                    Text(account.getDisplayName())
-                                    Text(
-                                        text = "${account.currentBalance}",
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontSize = 12.sp
-                                    )
-                                }
-                            },
-                            onClick = {
-                                viewModel.handleEvent(IncomeEntryEvent.AccountSelected(account))
-                                accountExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
+            // ✅ REUSABLE PAYMENT COMPONENT
+            PaymentListComponent(
+                paymentRows = state.paymentRows,
+                accounts = state.accounts,
+                totalAmount = state.getTotalAmount(),
+                onAccountSelected = { rowId, account ->
+                    viewModel.handleEvent(IncomeEntryEvent.PaymentAccountChanged(rowId, account))
+                },
+                onAmountChanged = { rowId, amount ->
+                    viewModel.handleEvent(IncomeEntryEvent.PaymentAmountChanged(rowId, amount))
+                },
+                onAddRow = { viewModel.handleEvent(IncomeEntryEvent.AddPaymentRow) },
+                onRemoveRow = { rowId -> viewModel.handleEvent(IncomeEntryEvent.RemovePaymentRow(rowId)) }
+            )
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // Entry Type Selector
+            // Category (Business/Personal)
             Text(
                 text = stringResource(R.string.entry_category),
                 style = AppTypography.label,
@@ -199,17 +143,15 @@ fun IncomeEntryScreen(
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 IncomeTypeButton(
-                    type = IncomeEntryType.BUSINESS,
                     label = stringResource(R.string.income_business_icon),
                     isSelected = state.entryType == IncomeEntryType.BUSINESS,
                     onClick = { viewModel.handleEvent(IncomeEntryEvent.EntryTypeChanged(IncomeEntryType.BUSINESS)) },
                     modifier = Modifier.weight(1f)
                 )
                 IncomeTypeButton(
-                    type = IncomeEntryType.PERSONAL,
                     label = stringResource(R.string.income_personal_icon),
                     isSelected = state.entryType == IncomeEntryType.PERSONAL,
                     onClick = { viewModel.handleEvent(IncomeEntryEvent.EntryTypeChanged(IncomeEntryType.PERSONAL)) },
@@ -226,7 +168,7 @@ fun IncomeEntryScreen(
                 label = { Text(stringResource(R.string.description)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp)
+                    .height(80.dp)
             )
             
             Spacer(modifier = Modifier.height(Spacing.medium))
@@ -245,38 +187,43 @@ fun IncomeEntryScreen(
             Spacer(modifier = Modifier.height(Spacing.medium))
             
             state.error?.let { error ->
-                Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = AppTypography.body,
-                    modifier = Modifier.padding(bottom = Spacing.medium)
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = AppTypography.body,
+                        modifier = Modifier.padding(Spacing.small)
+                    )
+                }
+                Spacer(modifier = Modifier.height(Spacing.medium))
             }
             
             AppPrimaryButton(
                 text = if (state.isSaving) stringResource(R.string.saving) else stringResource(R.string.save_income),
-                onClick = {
-                    viewModel.handleEvent(IncomeEntryEvent.SaveIncome)
-                },
+                onClick = { viewModel.handleEvent(IncomeEntryEvent.SaveIncome) },
                 isLoading = state.isSaving,
-                enabled = state.amount.isNotEmpty() && state.selectedStream != null && !state.isSaving
+                enabled = state.amount.isNotEmpty() && 
+                         state.selectedStream != null && 
+                         state.isFullyPaid() &&
+                         !state.isSaving
             )
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
             OutlinedButton(
-                onClick = {
-                    navController?.navigate(Routes.INCOME_LIST)
-                },
+                onClick = { navController?.navigate(Routes.INCOME_LIST) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.view_income_list))
             }
             
             if (state.saveSuccess) {
-                LaunchedEffect(Unit) {
-                    onIncomeAdded()
-                }
+                LaunchedEffect(Unit) { onIncomeAdded() }
             }
             
             Spacer(modifier = Modifier.height(Spacing.xxlarge))
@@ -295,9 +242,7 @@ fun IncomeEntryScreen(
                         }
                         showDatePicker = false
                     }
-                ) {
-                    Text(stringResource(R.string.ok))
-                }
+                ) { Text(stringResource(R.string.ok)) }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
@@ -312,7 +257,6 @@ fun IncomeEntryScreen(
 
 @Composable
 fun IncomeTypeButton(
-    type: IncomeEntryType,
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit,

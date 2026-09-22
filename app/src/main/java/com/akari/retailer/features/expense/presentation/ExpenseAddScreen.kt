@@ -1,33 +1,14 @@
 package com.akari.retailer.features.expense.presentation
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,13 +17,13 @@ import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
+import com.akari.retailer.core.ui.components.PaymentListComponent
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.expense.data.repository.FirestoreCategoryRepository
 import com.akari.retailer.features.expense.data.repository.FirestoreExpenseRepository
 import com.akari.retailer.features.expense.data.remote.FirestoreCategoryService
 import com.akari.retailer.features.expense.data.remote.FirestoreExpenseService
-import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 import com.akari.retailer.features.expense.domain.models.ExpenseType
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,14 +45,14 @@ fun ExpenseAddScreen(
             expenseRepository,
             categoryRepository,
             application.container.moneyAccountRepository,
-            application.container.processMoneyTransactionUseCase
+            application.container.processMoneyTransactionUseCase,
+        application
         )
     )
     
     val state by viewModel.state.collectAsState()
     
     var categoryExpanded by remember { mutableStateOf(false) }
-    var accountExpanded by remember { mutableStateOf(false) }
 
     AppScreen(
         title = stringResource(R.string.add_expense),
@@ -140,100 +121,24 @@ fun ExpenseAddScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // ✅ Money Account Selector (NEW)
-            ExposedDropdownMenuBox(
-                expanded = accountExpanded,
-                onExpandedChange = { accountExpanded = it }
-            ) {
-                val selectedAccount = state.accounts.find { it.id == state.selectedAccountId }
-                
-                OutlinedTextField(
-                    value = selectedAccount?.getDisplayName() ?: stringResource(R.string.select_account),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(stringResource(R.string.money_account)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(),
-                    trailingIcon = { 
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) 
-                    },
-                    supportingText = selectedAccount?.let {
-                        { 
-                            Text(
-                                text = "${stringResource(R.string.balance)}: ${it.currentBalance}",
-                                color = if (it.currentBalance < (state.amount.toIntOrNull() ?: 0))
-                                    MaterialTheme.colorScheme.error
-                                else
-                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                fontSize = 11.sp
-                            )
-                        }
-                    }
-                )
-                ExposedDropdownMenu(
-                    expanded = accountExpanded,
-                    onDismissRequest = { accountExpanded = false }
-                ) {
-                    state.accounts.forEach { account ->
-                        DropdownMenuItem(
-                            text = { 
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
-                                ) {
-                                    Text(account.getDisplayName())
-                                    Text(
-                                        text = "${account.currentBalance}",
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            },
-                            onClick = {
-                                viewModel.handleEvent(ExpenseAddEvent.AccountSelected(account))
-                                accountExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-            
-            // ✅ Warning: Will go negative
-            val selectedAccount = state.accounts.find { it.id == state.selectedAccountId }
-            val amountInt = state.amount.toIntOrNull() ?: 0
-            if (selectedAccount != null && amountInt > 0 && selectedAccount.currentBalance < amountInt) {
-                Spacer(modifier = Modifier.height(Spacing.small))
-                androidx.compose.material3.Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = androidx.compose.material3.CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(Spacing.small)
-                    ) {
-                        Text(
-                            text = "⚠️ Insufficient Balance",
-                            style = AppTypography.label,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        Text(
-                            text = "Account will go negative: ${selectedAccount.currentBalance - amountInt}",
-                            style = AppTypography.small,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            }
+            // ✅ REUSABLE PAYMENT COMPONENT
+            PaymentListComponent(
+                paymentRows = state.paymentRows,
+                accounts = state.accounts,
+                totalAmount = state.getTotalAmount(),
+                onAccountSelected = { rowId, account ->
+                    viewModel.handleEvent(ExpenseAddEvent.PaymentAccountChanged(rowId, account))
+                },
+                onAmountChanged = { rowId, amount ->
+                    viewModel.handleEvent(ExpenseAddEvent.PaymentAmountChanged(rowId, amount))
+                },
+                onAddRow = { viewModel.handleEvent(ExpenseAddEvent.AddPaymentRow) },
+                onRemoveRow = { rowId -> viewModel.handleEvent(ExpenseAddEvent.RemovePaymentRow(rowId)) }
+            )
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // Expense Type Selector
+            // Expense Type
             Text(
                 text = "Expense Type",
                 style = AppTypography.label,
@@ -242,24 +147,21 @@ fun ExpenseAddScreen(
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ExpenseTypeButton(
-                    type = ExpenseType.BUSINESS,
                     label = "💼 Business",
                     isSelected = state.expenseType == ExpenseType.BUSINESS,
                     onClick = { viewModel.handleEvent(ExpenseAddEvent.ExpenseTypeChanged(ExpenseType.BUSINESS)) },
                     modifier = Modifier.weight(1f)
                 )
                 ExpenseTypeButton(
-                    type = ExpenseType.PERSONAL,
                     label = "👤 Personal",
                     isSelected = state.expenseType == ExpenseType.PERSONAL,
                     onClick = { viewModel.handleEvent(ExpenseAddEvent.ExpenseTypeChanged(ExpenseType.PERSONAL)) },
                     modifier = Modifier.weight(1f)
                 )
                 ExpenseTypeButton(
-                    type = ExpenseType.MIXED,
                     label = "🔄 Mixed",
                     isSelected = state.expenseType == ExpenseType.MIXED,
                     onClick = { viewModel.handleEvent(ExpenseAddEvent.ExpenseTypeChanged(ExpenseType.MIXED)) },
@@ -267,7 +169,6 @@ fun ExpenseAddScreen(
                 )
             }
             
-            // Business Percentage (only for MIXED)
             if (state.expenseType == ExpenseType.MIXED) {
                 Spacer(modifier = Modifier.height(Spacing.small))
                 OutlinedTextField(
@@ -293,27 +194,36 @@ fun ExpenseAddScreen(
                 label = { Text(stringResource(R.string.description)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp)
+                    .height(80.dp)
             )
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
             state.error?.let { error ->
-                Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = AppTypography.body,
-                    modifier = Modifier.padding(bottom = Spacing.medium)
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = AppTypography.body,
+                        modifier = Modifier.padding(Spacing.small)
+                    )
+                }
+                Spacer(modifier = Modifier.height(Spacing.medium))
             }
             
             AppPrimaryButton(
                 text = if (state.isSaving) stringResource(R.string.saving) else stringResource(R.string.save_expense),
-                onClick = {
-                    viewModel.handleEvent(ExpenseAddEvent.SaveExpense)
-                },
+                onClick = { viewModel.handleEvent(ExpenseAddEvent.SaveExpense) },
                 isLoading = state.isSaving,
-                enabled = state.title.isNotEmpty() && state.amount.isNotEmpty() && !state.isSaving
+                enabled = state.title.isNotEmpty() && 
+                         state.amount.isNotEmpty() && 
+                         state.isFullyPaid() &&
+                         !state.isSaving
             )
             
             if (state.saveSuccess) {
@@ -329,16 +239,15 @@ fun ExpenseAddScreen(
 
 @Composable
 fun ExpenseTypeButton(
-    type: ExpenseType,
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    androidx.compose.material3.Button(
+    Button(
         onClick = onClick,
         modifier = modifier,
-        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+        colors = ButtonDefaults.buttonColors(
             containerColor = if (isSelected) 
                 MaterialTheme.colorScheme.primary 
             else 
@@ -349,6 +258,6 @@ fun ExpenseTypeButton(
                 MaterialTheme.colorScheme.onSurface
         )
     ) {
-        Text(label, fontSize = 12.sp)
+        Text(label, fontSize = 11.sp)
     }
 }

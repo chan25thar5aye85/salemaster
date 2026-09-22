@@ -1,5 +1,7 @@
 package com.akari.retailer.features.sales.domain.models
 
+import com.akari.retailer.features.money.domain.models.PaymentEntry
+
 enum class IncomeEntryType {
     BUSINESS,
     PERSONAL
@@ -9,13 +11,16 @@ data class IncomeEntry(
     val id: String = "",
     val amount: Int = 0,
     val incomeStreamId: String = "default_product_sales",
-    val accountId: String = "default_cash",  // ✅ NEW - Money account
+    val payments: List<PaymentEntry> = emptyList(),  // ✅ NEW - Multiple payments
     val description: String = "",
     val type: IncomeEntryType = IncomeEntryType.BUSINESS,
     val date: Long = System.currentTimeMillis(),
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 ) {
+    val accountId: String
+        get() = payments.firstOrNull()?.accountId ?: "default_cash"
+    
     fun getBusinessAmount(): Int {
         return when (type) {
             IncomeEntryType.BUSINESS -> amount
