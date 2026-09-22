@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Income Main -->
+    <string name="income">ဝင်ငွေ</string>
+    <string name="add_income">ဝင်ငွေထည့်ရန်</string>
+    <string name="income_list">ဝင်ငွေစာရင်း</string>
+    <string name="income_analytics">ဝင်ငွေခွဲခြမ်းစိတ်ဖြာချက်</string>
+    <string name="income_streams">ဝင်ငွေအမျိုးအစားများ</string>
+    <string name="income_type">ဝင်ငွေအမျိုးအစား</string>
+    <string name="income_stream">ဝင်ငွေအမျိုးအစား</string>
+    <string name="save_income">ဝင်ငွေသိမ်းမည်</string>
+    <string name="view_income_list">ဝင်ငွေစာရင်းကြည့်ရန်</string>
+    <string name="select_income_type">ဝင်ငွေအမျိုးအစားရွေးပါ</string>
+    <string name="income_entry">ဝင်ငွေထည့်ရန်</string>
+    <string name="entry_category">အမျိုးအစား</string>
+    
+    <!-- Income Totals -->
+    <string name="no_income_yet">ဝင်ငွေမရှိသေးပါ</string>
+    <string name="total_income">စုစုပေါင်းဝင်ငွေ</string>
+    <string name="business_income">စီးပွားရေးဝင်ငွေ</string>
+    <string name="personal_income">ကိုယ်ပိုင်ဝင်ငွေ</string>
+    
+    <!-- Income Analytics -->
+    <string name="income_by_source">ရင်းမြစ်အလိုက်ဝင်ငွေ</string>
+    <string name="income_comparison">ဝင်ငွေနှိုင်းယှဉ်ချက်</string>
+    <string name="income_details_title">ဝင်ငွေအသေးစိတ်</string>
+    <string name="top_income_source">ထိပ်ဆုံးဝင်ငွေရင်းမြစ်</string>
+    <string name="no_income_period">ဤကာလအတွင်း ဝင်ငွေမရှိပါ</string>
+    <string name="add_income_to_see_analytics">ခွဲခြမ်းစိတ်ဖြာချက်ကြည့်ရန် ဝင်ငွေထည့်ပါ</string>
+    
+    <!-- Income Streams Management -->
+    <string name="income_stream_name">ဝင်ငွေအမျိုးအစားအမည်</string>
+    <string name="add_income_stream">ဝင်ငွေအမျိုးအစားထည့်ရန်</string>
+    <string name="edit_income_stream">ဝင်ငွေအမျိုးအစားပြင်ရန်</string>
+    <string name="delete_income_stream">ဝင်ငွေအမျိုးအစားဖျက်မည်</string>
+    <string name="delete_income_stream_confirmation">ဤဝင်ငွေအမျိုးအစားကို ဖျက်ရန် သေချာပါသလား။</string>
+    <string name="no_income_streams">ဝင်ငွေအမျိုးအစားမရှိပါ</string>
+    <string name="no_custom_income_streams">ကိုယ်ပိုင်ဝင်ငွေအမျိုးအစားမရှိသေးပါ</string>
+    <string name="tap_add_income_stream">ပထမဆုံးကိုယ်ပိုင်ဝင်ငွေအမျိုးအစားထည့်ရန် + ကိုနှိပ်ပါ</string>
+    <string name="manage_income_streams">ဝင်ငွေအမျိုးအစားများစီမံရန်</string>
+    <string name="default_income_streams">မူလဝင်ငွေအမျိုးအစားများ</string>
+    <string name="custom_income_streams">ကိုယ်ပိုင်ဝင်ငွေအမျိုးအစားများ</string>
+    <string name="income_stream_name_required">ဝင်ငွေအမျိုးအစားအမည် လိုအပ်သည်</string>
+    <string name="income_stream_name_min_length">အမည်သည်အနည်းဆုံး ၂ လုံးရှိရမည်</string>
+    
+    <!-- Income Actions -->
+    <string name="income_added">ဝင်ငွေအောင်မြင်စွာထည့်သွင်းပြီး</string>
+    <string name="failed_to_add_income">ဝင်ငွေထည့်သွင်းရန်မအောင်မြင်ပါ</string>
+    <string name="income_updated">ဝင်ငွေအောင်မြင်စွာပြင်ဆင်ပြီး</string>
+    <string name="failed_to_update_income">ဝင်ငွေပြင်ဆင်ရန်မအောင်မြင်ပါ</string>
+    <string name="income_deleted">ဝင်ငွေအောင်မြင်စွာဖျက်ပြီး</string>
+    <string name="failed_to_delete_income">ဝင်ငွေဖျက်ရန်မအောင်မြင်ပါ</string>
+    <string name="search_income">ဝင်ငွေရှာဖွေရန်...</string>
+    <string name="filter_by_income_type">ဝင်ငွေအမျိုးအစားအလိုက်စစ်ထုတ်ရန်</string>
+    <string name="no_income_found">ဝင်ငွေမတွေ့ပါ</string>
+    <string name="income_entry_delete_confirmation">ဤဝင်ငွေထည့်သွင်းမှုကို ဖျက်ရန် သေချာပါသလား။</string>
+    <string name="income_entry_unknown">မသိ</string>
+    
+    <!-- Income Icons/Labels -->
+    <string name="income_business_label">စီးပွားရေး</string>
+    <string name="income_personal_label">ကိုယ်ပိုင်</string>
+    <string name="income_business_icon">💼 စီးပွားရေး</string>
+    <string name="income_personal_icon">👤 ကိုယ်ပိုင်</string>
+</resources>

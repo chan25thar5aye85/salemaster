@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- FAB Menu -->
+    <string name="fab_sale_entry">အရောင်းထည့်ရန်</string>
+    <string name="fab_expenses">အသုံးစရိတ်များ</string>
+    <string name="fab_inventory">ပစ္စည်းစာရင်း</string>
+    <string name="fab_customers">ဖောက်သည်များ</string>
+    <string name="fab_reports">အစီရင်ခံစာ</string>
+    <string name="fab_suppliers">ပေးသွင်းသူများ</string>
+    <string name="fab_purchase_orders">အော်ဒါများ</string>
+    <string name="fab_purchases">ဝယ်ယူမှုများ</string>
+    <string name="fab_settings">ပြင်ဆင်ချက်များ</string>
+    
+    <!-- FAB New Items -->
+    <string name="fab_add_income">ဝင်ငွေထည့်ရန်</string>
+    <string name="fab_external_transfer">ပြင်ပငွေလွှဲခြင်း</string>
+    <string name="fab_transfer_money">ငွေလွှဲရန်</string>
+    <string name="fab_money_accounts">ငွေအကောင့်များ</string>
+    <string name="fab_transactions">ငွေလွှဲမှုများ</string>
+    <string name="fab_money_analytics">ငွေခွဲခြမ်းစိတ်ဖြာချက်</string>
+    <string name="fab_sales_trends">အရောင်းလမ်းကြောင်း</string>
+    <string name="fab_expense_analytics">အသုံးစရိတ်ခွဲခြမ်းစိတ်ဖြာချက်</string>
+    <string name="fab_income_analytics">ဝင်ငွေခွဲခြမ်းစိတ်ဖြာချက်</string>
+    <string name="fab_profit_loss">အမြတ်နှင့် အရှုံး</string>
+    
+    <!-- Submenus -->
+    <string name="fab_submenu_reports">အစီရင်ခံစာ</string>
+    <string name="fab_submenu_money">ငွေ</string>
+</resources>

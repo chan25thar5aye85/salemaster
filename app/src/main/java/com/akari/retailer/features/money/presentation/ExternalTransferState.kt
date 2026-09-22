@@ -4,8 +4,8 @@ import com.akari.retailer.features.money.domain.models.FeeType
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 
 enum class ExternalTransferDirection {
-    OUTGOING,   // Money going out (you pay)
-    INCOMING    // Money coming in (you receive)
+    OUTGOING,
+    INCOMING
 }
 
 data class ExternalTransferState(
@@ -13,11 +13,11 @@ data class ExternalTransferState(
     val selectedAccount: MoneyAccount? = null,
     val direction: ExternalTransferDirection = ExternalTransferDirection.OUTGOING,
     val externalAccountName: String = "",
-    val externalAccountNumber: String = "",
     val amount: String = "",
     val fee: String = "",
     val feeType: FeeType = FeeType.NONE,
     val description: String = "",
+    val lastUsedAccountId: String = "",  // ✅ NEW - Remember last used
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
     val error: String? = null
@@ -25,23 +25,20 @@ data class ExternalTransferState(
     fun getAmountInt(): Int = amount.toIntOrNull() ?: 0
     fun getFeeInt(): Int = fee.toIntOrNull() ?: 0
     
-    // Calculate net effect on selected account
     fun getAccountChange(): Int {
         val amt = getAmountInt()
         val feeAmt = getFeeInt()
         return when (direction) {
             ExternalTransferDirection.OUTGOING -> {
-                // Money leaving account
                 when (feeType) {
-                    FeeType.FEE_PAID -> -(amt + feeAmt)  // Pay amount + fee
-                    else -> -amt                          // Just amount
+                    FeeType.FEE_PAID -> -(amt + feeAmt)
+                    else -> -amt
                 }
             }
             ExternalTransferDirection.INCOMING -> {
-                // Money entering account
                 when (feeType) {
-                    FeeType.FEE_EARNED -> amt + feeAmt   // Receive amount + fee
-                    FeeType.FEE_PAID -> amt - feeAmt      // Receive amount - fee
+                    FeeType.FEE_EARNED -> amt + feeAmt
+                    FeeType.FEE_PAID -> amt - feeAmt
                     FeeType.NONE -> amt
                 }
             }

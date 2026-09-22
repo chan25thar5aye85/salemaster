@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -29,8 +27,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
@@ -69,6 +69,9 @@ fun ExpenseAddScreen(
     )
     
     val state by viewModel.state.collectAsState()
+    
+    var categoryExpanded by remember { mutableStateOf(false) }
+    var accountExpanded by remember { mutableStateOf(false) }
 
     AppScreen(
         title = stringResource(R.string.add_expense),
@@ -79,6 +82,7 @@ fun ExpenseAddScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .imePadding()
         ) {
             // Title
             OutlinedTextField(
@@ -104,7 +108,6 @@ fun ExpenseAddScreen(
             Spacer(modifier = Modifier.height(Spacing.medium))
             
             // Category Dropdown
-            var categoryExpanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
                 expanded = categoryExpanded,
                 onExpandedChange = { categoryExpanded = it }
@@ -130,6 +133,99 @@ fun ExpenseAddScreen(
                                 viewModel.handleEvent(ExpenseAddEvent.CategorySelected(category))
                                 categoryExpanded = false
                             }
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.medium))
+            
+            // ✅ Money Account Selector (NEW)
+            ExposedDropdownMenuBox(
+                expanded = accountExpanded,
+                onExpandedChange = { accountExpanded = it }
+            ) {
+                val selectedAccount = state.accounts.find { it.id == state.selectedAccountId }
+                
+                OutlinedTextField(
+                    value = selectedAccount?.getDisplayName() ?: stringResource(R.string.select_account),
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text(stringResource(R.string.money_account)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    trailingIcon = { 
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) 
+                    },
+                    supportingText = selectedAccount?.let {
+                        { 
+                            Text(
+                                text = "${stringResource(R.string.balance)}: ${it.currentBalance}",
+                                color = if (it.currentBalance < (state.amount.toIntOrNull() ?: 0))
+                                    MaterialTheme.colorScheme.error
+                                else
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                )
+                ExposedDropdownMenu(
+                    expanded = accountExpanded,
+                    onDismissRequest = { accountExpanded = false }
+                ) {
+                    state.accounts.forEach { account ->
+                        DropdownMenuItem(
+                            text = { 
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
+                                ) {
+                                    Text(account.getDisplayName())
+                                    Text(
+                                        text = "${account.currentBalance}",
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            },
+                            onClick = {
+                                viewModel.handleEvent(ExpenseAddEvent.AccountSelected(account))
+                                accountExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+            
+            // ✅ Warning: Will go negative
+            val selectedAccount = state.accounts.find { it.id == state.selectedAccountId }
+            val amountInt = state.amount.toIntOrNull() ?: 0
+            if (selectedAccount != null && amountInt > 0 && selectedAccount.currentBalance < amountInt) {
+                Spacer(modifier = Modifier.height(Spacing.small))
+                androidx.compose.material3.Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = androidx.compose.material3.CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.small)
+                    ) {
+                        Text(
+                            text = "⚠️ Insufficient Balance",
+                            style = AppTypography.label,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Text(
+                            text = "Account will go negative: ${selectedAccount.currentBalance - amountInt}",
+                            style = AppTypography.small,
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
                 }
@@ -186,11 +282,6 @@ fun ExpenseAddScreen(
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
-                Text(
-                    text = "Percentage of this expense that is business-related",
-                    style = AppTypography.small,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
             }
             
             Spacer(modifier = Modifier.height(Spacing.medium))
@@ -244,10 +335,10 @@ fun ExpenseTypeButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Button(
+    androidx.compose.material3.Button(
         onClick = onClick,
         modifier = modifier,
-        colors = ButtonDefaults.buttonColors(
+        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
             containerColor = if (isSelected) 
                 MaterialTheme.colorScheme.primary 
             else 
@@ -258,6 +349,6 @@ fun ExpenseTypeButton(
                 MaterialTheme.colorScheme.onSurface
         )
     ) {
-        Text(label)
+        Text(label, fontSize = 12.sp)
     }
 }

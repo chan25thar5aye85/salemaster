@@ -60,10 +60,11 @@ fun FABMenu(
     // Main menu items
     val mainItems = listOf(
         FABMenuItemData(Icons.Default.PointOfSale, stringResource(R.string.fab_sale_entry), "sale_entry"),
-        FABMenuItemData(Icons.Default.AttachMoney, stringResource(R.string.add_income), "income_entry"),
+        FABMenuItemData(Icons.Default.AttachMoney, stringResource(R.string.fab_add_income), "income_entry"),
         FABMenuItemData(Icons.Default.Receipt, stringResource(R.string.fab_expenses), "expenses"),
-        FABMenuItemData(Icons.Default.BarChart, "📈 Reports", "SUBMENU_REPORTS"),
-        FABMenuItemData(Icons.Default.AccountBalanceWallet, "💰 Money", "SUBMENU_MONEY"),
+        FABMenuItemData(Icons.Default.Public, stringResource(R.string.fab_external_transfer), "external_transfer"),
+        FABMenuItemData(Icons.Default.BarChart, stringResource(R.string.fab_submenu_reports), "SUBMENU_REPORTS"),
+        FABMenuItemData(Icons.Default.AccountBalanceWallet, stringResource(R.string.fab_submenu_money), "SUBMENU_MONEY"),
         FABMenuItemData(Icons.Default.Inventory, stringResource(R.string.fab_inventory), "inventory"),
         FABMenuItemData(Icons.Default.People, stringResource(R.string.fab_customers), "customers"),
         FABMenuItemData(Icons.Default.Business, stringResource(R.string.fab_suppliers), "suppliers"),
@@ -74,19 +75,19 @@ fun FABMenu(
 
     // Reports submenu
     val reportsItems = listOf(
-        FABMenuItemData(Icons.Default.BarChart, "📈 Sales Trends", "reports"),
-        FABMenuItemData(Icons.Default.Insights, "📊 Expense Analytics", "expense_analytics"),
-        FABMenuItemData(Icons.Default.Insights, "💰 Income Analytics", "income_analytics"),
-        FABMenuItemData(Icons.Default.PieChart, "📊 Profit & Loss", "profit_loss")
+        FABMenuItemData(Icons.Default.BarChart, stringResource(R.string.fab_sales_trends), "reports"),
+        FABMenuItemData(Icons.Default.Insights, stringResource(R.string.fab_expense_analytics), "expense_analytics"),
+        FABMenuItemData(Icons.Default.Insights, stringResource(R.string.fab_income_analytics), "income_analytics"),
+        FABMenuItemData(Icons.Default.PieChart, stringResource(R.string.fab_profit_loss), "profit_loss")
     )
 
     // Money submenu
     val moneyItems = listOf(
-        FABMenuItemData(Icons.Default.AccountBalanceWallet, "💰 Money Accounts", "money_accounts"),
-        FABMenuItemData(Icons.Default.SwapHoriz, "💸 Transfer Money", "transfer_money"),
-        FABMenuItemData(Icons.Default.Public, "🌐 External Transfer", "external_transfer"),
-        FABMenuItemData(Icons.Default.ReceiptLong, "📋 Transactions", "money_transactions"),
-        FABMenuItemData(Icons.Default.Insights, "📊 Money Analytics", "money_analytics")
+        FABMenuItemData(Icons.Default.AccountBalanceWallet, stringResource(R.string.fab_money_accounts), "money_accounts"),
+        FABMenuItemData(Icons.Default.SwapHoriz, stringResource(R.string.fab_transfer_money), "transfer_money"),
+        FABMenuItemData(Icons.Default.Public, stringResource(R.string.fab_external_transfer), "external_transfer"),
+        FABMenuItemData(Icons.Default.ReceiptLong, stringResource(R.string.fab_transactions), "money_transactions"),
+        FABMenuItemData(Icons.Default.Insights, stringResource(R.string.fab_money_analytics), "money_analytics")
     )
 
     // Determine which items to show
@@ -182,10 +183,8 @@ fun FABMenu(
             FloatingActionButton(
                 onClick = { 
                     if (isExpanded && currentSubmenu != FABSubmenu.NONE) {
-                        // Back to main menu
                         currentSubmenu = FABSubmenu.NONE
                     } else {
-                        // Toggle expand
                         isExpanded = !isExpanded
                         if (!isExpanded) {
                             currentSubmenu = FABSubmenu.NONE

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Income Main -->
+    <string name="income">Income</string>
+    <string name="add_income">Add Income</string>
+    <string name="income_list">Income List</string>
+    <string name="income_analytics">Income Analytics</string>
+    <string name="income_streams">Income Streams</string>
+    <string name="income_type">Income Type</string>
+    <string name="income_stream">Income Stream</string>
+    <string name="save_income">Save Income</string>
+    <string name="view_income_list">View Income List</string>
+    <string name="select_income_type">Select Income Type</string>
+    <string name="income_entry">Income Entry</string>
+    <string name="entry_category">Category</string>
+    
+    <!-- Income Totals -->
+    <string name="no_income_yet">No income yet</string>
+    <string name="total_income">Total Income</string>
+    <string name="business_income">Business Income</string>
+    <string name="personal_income">Personal Income</string>
+    
+    <!-- Income Analytics -->
+    <string name="income_by_source">Income by Source</string>
+    <string name="income_comparison">Income Comparison</string>
+    <string name="income_details_title">Income Details</string>
+    <string name="top_income_source">Top Income Source</string>
+    <string name="no_income_period">No income for this period</string>
+    <string name="add_income_to_see_analytics">Add some income to see analytics</string>
+    
+    <!-- Income Streams Management -->
+    <string name="income_stream_name">Income Stream Name</string>
+    <string name="add_income_stream">Add Income Stream</string>
+    <string name="edit_income_stream">Edit Income Stream</string>
+    <string name="delete_income_stream">Delete Income Stream</string>
+    <string name="delete_income_stream_confirmation">Are you sure you want to delete this income stream?</string>
+    <string name="no_income_streams">No income streams found</string>
+    <string name="no_custom_income_streams">No custom income streams yet</string>
+    <string name="tap_add_income_stream">Tap + to add your first custom income stream</string>
+    <string name="manage_income_streams">Manage Income Streams</string>
+    <string name="default_income_streams">Default Income Streams</string>
+    <string name="custom_income_streams">Custom Income Streams</string>
+    <string name="income_stream_name_required">Income stream name is required</string>
+    <string name="income_stream_name_min_length">Name must be at least 2 characters</string>
+    
+    <!-- Income Actions -->
+    <string name="income_added">Income added successfully!</string>
+    <string name="failed_to_add_income">Failed to add income</string>
+    <string name="income_updated">Income updated successfully!</string>
+    <string name="failed_to_update_income">Failed to update income</string>
+    <string name="income_deleted">Income deleted successfully!</string>
+    <string name="failed_to_delete_income">Failed to delete income</string>
+    <string name="search_income">Search income...</string>
+    <string name="filter_by_income_type">Filter by Income Type</string>
+    <string name="no_income_found">No income found</string>
+    <string name="income_entry_delete_confirmation">Are you sure you want to delete this income entry?</string>
+    <string name="income_entry_unknown">Unknown</string>
+    
+    <!-- Income Icons/Labels -->
+    <string name="income_business_label">Business</string>
+    <string name="income_personal_label">Personal</string>
+    <string name="income_business_icon">💼 Business</string>
+    <string name="income_personal_icon">👤 Personal</string>
+</resources>

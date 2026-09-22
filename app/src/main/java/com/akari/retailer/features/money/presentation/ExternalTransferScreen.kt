@@ -48,7 +48,7 @@ fun ExternalTransferScreen(
     }
     
     val viewModel: ExternalTransferViewModel = viewModel(
-        factory = ExternalTransferViewModelFactory(accountRepository, transferUseCase)
+        factory = ExternalTransferViewModelFactory(accountRepository, transferUseCase, application)
     )
     
     val state by viewModel.state.collectAsState()
@@ -72,8 +72,9 @@ fun ExternalTransferScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .imePadding()
         ) {
-            // Direction Selector (Outgoing / Incoming)
+            // Direction Selector
             Text(
                 text = stringResource(R.string.direction),
                 style = AppTypography.label,
@@ -109,59 +110,97 @@ fun ExternalTransferScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // Account Selector
-            Text(
-                text = if (state.isOutgoing()) 
-                    stringResource(R.string.from_account) 
-                else 
-                    stringResource(R.string.to_account),
-                style = AppTypography.label,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(bottom = Spacing.small)
-            )
-            
-            ExposedDropdownMenuBox(
-                expanded = accountExpanded,
-                onExpandedChange = { accountExpanded = it }
+            // Account + External Account Name in ONE ROW
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.Top
             ) {
-                OutlinedTextField(
-                    value = state.selectedAccount?.getDisplayName() ?: stringResource(R.string.select_account),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(stringResource(R.string.money_account)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(),
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) }
-                )
-                ExposedDropdownMenu(
-                    expanded = accountExpanded,
-                    onDismissRequest = { accountExpanded = false }
+                // Account Selector (Left side)
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    state.accounts.forEach { account ->
-                        DropdownMenuItem(
-                            text = { 
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(account.getDisplayName())
-                                    Text(
-                                        text = "${account.currentBalance}",
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontSize = 12.sp
-                                    )
-                                }
-                            },
-                            onClick = {
-                                viewModel.handleEvent(ExternalTransferEvent.AccountSelected(account))
-                                accountExpanded = false
-                            }
+                    Text(
+                        text = if (state.isOutgoing()) 
+                            stringResource(R.string.from_account) 
+                        else 
+                            stringResource(R.string.to_account),
+                        style = AppTypography.label,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    
+                    ExposedDropdownMenuBox(
+                        expanded = accountExpanded,
+                        onExpandedChange = { accountExpanded = it }
+                    ) {
+                        OutlinedTextField(
+                            value = state.selectedAccount?.getDisplayName() ?: stringResource(R.string.select_account),
+                            onValueChange = {},
+                            readOnly = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
+                            singleLine = true
                         )
+                        ExposedDropdownMenu(
+                            expanded = accountExpanded,
+                            onDismissRequest = { accountExpanded = false }
+                        ) {
+                            state.accounts.forEach { account ->
+                                DropdownMenuItem(
+                                    text = { 
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(account.getDisplayName())
+                                            Text(
+                                                text = "${account.currentBalance}",
+                                                color = MaterialTheme.colorScheme.primary,
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        viewModel.handleEvent(ExternalTransferEvent.AccountSelected(account))
+                                        accountExpanded = false
+                                    }
+                                )
+                            }
+                        }
                     }
+                }
+                
+                // External Account Name (Right side)
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = if (state.isOutgoing()) 
+                            stringResource(R.string.to_account) 
+                        else 
+                            stringResource(R.string.from_account),
+                        style = AppTypography.label,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    
+                    OutlinedTextField(
+                        value = state.externalAccountName,
+                        onValueChange = { 
+                            viewModel.handleEvent(ExternalTransferEvent.ExternalAccountNameChanged(it)) 
+                        },
+                        placeholder = { Text("Name", fontSize = 13.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
                 }
             }
             
+            // Show balance hint below
             if (state.selectedAccount != null) {
                 Text(
                     text = "${stringResource(R.string.balance)}: ${state.selectedAccount!!.currentBalance}",
@@ -172,28 +211,6 @@ fun ExternalTransferScreen(
             } else {
                 Spacer(modifier = Modifier.height(Spacing.medium))
             }
-            
-            // External Account Name
-            OutlinedTextField(
-                value = state.externalAccountName,
-                onValueChange = { viewModel.handleEvent(ExternalTransferEvent.ExternalAccountNameChanged(it)) },
-                label = { Text(stringResource(R.string.external_account_name)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-            
-            Spacer(modifier = Modifier.height(Spacing.medium))
-            
-            // External Account Number
-            OutlinedTextField(
-                value = state.externalAccountNumber,
-                onValueChange = { viewModel.handleEvent(ExternalTransferEvent.ExternalAccountNumberChanged(it)) },
-                label = { Text(stringResource(R.string.external_account_number)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-            
-            Spacer(modifier = Modifier.height(Spacing.medium))
             
             // Amount
             OutlinedTextField(
@@ -219,19 +236,19 @@ fun ExternalTransferScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                FeeTypeButton(
+                ExternalFeeTypeButton(
                     label = stringResource(R.string.fee_none),
                     isSelected = state.feeType == FeeType.NONE,
                     onClick = { viewModel.handleEvent(ExternalTransferEvent.FeeTypeChanged(FeeType.NONE)) },
                     modifier = Modifier.weight(1f)
                 )
-                FeeTypeButton(
+                ExternalFeeTypeButton(
                     label = stringResource(R.string.fee_paid),
                     isSelected = state.feeType == FeeType.FEE_PAID,
                     onClick = { viewModel.handleEvent(ExternalTransferEvent.FeeTypeChanged(FeeType.FEE_PAID)) },
                     modifier = Modifier.weight(1f)
                 )
-                FeeTypeButton(
+                ExternalFeeTypeButton(
                     label = stringResource(R.string.fee_earned),
                     isSelected = state.feeType == FeeType.FEE_EARNED,
                     onClick = { viewModel.handleEvent(ExternalTransferEvent.FeeTypeChanged(FeeType.FEE_EARNED)) },
@@ -241,7 +258,7 @@ fun ExternalTransferScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // Fee Amount (only if fee type is not NONE)
+            // Fee Amount
             if (state.feeType != FeeType.NONE) {
                 OutlinedTextField(
                     value = state.fee,
@@ -318,7 +335,7 @@ fun ExternalTransferScreen(
                                 style = AppTypography.body
                             )
                             Text(
-                                text = state.externalAccountName.ifEmpty { "External Account" },
+                                text = state.externalAccountName.ifEmpty { "External" },
                                 style = AppTypography.body,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                             )
@@ -384,5 +401,32 @@ fun DirectionButton(
         shape = MaterialTheme.shapes.small
     ) {
         Text(label)
+    }
+}
+
+@Composable
+fun ExternalFeeTypeButton(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected) 
+                MaterialTheme.colorScheme.primary 
+            else 
+                MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = if (isSelected) 
+                MaterialTheme.colorScheme.onPrimary 
+            else 
+                MaterialTheme.colorScheme.onSurface
+        ),
+        shape = MaterialTheme.shapes.small,
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+    ) {
+        Text(label, fontSize = 12.sp)
     }
 }

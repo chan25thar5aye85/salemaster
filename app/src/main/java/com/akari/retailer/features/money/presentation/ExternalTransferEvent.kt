@@ -8,7 +8,7 @@ sealed class ExternalTransferEvent {
     data class AccountSelected(val account: MoneyAccount) : ExternalTransferEvent()
     data class DirectionChanged(val direction: ExternalTransferDirection) : ExternalTransferEvent()
     data class ExternalAccountNameChanged(val value: String) : ExternalTransferEvent()
-    data class ExternalAccountNumberChanged(val value: String) : ExternalTransferEvent()
+    // ❌ Removed: ExternalAccountNumberChanged - no longer used
     data class AmountChanged(val value: String) : ExternalTransferEvent()
     data class FeeChanged(val value: String) : ExternalTransferEvent()
     data class FeeTypeChanged(val type: FeeType) : ExternalTransferEvent()

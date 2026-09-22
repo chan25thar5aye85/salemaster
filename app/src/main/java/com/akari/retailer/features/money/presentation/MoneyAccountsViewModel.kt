@@ -76,6 +76,7 @@ class MoneyAccountsViewModel(
             dialogOpeningBalance = "0",
             dialogAccountNumber = "",
             dialogNotes = "",
+            isSaving = false,           // ✅ Reset
             error = null
         )
     }
@@ -90,6 +91,7 @@ class MoneyAccountsViewModel(
             dialogOpeningBalance = account.openingBalance.toString(),
             dialogAccountNumber = account.accountNumber,
             dialogNotes = account.notes,
+            isSaving = false,           // ✅ Reset
             error = null
         )
     }
@@ -104,6 +106,7 @@ class MoneyAccountsViewModel(
             dialogOpeningBalance = "0",
             dialogAccountNumber = "",
             dialogNotes = "",
+            isSaving = false,           // ✅ FIXED: Reset isSaving
             error = null
         )
     }
@@ -173,7 +176,7 @@ class MoneyAccountsViewModel(
                     )
                     val result = repository.updateAccount(updated)
                     if (result.isSuccess) {
-                        dismissDialog()
+                        dismissDialog()  // ✅ Reset isSaving happens here
                     } else {
                         _state.value = _state.value.copy(
                             isSaving = false,
@@ -195,7 +198,7 @@ class MoneyAccountsViewModel(
                     )
                     val result = repository.addAccount(newAccount)
                     if (result.isSuccess) {
-                        dismissDialog()
+                        dismissDialog()  // ✅ Reset isSaving happens here
                     } else {
                         _state.value = _state.value.copy(
                             isSaving = false,
