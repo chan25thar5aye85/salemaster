@@ -39,8 +39,47 @@ fun PurchaseOrderTabsScreen(
     )
     
     val state by viewModel.state.collectAsState()
-    
+
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var pendingDeleteId by remember { mutableStateOf<String?>(null) }
+
     var selectedTab by remember { mutableStateOf(0) }
+
+    // Delete confirmation dialog
+    if (showDeleteDialog && pendingDeleteId != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showDeleteDialog = false
+                pendingDeleteId = null
+            },
+            title = { Text(stringResource(R.string.delete)) },
+            text = { Text("Are you sure you want to delete this order?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        pendingDeleteId?.let {
+                            viewModel.handleEvent(PurchaseOrderListEvent.DeleteOrder(it))
+                        }
+                        showDeleteDialog = false
+                        pendingDeleteId = null
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(stringResource(R.string.delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showDeleteDialog = false
+                    pendingDeleteId = null
+                }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
     
     // Get tomorrow's date (midnight)
     val tomorrow = remember {
@@ -235,7 +274,11 @@ fun PurchaseOrderTabsScreen(
                     PurchaseOrderCardCompact(
                         order = order,
                         navController = navController,
-                        orderName = order.orderName
+                        orderName = order.orderName,
+                        onDelete = {
+                            pendingDeleteId = order.id
+                            showDeleteDialog = true
+                        }
                     )
                 }
             }
