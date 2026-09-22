@@ -17,8 +17,6 @@ import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.customer.data.repository.FirestoreCustomerRepository
-import com.akari.retailer.features.customer.data.remote.FirestoreCustomerService
 import com.akari.retailer.features.customer.domain.models.Customer
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,11 +29,9 @@ fun CustomerEditScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val service = remember { FirestoreCustomerService() }
-    val repository = remember { FirestoreCustomerRepository(service) }
     
     val viewModel: CustomerEditViewModel = viewModel(
-        factory = CustomerEditViewModelFactory(repository, customerId)
+        factory = CustomerEditViewModelFactory(application.container.customerRepository, customerId)
     )
     
     val state by viewModel.state.collectAsState()

@@ -24,8 +24,6 @@ import com.akari.retailer.core.ui.components.AppCard
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.data.repository.FirestoreSaleRepository
-import com.akari.retailer.data.remote.FirestoreService
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
@@ -42,10 +40,9 @@ fun TrendsScreen(
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
-    val repository = FirestoreSaleRepository(FirestoreService())
     
     val viewModel: TrendsViewModel = viewModel(
-        factory = TrendsViewModelFactory(repository)
+        factory = TrendsViewModelFactory(application.container.saleRepository)
     )
     
     val state by viewModel.state.collectAsState()

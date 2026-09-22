@@ -24,10 +24,6 @@ import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.components.SearchBox
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.sales.data.repository.FirestoreIncomeEntryRepository
-import com.akari.retailer.features.sales.data.repository.FirestoreIncomeStreamRepository
-import com.akari.retailer.features.sales.data.remote.FirestoreIncomeEntryService
-import com.akari.retailer.features.sales.data.remote.FirestoreIncomeStreamService
 import com.akari.retailer.features.sales.domain.models.IncomeEntry
 import com.akari.retailer.features.sales.domain.models.IncomeEntryType
 import com.akari.retailer.navigation.Routes
@@ -42,13 +38,9 @@ fun IncomeListScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val entryService = remember { FirestoreIncomeEntryService() }
-    val entryRepository = remember { FirestoreIncomeEntryRepository(entryService) }
-    val streamService = remember { FirestoreIncomeStreamService() }
-    val streamRepository = remember { FirestoreIncomeStreamRepository(streamService) }
     
     val viewModel: IncomeListViewModel = viewModel(
-        factory = IncomeListViewModelFactory(entryRepository, streamRepository)
+        factory = IncomeListViewModelFactory(application.container.incomeEntryRepository, application.container.incomeStreamRepository)
     )
     
     val state by viewModel.state.collectAsState()

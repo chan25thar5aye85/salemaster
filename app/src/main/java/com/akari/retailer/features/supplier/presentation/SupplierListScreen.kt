@@ -22,8 +22,6 @@ import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.components.SearchBox
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.supplier.data.repository.FirestoreSupplierRepository
-import com.akari.retailer.features.supplier.data.remote.FirestoreSupplierService
 import com.akari.retailer.features.supplier.domain.models.Supplier
 import com.akari.retailer.navigation.Routes
 
@@ -36,11 +34,9 @@ fun SupplierListScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val service = remember { FirestoreSupplierService() }
-    val repository = remember { FirestoreSupplierRepository(service) }
     
     val viewModel: SupplierListViewModel = viewModel(
-        factory = SupplierListViewModelFactory(repository)
+        factory = SupplierListViewModelFactory(application.container.supplierRepository)
     )
     
     val state by viewModel.state.collectAsState()

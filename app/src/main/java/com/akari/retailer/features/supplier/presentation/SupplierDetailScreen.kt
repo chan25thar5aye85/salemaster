@@ -19,8 +19,6 @@ import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.supplier.data.repository.FirestoreSupplierRepository
-import com.akari.retailer.features.supplier.data.remote.FirestoreSupplierService
 import com.akari.retailer.features.supplier.domain.models.Supplier
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,11 +31,9 @@ fun SupplierDetailScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val service = remember { FirestoreSupplierService() }
-    val repository = remember { FirestoreSupplierRepository(service) }
     
     val viewModel: SupplierDetailViewModel = viewModel(
-        factory = SupplierDetailViewModelFactory(repository, supplierId)
+        factory = SupplierDetailViewModelFactory(application.container.supplierRepository, supplierId)
     )
     
     val state by viewModel.state.collectAsState()

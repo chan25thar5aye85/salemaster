@@ -21,10 +21,6 @@ import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.components.PaymentListComponent
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.sales.data.repository.FirestoreIncomeEntryRepository
-import com.akari.retailer.features.sales.data.repository.FirestoreIncomeStreamRepository
-import com.akari.retailer.features.sales.data.remote.FirestoreIncomeEntryService
-import com.akari.retailer.features.sales.data.remote.FirestoreIncomeStreamService
 import com.akari.retailer.features.sales.domain.models.IncomeEntryType
 import com.akari.retailer.navigation.Routes
 import java.text.SimpleDateFormat
@@ -41,18 +37,14 @@ fun IncomeEntryScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val entryService = remember { FirestoreIncomeEntryService() }
-    val entryRepository = remember { FirestoreIncomeEntryRepository(entryService) }
-    val streamService = remember { FirestoreIncomeStreamService() }
-    val streamRepository = remember { FirestoreIncomeStreamRepository(streamService) }
     
     val viewModel: IncomeEntryViewModel = viewModel(
         factory = IncomeEntryViewModelFactory(
-            entryRepository,
-            streamRepository,
+            application.container.incomeEntryRepository,
+            application.container.incomeStreamRepository,
             application.container.moneyAccountRepository,
             application.container.processMoneyTransactionUseCase,
-        application
+            application
         )
     )
     

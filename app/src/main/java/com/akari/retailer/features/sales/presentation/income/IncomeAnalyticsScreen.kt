@@ -26,10 +26,6 @@ import com.akari.retailer.core.ui.components.AppCard
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.sales.data.repository.FirestoreIncomeEntryRepository
-import com.akari.retailer.features.sales.data.repository.FirestoreIncomeStreamRepository
-import com.akari.retailer.features.sales.data.remote.FirestoreIncomeEntryService
-import com.akari.retailer.features.sales.data.remote.FirestoreIncomeStreamService
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.data.PieData
@@ -50,13 +46,9 @@ fun IncomeAnalyticsScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val entryService = remember { FirestoreIncomeEntryService() }
-    val entryRepository = remember { FirestoreIncomeEntryRepository(entryService) }
-    val streamService = remember { FirestoreIncomeStreamService() }
-    val streamRepository = remember { FirestoreIncomeStreamRepository(streamService) }
     
     val viewModel: IncomeAnalyticsViewModel = viewModel(
-        factory = IncomeAnalyticsViewModelFactory(entryRepository, streamRepository)
+        factory = IncomeAnalyticsViewModelFactory(application.container.incomeEntryRepository, application.container.incomeStreamRepository)
     )
     
     val state by viewModel.state.collectAsState()

@@ -22,8 +22,6 @@ import com.akari.retailer.core.ui.components.AppCard
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.sales.data.repository.FirestoreIncomeStreamRepository
-import com.akari.retailer.features.sales.data.remote.FirestoreIncomeStreamService
 import com.akari.retailer.features.sales.domain.models.IncomeStream
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,11 +33,9 @@ fun IncomeStreamManagementScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val service = remember { FirestoreIncomeStreamService() }
-    val repository = remember { FirestoreIncomeStreamRepository(service) }
     
     val viewModel: IncomeStreamManagementViewModel = viewModel(
-        factory = IncomeStreamManagementViewModelFactory(repository)
+        factory = IncomeStreamManagementViewModelFactory(application.container.incomeStreamRepository)
     )
     
     val state by viewModel.state.collectAsState()
