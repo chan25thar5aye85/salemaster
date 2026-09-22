@@ -20,6 +20,9 @@ import com.akari.retailer.features.inventory.data.repository.InventoryRepository
 import com.akari.retailer.features.inventory.data.repository.PurchaseOrderRepository
 import com.akari.retailer.features.inventory.data.repository.PurchaseRepository
 import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
+import com.akari.retailer.features.inventory.data.remote.FirestoreStockService
+import com.akari.retailer.features.inventory.data.repository.FirestoreStockRepository
+import com.akari.retailer.features.inventory.data.repository.StockRepository
 import com.akari.retailer.features.money.data.remote.FirestoreMoneyService
 import com.akari.retailer.features.money.data.remote.FirestoreMoneyTransactionService
 import com.akari.retailer.features.money.data.repository.FirestoreMoneyAccountRepository
@@ -97,6 +100,12 @@ class AppContainer {
     // Purchases
     val purchaseRepository: PurchaseRepository by lazy {
         FirestorePurchaseRepository()
+    }
+    
+    // Stock Movements
+    private val stockService by lazy { FirestoreStockService() }
+    val stockRepository: StockRepository by lazy {
+        FirestoreStockRepository(stockService)
     }
     
     // Money Accounts

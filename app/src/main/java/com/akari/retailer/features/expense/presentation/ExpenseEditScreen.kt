@@ -38,10 +38,6 @@ import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.expense.data.repository.FirestoreCategoryRepository
-import com.akari.retailer.features.expense.data.repository.FirestoreExpenseRepository
-import com.akari.retailer.features.expense.data.remote.FirestoreCategoryService
-import com.akari.retailer.features.expense.data.remote.FirestoreExpenseService
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,13 +50,8 @@ fun ExpenseEditScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val expenseService = remember { FirestoreExpenseService() }
-    val expenseRepository = remember { FirestoreExpenseRepository(expenseService) }
-    val categoryService = remember { FirestoreCategoryService() }
-    val categoryRepository = remember { FirestoreCategoryRepository(categoryService) }
-    
     val viewModel: ExpenseEditViewModel = viewModel(
-        factory = ExpenseEditViewModelFactory(expenseRepository, categoryRepository, expenseId)
+        factory = ExpenseEditViewModelFactory(application.container.expenseRepository, application.container.categoryRepository, expenseId)
     )
     
     val state by viewModel.state.collectAsState()

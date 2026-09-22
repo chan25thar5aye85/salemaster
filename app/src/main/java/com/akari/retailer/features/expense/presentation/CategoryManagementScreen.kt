@@ -22,8 +22,6 @@ import com.akari.retailer.core.ui.components.AppCard
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.expense.data.repository.FirestoreCategoryRepository
-import com.akari.retailer.features.expense.data.remote.FirestoreCategoryService
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,11 +33,8 @@ fun CategoryManagementScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val service = remember { FirestoreCategoryService() }
-    val repository = remember { FirestoreCategoryRepository(service) }
-    
     val viewModel: CategoryManagementViewModel = viewModel(
-        factory = CategoryManagementViewModelFactory(repository)
+        factory = CategoryManagementViewModelFactory(application.container.categoryRepository)
     )
     
     val state by viewModel.state.collectAsState()

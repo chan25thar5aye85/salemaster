@@ -26,10 +26,6 @@ import com.akari.retailer.core.ui.components.AppCard
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.expense.data.repository.FirestoreCategoryRepository
-import com.akari.retailer.features.expense.data.repository.FirestoreExpenseRepository
-import com.akari.retailer.features.expense.data.remote.FirestoreCategoryService
-import com.akari.retailer.features.expense.data.remote.FirestoreExpenseService
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.data.PieData
@@ -50,13 +46,9 @@ fun ExpenseAnalyticsScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val expenseService = remember { FirestoreExpenseService() }
-    val expenseRepository = remember { FirestoreExpenseRepository(expenseService) }
-    val categoryService = remember { FirestoreCategoryService() }
-    val categoryRepository = remember { FirestoreCategoryRepository(categoryService) }
     
     val viewModel: ExpenseAnalyticsViewModel = viewModel(
-        factory = ExpenseAnalyticsViewModelFactory(expenseRepository, categoryRepository)
+        factory = ExpenseAnalyticsViewModelFactory(application.container.expenseRepository, application.container.categoryRepository)
     )
     
     val state by viewModel.state.collectAsState()
