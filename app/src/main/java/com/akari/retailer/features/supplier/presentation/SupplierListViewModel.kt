@@ -3,6 +3,7 @@ package com.akari.retailer.features.supplier.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.supplier.data.repository.SupplierRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,6 +15,8 @@ class SupplierListViewModel(
 
     private val _state = MutableStateFlow(SupplierListState())
     val state: StateFlow<SupplierListState> = _state.asStateFlow()
+
+    private var loadJob: Job? = null
 
     init {
         loadSuppliers()
@@ -31,7 +34,8 @@ class SupplierListViewModel(
     }
 
     private fun loadSuppliers() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 repository.getSuppliers().collect { suppliers ->
@@ -51,23 +55,18 @@ class SupplierListViewModel(
         }
     }
 
-    private fun refreshSuppliers() {
-        loadSuppliers()
-    }
+    private fun refreshSuppliers() = loadSuppliers()
 
     private fun deleteSupplier(supplierId: String) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
                 val result = repository.deleteSupplier(supplierId)
-                if (result.isSuccess) {
-                    loadSuppliers()
-                } else {
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        error = result.exceptionOrNull()?.message ?: "Failed to delete supplier"
-                    )
-                }
+                if (result.isSuccess) loadSuppliers()
+                else _state.value = _state.value.copy(
+                    isLoading = false,
+                    error = result.exceptionOrNull()?.message ?: "Failed to delete supplier"
+                )
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     isLoading = false,
@@ -90,7 +89,6 @@ class SupplierListViewModel(
     private fun applySearch() {
         val query = _state.value.searchQuery.lowercase().trim()
         val allSuppliers = _state.value.allSuppliers
-        
         val filtered = if (query.isEmpty()) {
             allSuppliers
         } else {
@@ -101,7 +99,6 @@ class SupplierListViewModel(
                 supplier.email.lowercase().contains(query)
             }
         }
-        
         _state.value = _state.value.copy(suppliers = filtered)
     }
 

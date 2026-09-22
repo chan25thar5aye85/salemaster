@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.FeeType
 import com.akari.retailer.features.money.domain.usecases.TransferMoneyUseCase
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +18,8 @@ class TransferMoneyViewModel(
 
     private val _state = MutableStateFlow(TransferMoneyState())
     val state: StateFlow<TransferMoneyState> = _state.asStateFlow()
+
+    private var loadAccountsJob: Job? = null
 
     init {
         loadAccounts()
@@ -38,7 +41,8 @@ class TransferMoneyViewModel(
     }
 
     private fun loadAccounts() {
-        viewModelScope.launch {
+        loadAccountsJob?.cancel()
+        loadAccountsJob = viewModelScope.launch {
             try {
                 accountRepository.getAccounts().collect { accounts ->
                     val active = accounts.filter { it.isActive }
@@ -50,7 +54,7 @@ class TransferMoneyViewModel(
 
     private fun saveTransfer() {
         val currentState = _state.value
-        
+
         if (currentState.fromAccount == null) {
             _state.value = _state.value.copy(error = "Select source account")
             return
@@ -63,22 +67,22 @@ class TransferMoneyViewModel(
             _state.value = _state.value.copy(error = "Cannot transfer to the same account")
             return
         }
-        
+
         val amountInt = currentState.amount.toIntOrNull()
         if (amountInt == null || amountInt <= 0) {
             _state.value = _state.value.copy(error = "Enter a valid amount")
             return
         }
-        
+
         val feeInt = currentState.fee.toIntOrNull() ?: 0
         if (feeInt < 0) {
             _state.value = _state.value.copy(error = "Fee cannot be negative")
             return
         }
-        
+
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
-            
+
             val params = TransferMoneyUseCase.Params(
                 fromAccountId = currentState.fromAccount.id,
                 toAccountId = currentState.toAccount.id,
@@ -87,16 +91,14 @@ class TransferMoneyViewModel(
                 feeType = currentState.feeType,
                 description = currentState.description.trim()
             )
-            
+
             val result = transferMoneyUseCase.invoke(params)
-            
+
             if (result.isSuccess) {
-                // ✅ Success — reset form but keep accounts selected
                 _state.value = _state.value.copy(
                     isSaving = false,
                     saveSuccess = true,
                     error = null,
-                    // Reset form fields
                     amount = "",
                     fee = "",
                     feeType = FeeType.NONE,

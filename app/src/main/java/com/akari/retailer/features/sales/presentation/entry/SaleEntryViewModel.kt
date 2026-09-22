@@ -14,6 +14,7 @@ import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransaction
 import com.akari.retailer.features.sales.domain.models.Sale
 import com.akari.retailer.features.sales.domain.models.SaleItem
 import com.akari.retailer.core.utils.MoneyFormatter
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,6 +34,9 @@ class SaleEntryViewModel(
     private val _state = MutableStateFlow(SaleEntryState())
     val state: StateFlow<SaleEntryState> = _state.asStateFlow()
 
+    private var loadAccountsJob: Job? = null
+    private var loadRecentSalesJob: Job? = null
+
     private var nextPaymentRowId = 2L
     private var userTouchedPaymentAmounts = false
 
@@ -49,7 +53,6 @@ class SaleEntryViewModel(
         when (event) {
             is SaleEntryEvent.AmountChanged -> {
                 updateAmount(event.rowId, event.value)
-                // Auto-fill single payment row with total
                 if (!userTouchedPaymentAmounts && _state.value.paymentRows.size == 1) {
                     val total = getTotal()
                     _state.value = _state.value.copy(
@@ -63,7 +66,6 @@ class SaleEntryViewModel(
             is SaleEntryEvent.NextPressed -> nextRow(event.rowId)
             is SaleEntryEvent.RowDeleted -> {
                 deleteRow(event.rowId)
-                // Re-sync payment amount if single row
                 if (!userTouchedPaymentAmounts && _state.value.paymentRows.size == 1) {
                     val total = getTotal()
                     _state.value = _state.value.copy(
@@ -93,7 +95,8 @@ class SaleEntryViewModel(
     fun getFormattedTotal(): String = MoneyFormatter.formatTotal(getTotal())
 
     private fun loadAccounts() {
-        viewModelScope.launch {
+        loadAccountsJob?.cancel()
+        loadAccountsJob = viewModelScope.launch {
             try {
                 moneyAccountRepository.getAccounts().collect { accounts ->
                     val active = accounts.filter { it.isActive }
@@ -104,7 +107,8 @@ class SaleEntryViewModel(
     }
 
     private fun loadRecentSales() {
-        viewModelScope.launch {
+        loadRecentSalesJob?.cancel()
+        loadRecentSalesJob = viewModelScope.launch {
             try {
                 repository.getSales().collect { sales ->
                     _state.value = _state.value.copy(recentSales = sales.take(2))
@@ -147,9 +151,7 @@ class SaleEntryViewModel(
         val total = getTotal()
         val totalPaid = _state.value.paymentRows.sumOf { it.amount.toIntOrNull() ?: 0 }
         val remaining = total - totalPaid
-        
         val lastAccountId = _state.value.paymentRows.lastOrNull()?.accountId ?: "default_cash"
-        
         val newRow = PaymentRow(
             id = nextPaymentRowId++,
             accountId = lastAccountId,
@@ -175,19 +177,19 @@ class SaleEntryViewModel(
         }
 
         val total = items.sum()
-        
+
         val payments = currentState.paymentRows
             .filter { it.amount.toIntOrNull()?.let { it > 0 } == true }
             .map { PaymentEntry(it.accountId, it.amount.toIntOrNull() ?: 0) }
-        
+
         if (payments.isEmpty()) {
             _state.value = stateManager.setError(currentState, "Add at least one payment")
             return
         }
-        
+
         if (payments.sumOf { it.amount } != total) {
             _state.value = stateManager.setError(
-                currentState, 
+                currentState,
                 "Payments (${payments.sumOf { it.amount }}) must equal total ($total)"
             )
             return
@@ -200,15 +202,7 @@ class SaleEntryViewModel(
             SaleItem(productId = "", quantity = 1, price = amount, total = amount)
         }
 
-        _state.value = stateManager.resetState().copy(
-            isSaving = false,
-            saveSuccess = true,
-            recentSales = currentRecentSales,
-            accounts = currentState.accounts,
-            paymentRows = listOf(PaymentRow(1L, lastAccountId, ""))
-        )
-        
-        userTouchedPaymentAmounts = false
+        _state.value = currentState.copy(isSaving = true, error = null)
 
         viewModelScope.launch {
             try {
@@ -228,13 +222,27 @@ class SaleEntryViewModel(
                         description = "Sale"
                     )
                     Log.d(TAG, "Sale saved")
+
+                    // Reset AFTER success
+                    _state.value = stateManager.resetState().copy(
+                        isSaving = false,
+                        saveSuccess = true,
+                        recentSales = currentRecentSales,
+                        accounts = currentState.accounts,
+                        paymentRows = listOf(PaymentRow(1L, lastAccountId, ""))
+                    )
+                    userTouchedPaymentAmounts = false
                 } else {
-                    _state.value = _state.value.copy(
+                    _state.value = currentState.copy(
+                        isSaving = false,
                         error = result.exceptionOrNull()?.message ?: "Failed"
                     )
                 }
             } catch (e: Exception) {
-                _state.value = _state.value.copy(error = e.message ?: "Failed")
+                _state.value = currentState.copy(
+                    isSaving = false,
+                    error = e.message ?: "Failed"
+                )
             }
         }
     }

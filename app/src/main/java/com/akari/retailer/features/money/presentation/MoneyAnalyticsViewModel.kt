@@ -5,7 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.data.repository.MoneyTransactionRepository
 import com.akari.retailer.features.money.domain.models.FeeType
+import com.akari.retailer.features.money.domain.models.MoneyAccount
+import com.akari.retailer.features.money.domain.models.MoneyTransaction
 import com.akari.retailer.features.money.domain.models.MoneyTransactionType
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +23,8 @@ class MoneyAnalyticsViewModel(
 
     private val _state = MutableStateFlow(MoneyAnalyticsState())
     val state: StateFlow<MoneyAnalyticsState> = _state.asStateFlow()
+
+    private var loadJob: Job? = null
 
     init {
         loadAnalytics()
@@ -38,9 +43,9 @@ class MoneyAnalyticsViewModel(
     }
 
     private fun loadAnalytics() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
-            
             try {
                 combine(
                     accountRepository.getAccounts(),
@@ -60,20 +65,15 @@ class MoneyAnalyticsViewModel(
     }
 
     private fun calculateAnalytics(
-        accounts: List<com.akari.retailer.features.money.domain.models.MoneyAccount>,
-        transactions: List<com.akari.retailer.features.money.domain.models.MoneyTransaction>
+        accounts: List<MoneyAccount>,
+        transactions: List<MoneyTransaction>
     ) {
-        // Filter transactions by time range
         val (startDate, endDate, rangeLabel) = getDateRange()
-        
-        val filteredTransactions = transactions.filter { 
-            it.date in startDate..endDate 
-        }
-        
-        // Calculate account balances
+        val filteredTransactions = transactions.filter { it.date in startDate..endDate }
+
         val activeAccounts = accounts.filter { it.isActive }
         val totalBalance = activeAccounts.sumOf { it.currentBalance }
-        
+
         val accountBalances = activeAccounts.map { account ->
             AccountBalance(
                 account = account,
@@ -83,31 +83,24 @@ class MoneyAnalyticsViewModel(
                 } else 0.0
             )
         }.sortedByDescending { it.balance }
-        
-        // Calculate fee summary
+
         val totalFeePaid = filteredTransactions
-            .filter { it.feeType == FeeType.FEE_PAID }
-            .sumOf { it.fee }
-        
+            .filter { it.feeType == FeeType.FEE_PAID }.sumOf { it.fee }
         val totalFeeEarned = filteredTransactions
-            .filter { it.feeType == FeeType.FEE_EARNED }
-            .sumOf { it.fee }
-        
-        val feesByType = mapOf(
-            "Fee Paid" to totalFeePaid,
-            "Fee Earned" to totalFeeEarned
-        )
-        
+            .filter { it.feeType == FeeType.FEE_EARNED }.sumOf { it.fee }
+
         val feeSummary = FeeSummary(
             totalPaid = totalFeePaid,
             totalEarned = totalFeeEarned,
             netFee = totalFeeEarned - totalFeePaid,
-            feesByType = feesByType
+            feesByType = mapOf(
+                "Fee Paid" to totalFeePaid,
+                "Fee Earned" to totalFeeEarned
+            )
         )
-        
-        // Calculate money flow
+
         val totalIn = filteredTransactions
-            .filter { 
+            .filter {
                 it.type in listOf(
                     MoneyTransactionType.SALE_IN,
                     MoneyTransactionType.INCOME_IN,
@@ -115,11 +108,10 @@ class MoneyAnalyticsViewModel(
                     MoneyTransactionType.EXTERNAL_IN,
                     MoneyTransactionType.FEE_IN
                 )
-            }
-            .sumOf { it.amount }
-        
+            }.sumOf { it.amount }
+
         val totalOut = filteredTransactions
-            .filter { 
+            .filter {
                 it.type in listOf(
                     MoneyTransactionType.EXPENSE_OUT,
                     MoneyTransactionType.PURCHASE_OUT,
@@ -127,16 +119,15 @@ class MoneyAnalyticsViewModel(
                     MoneyTransactionType.EXTERNAL_OUT,
                     MoneyTransactionType.FEE_OUT
                 )
-            }
-            .sumOf { it.amount }
-        
+            }.sumOf { it.amount }
+
         val moneyFlow = MoneyFlow(
             totalIn = totalIn,
             totalOut = totalOut,
             netFlow = totalIn - totalOut,
             transactionCount = filteredTransactions.size
         )
-        
+
         _state.value = _state.value.copy(
             accounts = activeAccounts,
             accountBalances = accountBalances,
@@ -152,7 +143,6 @@ class MoneyAnalyticsViewModel(
     private fun getDateRange(): Triple<Long, Long, String> {
         val now = System.currentTimeMillis()
         val calendar = Calendar.getInstance()
-        
         return when (_state.value.timeRange) {
             MoneyAnalyticsTimeRange.TODAY -> {
                 calendar.set(Calendar.HOUR_OF_DAY, 0)
@@ -190,12 +180,9 @@ class MoneyAnalyticsViewModel(
                 calendar.set(Calendar.MINUTE, 59)
                 calendar.set(Calendar.SECOND, 59)
                 calendar.set(Calendar.MILLISECOND, 999)
-                val end = calendar.timeInMillis
-                Triple(start, end, "Last Month")
+                Triple(start, calendar.timeInMillis, "Last Month")
             }
-            MoneyAnalyticsTimeRange.ALL -> {
-                Triple(0L, now, "All Time")
-            }
+            MoneyAnalyticsTimeRange.ALL -> Triple(0L, now, "All Time")
         }
     }
 }

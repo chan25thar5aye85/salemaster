@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.sales.data.repository.IncomeStreamRepository
 import com.akari.retailer.features.sales.domain.models.IncomeStream
 import com.akari.retailer.features.sales.domain.models.IncomeType
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +17,8 @@ class IncomeStreamManagementViewModel(
 
     private val _state = MutableStateFlow(IncomeStreamManagementState())
     val state: StateFlow<IncomeStreamManagementState> = _state.asStateFlow()
+
+    private var loadJob: Job? = null
 
     init {
         loadStreams()
@@ -37,13 +40,13 @@ class IncomeStreamManagementViewModel(
     }
 
     private fun loadStreams() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 repository.getIncomeStreams().collect { streams ->
                     val defaultStreams = streams.filter { it.isDefault }
                     val customStreams = streams.filter { !it.isDefault }
-                    
                     _state.value = _state.value.copy(
                         streams = streams,
                         defaultStreams = defaultStreams,
@@ -66,14 +69,11 @@ class IncomeStreamManagementViewModel(
             _state.value = _state.value.copy(isLoading = true)
             try {
                 val result = repository.deleteIncomeStream(streamId)
-                if (result.isSuccess) {
-                    loadStreams()
-                } else {
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        error = result.exceptionOrNull()?.message ?: "Failed to delete income stream"
-                    )
-                }
+                if (result.isSuccess) loadStreams()
+                else _state.value = _state.value.copy(
+                    isLoading = false,
+                    error = result.exceptionOrNull()?.message ?: "Failed to delete income stream"
+                )
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     isLoading = false,
@@ -121,12 +121,11 @@ class IncomeStreamManagementViewModel(
 
     private fun saveStream() {
         val name = _state.value.dialogName.trim()
-        
+
         if (name.isBlank()) {
             _state.value = _state.value.copy(error = "Income stream name is required")
             return
         }
-        
         if (name.length < 2) {
             _state.value = _state.value.copy(error = "Name must be at least 2 characters")
             return
@@ -134,25 +133,16 @@ class IncomeStreamManagementViewModel(
 
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
-            
             try {
                 val editing = _state.value.editingStream
-                
                 if (editing != null) {
-                    val updated = editing.copy(
-                        name = name,
-                        updatedAt = System.currentTimeMillis()
-                    )
+                    val updated = editing.copy(name = name, updatedAt = System.currentTimeMillis())
                     val result = repository.updateIncomeStream(updated)
-                    if (result.isSuccess) {
-                        dismissDialog()
-                        loadStreams()
-                    } else {
-                        _state.value = _state.value.copy(
-                            isSaving = false,
-                            error = result.exceptionOrNull()?.message ?: "Failed to update income stream"
-                        )
-                    }
+                    if (result.isSuccess) { dismissDialog(); loadStreams() }
+                    else _state.value = _state.value.copy(
+                        isSaving = false,
+                        error = result.exceptionOrNull()?.message ?: "Failed to update income stream"
+                    )
                 } else {
                     val newStream = IncomeStream(
                         name = name,
@@ -162,15 +152,11 @@ class IncomeStreamManagementViewModel(
                         isDefault = false
                     )
                     val result = repository.addIncomeStream(newStream)
-                    if (result.isSuccess) {
-                        dismissDialog()
-                        loadStreams()
-                    } else {
-                        _state.value = _state.value.copy(
-                            isSaving = false,
-                            error = result.exceptionOrNull()?.message ?: "Failed to add income stream"
-                        )
-                    }
+                    if (result.isSuccess) { dismissDialog(); loadStreams() }
+                    else _state.value = _state.value.copy(
+                        isSaving = false,
+                        error = result.exceptionOrNull()?.message ?: "Failed to add income stream"
+                    )
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(

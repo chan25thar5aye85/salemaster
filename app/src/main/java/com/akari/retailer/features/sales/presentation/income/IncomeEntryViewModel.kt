@@ -14,6 +14,7 @@ import com.akari.retailer.features.sales.data.repository.IncomeStreamRepository
 import com.akari.retailer.features.sales.domain.models.IncomeEntry
 import com.akari.retailer.features.sales.domain.models.IncomeEntryType
 import com.akari.retailer.features.sales.domain.models.IncomeStream
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,7 +41,7 @@ data class IncomeEntryState(
     fun getTotalPaid(): Int = paymentRows.sumOf { it.amount.toIntOrNull() ?: 0 }
     fun getRemaining(): Int = getTotalAmount() - getTotalPaid()
     fun isFullyPaid(): Boolean = getTotalPaid() == getTotalAmount() && getTotalAmount() > 0
-    
+
     fun getPayments(): List<PaymentEntry> {
         return paymentRows
             .filter { it.amount.toIntOrNull()?.let { it > 0 } == true }
@@ -79,6 +80,9 @@ class IncomeEntryViewModel(
     private val _state = MutableStateFlow(IncomeEntryState())
     val state: StateFlow<IncomeEntryState> = _state.asStateFlow()
 
+    private var loadStreamsJob: Job? = null
+    private var loadAccountsJob: Job? = null
+
     private var nextRowId = 2L
 
     init {
@@ -87,7 +91,6 @@ class IncomeEntryViewModel(
             lastUsedAccountId = lastAccountId,
             paymentRows = listOf(PaymentRow(id = 1L, accountId = lastAccountId, amount = ""))
         )
-        
         loadStreams()
         loadAccounts()
     }
@@ -110,7 +113,8 @@ class IncomeEntryViewModel(
     }
 
     private fun loadStreams() {
-        viewModelScope.launch {
+        loadStreamsJob?.cancel()
+        loadStreamsJob = viewModelScope.launch {
             try {
                 incomeStreamRepository.getIncomeStreams().collect { streams ->
                     _state.value = _state.value.copy(streams = streams)
@@ -120,7 +124,8 @@ class IncomeEntryViewModel(
     }
 
     private fun loadAccounts() {
-        viewModelScope.launch {
+        loadAccountsJob?.cancel()
+        loadAccountsJob = viewModelScope.launch {
             try {
                 moneyAccountRepository.getAccounts().collect { accounts ->
                     val active = accounts.filter { it.isActive }
@@ -132,15 +137,13 @@ class IncomeEntryViewModel(
 
     private fun handleAmountChanged(value: String) {
         val digitsOnly = value.filter { it.isDigit() }
-        val shouldAutoFill = _state.value.paymentRows.size == 1 && 
+        val shouldAutoFill = _state.value.paymentRows.size == 1 &&
                              !_state.value.userTouchedAmounts
-        
         val updatedRows = if (shouldAutoFill) {
             _state.value.paymentRows.map { it.copy(amount = digitsOnly) }
         } else {
             _state.value.paymentRows
         }
-        
         _state.value = _state.value.copy(amount = digitsOnly, paymentRows = updatedRows)
     }
 
@@ -164,9 +167,8 @@ class IncomeEntryViewModel(
 
     private fun addPaymentRow() {
         val remaining = _state.value.getRemaining()
-        val lastAccountId = _state.value.paymentRows.lastOrNull()?.accountId 
+        val lastAccountId = _state.value.paymentRows.lastOrNull()?.accountId
             ?: _state.value.lastUsedAccountId
-        
         val newRow = PaymentRow(
             id = nextRowId++,
             accountId = lastAccountId,
@@ -186,34 +188,34 @@ class IncomeEntryViewModel(
 
     private fun saveIncome() {
         val currentState = _state.value
-        
+
         val amountInt = currentState.amount.toIntOrNull()
         if (amountInt == null || amountInt <= 0) {
             _state.value = _state.value.copy(error = "Enter a valid amount")
             return
         }
-        
+
         if (currentState.selectedStream == null) {
             _state.value = _state.value.copy(error = "Select an income stream")
             return
         }
-        
+
         val payments = currentState.getPayments()
         if (payments.isEmpty()) {
             _state.value = _state.value.copy(error = "Add at least one payment")
             return
         }
-        
+
         if (currentState.getTotalPaid() != amountInt) {
             _state.value = _state.value.copy(
                 error = "Payments (${currentState.getTotalPaid()}) must equal amount ($amountInt)"
             )
             return
         }
-        
+
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
-            
+
             val entry = IncomeEntry(
                 amount = amountInt,
                 incomeStreamId = currentState.selectedStream.id,
@@ -222,9 +224,9 @@ class IncomeEntryViewModel(
                 type = currentState.entryType,
                 date = currentState.date
             )
-            
+
             val result = incomeEntryRepository.addIncomeEntry(entry)
-            
+
             if (result.isSuccess) {
                 val incomeId = result.getOrNull() ?: ""
                 processMoneyTransactionUseCase.processIncome(
@@ -232,11 +234,11 @@ class IncomeEntryViewModel(
                     incomeId = incomeId,
                     description = currentState.selectedStream.name
                 )
-                
+
                 payments.firstOrNull()?.let {
                     PaymentPreferences.setLastUsedAccountId(appContext, it.accountId)
                 }
-                
+
                 _state.value = _state.value.copy(
                     isSaving = false,
                     saveSuccess = true,

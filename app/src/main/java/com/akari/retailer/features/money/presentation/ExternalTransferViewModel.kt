@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.FeeType
 import com.akari.retailer.features.money.domain.usecases.ExternalTransferUseCase
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +25,8 @@ class ExternalTransferViewModel(
 
     private val _state = MutableStateFlow(ExternalTransferState())
     val state: StateFlow<ExternalTransferState> = _state.asStateFlow()
+
+    private var loadAccountsJob: Job? = null
 
     private val prefs = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -61,18 +64,17 @@ class ExternalTransferViewModel(
     }
 
     private fun loadAccounts() {
-        viewModelScope.launch {
+        loadAccountsJob?.cancel()
+        loadAccountsJob = viewModelScope.launch {
             try {
                 accountRepository.getAccounts().collect { accounts ->
                     val active = accounts.filter { it.isActive }
-                    
                     val lastUsedId = _state.value.lastUsedAccountId
                     val autoSelected = if (_state.value.selectedAccount == null && lastUsedId.isNotEmpty()) {
                         active.find { it.id == lastUsedId }
                     } else {
                         _state.value.selectedAccount
                     }
-                    
                     _state.value = _state.value.copy(
                         accounts = active,
                         selectedAccount = autoSelected
@@ -84,7 +86,7 @@ class ExternalTransferViewModel(
 
     private fun saveTransfer() {
         val currentState = _state.value
-        
+
         if (currentState.selectedAccount == null) {
             _state.value = _state.value.copy(error = "Select account")
             return
@@ -93,28 +95,28 @@ class ExternalTransferViewModel(
             _state.value = _state.value.copy(error = "External account name is required")
             return
         }
-        
+
         val amountInt = currentState.amount.toIntOrNull()
         if (amountInt == null || amountInt <= 0) {
             _state.value = _state.value.copy(error = "Enter a valid amount")
             return
         }
-        
+
         val feeInt = currentState.fee.toIntOrNull() ?: 0
         if (feeInt < 0) {
             _state.value = _state.value.copy(error = "Fee cannot be negative")
             return
         }
-        
+
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
-            
+
             val direction = if (currentState.direction == ExternalTransferDirection.OUTGOING) {
                 ExternalTransferUseCase.Direction.OUTGOING
             } else {
                 ExternalTransferUseCase.Direction.INCOMING
             }
-            
+
             val params = ExternalTransferUseCase.Params(
                 direction = direction,
                 accountId = currentState.selectedAccount.id,
@@ -125,16 +127,14 @@ class ExternalTransferViewModel(
                 feeType = currentState.feeType,
                 description = currentState.description.trim()
             )
-            
+
             val result = externalTransferUseCase.invoke(params)
-            
+
             if (result.isSuccess) {
-                // ✅ Success — reset form but keep account selected
                 _state.value = _state.value.copy(
                     isSaving = false,
                     saveSuccess = true,
                     error = null,
-                    // Reset form fields
                     externalAccountName = "",
                     amount = "",
                     fee = "",

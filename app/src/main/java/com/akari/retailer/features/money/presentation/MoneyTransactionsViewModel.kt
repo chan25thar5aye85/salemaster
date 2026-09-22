@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.data.repository.MoneyTransactionRepository
 import com.akari.retailer.features.money.domain.models.FeeType
-import com.akari.retailer.features.money.domain.models.MoneyTransaction
 import com.akari.retailer.features.money.domain.models.MoneyTransactionType
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,6 +21,8 @@ class MoneyTransactionsViewModel(
 
     private val _state = MutableStateFlow(MoneyTransactionsState())
     val state: StateFlow<MoneyTransactionsState> = _state.asStateFlow()
+
+    private var loadJob: Job? = null
 
     init {
         loadData()
@@ -63,7 +65,8 @@ class MoneyTransactionsViewModel(
     }
 
     private fun loadData() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 combine(
@@ -92,54 +95,38 @@ class MoneyTransactionsViewModel(
     private fun applyFilters() {
         val state = _state.value
         var filtered = state.transactions
-        
-        // Account filter
+
         if (state.selectedAccountId.isNotEmpty()) {
-            filtered = filtered.filter { 
-                it.fromAccountId == state.selectedAccountId || 
-                it.toAccountId == state.selectedAccountId 
+            filtered = filtered.filter {
+                it.fromAccountId == state.selectedAccountId ||
+                it.toAccountId == state.selectedAccountId
             }
         }
-        
-        // Type filter
+
         state.selectedType?.let { type ->
             filtered = filtered.filter { it.type == type }
         }
-        
-        // Time range filter
+
         val now = System.currentTimeMillis()
-        val (startDate, _) = when (state.timeRange) {
-            TransactionTimeRange.TODAY -> {
-                val cal = Calendar.getInstance()
-                cal.set(Calendar.HOUR_OF_DAY, 0)
-                cal.set(Calendar.MINUTE, 0)
-                cal.set(Calendar.SECOND, 0)
-                cal.set(Calendar.MILLISECOND, 0)
-                Pair(cal.timeInMillis, now)
-            }
-            TransactionTimeRange.THIS_WEEK -> {
-                val cal = Calendar.getInstance()
-                cal.set(Calendar.DAY_OF_WEEK, cal.firstDayOfWeek)
-                cal.set(Calendar.HOUR_OF_DAY, 0)
-                cal.set(Calendar.MINUTE, 0)
-                cal.set(Calendar.SECOND, 0)
-                cal.set(Calendar.MILLISECOND, 0)
-                Pair(cal.timeInMillis, now)
-            }
-            TransactionTimeRange.THIS_MONTH -> {
-                val cal = Calendar.getInstance()
-                cal.set(Calendar.DAY_OF_MONTH, 1)
-                cal.set(Calendar.HOUR_OF_DAY, 0)
-                cal.set(Calendar.MINUTE, 0)
-                cal.set(Calendar.SECOND, 0)
-                cal.set(Calendar.MILLISECOND, 0)
-                Pair(cal.timeInMillis, now)
-            }
-            TransactionTimeRange.ALL -> Pair(0L, now)
+        val startDate = when (state.timeRange) {
+            TransactionTimeRange.TODAY -> Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            TransactionTimeRange.THIS_WEEK -> Calendar.getInstance().apply {
+                set(Calendar.DAY_OF_WEEK, firstDayOfWeek)
+                set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            TransactionTimeRange.THIS_MONTH -> Calendar.getInstance().apply {
+                set(Calendar.DAY_OF_MONTH, 1)
+                set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            TransactionTimeRange.ALL -> 0L
         }
         filtered = filtered.filter { it.date in startDate..now }
-        
-        // Search filter
+
         if (state.searchQuery.isNotEmpty()) {
             val query = state.searchQuery.lowercase()
             filtered = filtered.filter {
@@ -147,9 +134,8 @@ class MoneyTransactionsViewModel(
                 it.externalAccountName.lowercase().contains(query)
             }
         }
-        
-        // Calculate summary
-        val totalIn = filtered.filter { 
+
+        val totalIn = filtered.filter {
             it.type in listOf(
                 MoneyTransactionType.SALE_IN,
                 MoneyTransactionType.INCOME_IN,
@@ -158,8 +144,8 @@ class MoneyTransactionsViewModel(
                 MoneyTransactionType.FEE_IN
             )
         }.sumOf { it.amount }
-        
-        val totalOut = filtered.filter { 
+
+        val totalOut = filtered.filter {
             it.type in listOf(
                 MoneyTransactionType.EXPENSE_OUT,
                 MoneyTransactionType.PURCHASE_OUT,
@@ -168,10 +154,10 @@ class MoneyTransactionsViewModel(
                 MoneyTransactionType.FEE_OUT
             )
         }.sumOf { it.amount }
-        
+
         val totalFeePaid = filtered.filter { it.feeType == FeeType.FEE_PAID }.sumOf { it.fee }
         val totalFeeEarned = filtered.filter { it.feeType == FeeType.FEE_EARNED }.sumOf { it.fee }
-        
+
         _state.value = _state.value.copy(
             filteredTransactions = filtered,
             totalIn = totalIn,

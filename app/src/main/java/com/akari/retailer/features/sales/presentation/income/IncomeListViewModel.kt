@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.sales.data.repository.IncomeEntryRepository
 import com.akari.retailer.features.sales.data.repository.IncomeStreamRepository
 import com.akari.retailer.features.sales.domain.models.IncomeEntryType
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +43,9 @@ class IncomeListViewModel(
     private val _state = MutableStateFlow(IncomeListState())
     val state: StateFlow<IncomeListState> = _state.asStateFlow()
 
+    private var loadEntriesJob: Job? = null
+    private var loadStreamsJob: Job? = null
+
     init {
         loadEntries()
         loadStreams()
@@ -61,26 +65,25 @@ class IncomeListViewModel(
     }
 
     private fun loadStreams() {
-        viewModelScope.launch {
+        loadStreamsJob?.cancel()
+        loadStreamsJob = viewModelScope.launch {
             try {
                 streamRepository.getIncomeStreams().collect { streams ->
                     _state.value = _state.value.copy(streams = streams)
                 }
-            } catch (e: Exception) {
-                // Handle silently
-            }
+            } catch (e: Exception) { }
         }
     }
 
     private fun loadEntries() {
-        viewModelScope.launch {
+        loadEntriesJob?.cancel()
+        loadEntriesJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 entryRepository.getIncomeEntries().collect { entries ->
                     val total = entries.sumOf { it.amount }
                     val business = entries.filter { it.type == IncomeEntryType.BUSINESS }.sumOf { it.amount }
                     val personal = entries.filter { it.type == IncomeEntryType.PERSONAL }.sumOf { it.amount }
-                    
                     _state.value = _state.value.copy(
                         allEntries = entries,
                         isLoading = false,
@@ -100,23 +103,18 @@ class IncomeListViewModel(
         }
     }
 
-    private fun refreshEntries() {
-        loadEntries()
-    }
+    private fun refreshEntries() = loadEntries()
 
     private fun deleteEntry(entryId: String) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
                 val result = entryRepository.deleteIncomeEntry(entryId)
-                if (result.isSuccess) {
-                    loadEntries()
-                } else {
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        error = result.exceptionOrNull()?.message ?: "Failed to delete income entry"
-                    )
-                }
+                if (result.isSuccess) loadEntries()
+                else _state.value = _state.value.copy(
+                    isLoading = false,
+                    error = result.exceptionOrNull()?.message ?: "Failed to delete income entry"
+                )
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     isLoading = false,
@@ -128,11 +126,8 @@ class IncomeListViewModel(
 
     private fun toggleStreamFilter(streamId: String) {
         val currentSelected = _state.value.selectedStreamIds.toMutableSet()
-        if (currentSelected.contains(streamId)) {
-            currentSelected.remove(streamId)
-        } else {
-            currentSelected.add(streamId)
-        }
+        if (currentSelected.contains(streamId)) currentSelected.remove(streamId)
+        else currentSelected.add(streamId)
         _state.value = _state.value.copy(selectedStreamIds = currentSelected.toSet())
         applyFilters()
     }
@@ -157,22 +152,17 @@ class IncomeListViewModel(
         val allEntries = _state.value.allEntries
         val streams = _state.value.streams
         val selectedStreamIds = _state.value.selectedStreamIds
-        
+
         var filtered = allEntries
-        
         if (selectedStreamIds.isNotEmpty()) {
-            filtered = filtered.filter { entry ->
-                selectedStreamIds.contains(entry.incomeStreamId)
-            }
+            filtered = filtered.filter { selectedStreamIds.contains(it.incomeStreamId) }
         }
-        
         if (query.isNotEmpty()) {
             filtered = filtered.filter { entry ->
                 entry.description.lowercase().contains(query) ||
                 streams.find { it.id == entry.incomeStreamId }?.name?.lowercase()?.contains(query) == true
             }
         }
-        
         _state.value = _state.value.copy(entries = filtered)
     }
 

@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.supplier.data.repository.SupplierRepository
 import com.akari.retailer.features.supplier.domain.models.Supplier
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 data class SupplierEditState(
@@ -18,6 +20,8 @@ data class SupplierEditState(
     val address: String = "",
     val notes: String = "",
     val totalPurchased: Int = 0,
+    val products: List<String> = emptyList(),
+    val lastOrderDate: Long = 0L,
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
@@ -45,6 +49,8 @@ class SupplierEditViewModel(
     private val _state = MutableStateFlow(SupplierEditState(id = supplierId))
     val state: StateFlow<SupplierEditState> = _state.asStateFlow()
 
+    private var loadJob: Job? = null
+
     init {
         loadSupplier()
     }
@@ -65,29 +71,31 @@ class SupplierEditViewModel(
     }
 
     private fun loadSupplier() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                repository.getSupplierById(supplierId).collect { supplier ->
-                    if (supplier != null) {
-                        _state.value = _state.value.copy(
-                            id = supplier.id,
-                            name = supplier.name,
-                            company = supplier.company,
-                            phone = supplier.phone,
-                            email = supplier.email,
-                            address = supplier.address,
-                            notes = supplier.notes,
-                            totalPurchased = supplier.totalPurchased,
-                            isLoading = false,
-                            error = null
-                        )
-                    } else {
-                        _state.value = _state.value.copy(
-                            isLoading = false,
-                            error = "Supplier not found"
-                        )
-                    }
+                val supplier = repository.getSupplierById(supplierId).first()
+                if (supplier != null) {
+                    _state.value = _state.value.copy(
+                        id = supplier.id,
+                        name = supplier.name,
+                        company = supplier.company,
+                        phone = supplier.phone,
+                        email = supplier.email,
+                        address = supplier.address,
+                        notes = supplier.notes,
+                        totalPurchased = supplier.totalPurchased,
+                        products = supplier.products,
+                        lastOrderDate = supplier.lastOrderDate,
+                        isLoading = false,
+                        error = null
+                    )
+                } else {
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = "Supplier not found"
+                    )
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
@@ -100,15 +108,17 @@ class SupplierEditViewModel(
 
     private fun saveSupplier() {
         val currentState = _state.value
-        
+
         if (currentState.name.isBlank()) {
             _state.value = _state.value.copy(error = "Supplier name is required")
             return
         }
-        
+
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
-            
+
+            // Preserve fields the user can't edit in this screen:
+            // products, lastOrderDate. Otherwise editSupplier would wipe them.
             val supplier = Supplier(
                 id = currentState.id,
                 name = currentState.name.trim(),
@@ -117,11 +127,13 @@ class SupplierEditViewModel(
                 email = currentState.email.trim(),
                 address = currentState.address.trim(),
                 notes = currentState.notes.trim(),
-                totalPurchased = currentState.totalPurchased
+                totalPurchased = currentState.totalPurchased,
+                products = currentState.products,
+                lastOrderDate = currentState.lastOrderDate
             )
-            
+
             val result = repository.updateSupplier(supplier)
-            
+
             if (result.isSuccess) {
                 _state.value = _state.value.copy(
                     isSaving = false,

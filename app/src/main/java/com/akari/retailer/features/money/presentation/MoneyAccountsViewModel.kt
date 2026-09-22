@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.features.money.domain.models.MoneyAccountType
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +17,8 @@ class MoneyAccountsViewModel(
 
     private val _state = MutableStateFlow(MoneyAccountsState())
     val state: StateFlow<MoneyAccountsState> = _state.asStateFlow()
+
+    private var loadJob: Job? = null
 
     init {
         loadAccounts()
@@ -44,7 +47,8 @@ class MoneyAccountsViewModel(
     }
 
     private fun loadAccounts() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 repository.getAccounts().collect { accounts ->
@@ -76,7 +80,7 @@ class MoneyAccountsViewModel(
             dialogOpeningBalance = "0",
             dialogAccountNumber = "",
             dialogNotes = "",
-            isSaving = false,           // ✅ Reset
+            isSaving = false,
             error = null
         )
     }
@@ -91,7 +95,7 @@ class MoneyAccountsViewModel(
             dialogOpeningBalance = account.openingBalance.toString(),
             dialogAccountNumber = account.accountNumber,
             dialogNotes = account.notes,
-            isSaving = false,           // ✅ Reset
+            isSaving = false,
             error = null
         )
     }
@@ -106,7 +110,7 @@ class MoneyAccountsViewModel(
             dialogOpeningBalance = "0",
             dialogAccountNumber = "",
             dialogNotes = "",
-            isSaving = false,           // ✅ FIXED: Reset isSaving
+            isSaving = false,
             error = null
         )
     }
@@ -158,13 +162,11 @@ class MoneyAccountsViewModel(
 
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
-            
             try {
                 val editing = _state.value.editingAccount
                 val openingBalance = _state.value.dialogOpeningBalance.toIntOrNull() ?: 0
-                
+
                 if (editing != null) {
-                    // Update existing
                     val updated = editing.copy(
                         name = name,
                         icon = _state.value.dialogIcon,
@@ -175,16 +177,12 @@ class MoneyAccountsViewModel(
                         updatedAt = System.currentTimeMillis()
                     )
                     val result = repository.updateAccount(updated)
-                    if (result.isSuccess) {
-                        dismissDialog()  // ✅ Reset isSaving happens here
-                    } else {
-                        _state.value = _state.value.copy(
-                            isSaving = false,
-                            error = result.exceptionOrNull()?.message ?: "Failed to update account"
-                        )
-                    }
+                    if (result.isSuccess) dismissDialog()
+                    else _state.value = _state.value.copy(
+                        isSaving = false,
+                        error = result.exceptionOrNull()?.message ?: "Failed to update account"
+                    )
                 } else {
-                    // Add new
                     val newAccount = MoneyAccount(
                         name = name,
                         type = MoneyAccountType.OTHER,
@@ -197,14 +195,11 @@ class MoneyAccountsViewModel(
                         isDefault = false
                     )
                     val result = repository.addAccount(newAccount)
-                    if (result.isSuccess) {
-                        dismissDialog()  // ✅ Reset isSaving happens here
-                    } else {
-                        _state.value = _state.value.copy(
-                            isSaving = false,
-                            error = result.exceptionOrNull()?.message ?: "Failed to add account"
-                        )
-                    }
+                    if (result.isSuccess) dismissDialog()
+                    else _state.value = _state.value.copy(
+                        isSaving = false,
+                        error = result.exceptionOrNull()?.message ?: "Failed to add account"
+                    )
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(

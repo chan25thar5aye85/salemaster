@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.supplier.data.repository.SupplierRepository
 import com.akari.retailer.features.supplier.domain.models.Supplier
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +29,8 @@ class SupplierDetailViewModel(
     private val _state = MutableStateFlow(SupplierDetailState())
     val state: StateFlow<SupplierDetailState> = _state.asStateFlow()
 
+    private var loadJob: Job? = null
+
     init {
         loadSupplier()
     }
@@ -40,7 +43,8 @@ class SupplierDetailViewModel(
     }
 
     private fun loadSupplier() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 repository.getSupplierById(supplierId).collect { supplier ->
