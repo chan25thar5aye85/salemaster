@@ -22,10 +22,6 @@ import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.money.data.repository.FirestoreMoneyAccountRepository
-import com.akari.retailer.features.money.data.repository.FirestoreMoneyTransactionRepository
-import com.akari.retailer.features.money.data.remote.FirestoreMoneyService
-import com.akari.retailer.features.money.data.remote.FirestoreMoneyTransactionService
 import com.akari.retailer.features.money.domain.models.FeeType
 import com.akari.retailer.features.money.domain.usecases.ExternalTransferUseCase
 
@@ -38,17 +34,13 @@ fun ExternalTransferScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val accountService = remember { FirestoreMoneyService() }
-    val accountRepository = remember { FirestoreMoneyAccountRepository(accountService) }
-    val transactionService = remember { FirestoreMoneyTransactionService() }
-    val transactionRepository = remember { FirestoreMoneyTransactionRepository(transactionService) }
     
     val transferUseCase = remember { 
-        ExternalTransferUseCase(accountRepository, transactionRepository)
+        application.container.externalTransferUseCase
     }
     
     val viewModel: ExternalTransferViewModel = viewModel(
-        factory = ExternalTransferViewModelFactory(accountRepository, transferUseCase, application)
+        factory = ExternalTransferViewModelFactory(application.container.moneyAccountRepository, application.container.externalTransferUseCase, application)
     )
     
     val state by viewModel.state.collectAsState()

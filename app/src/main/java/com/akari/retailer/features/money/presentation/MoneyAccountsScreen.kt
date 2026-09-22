@@ -27,8 +27,6 @@ import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.money.data.remote.FirestoreMoneyService
-import com.akari.retailer.features.money.data.repository.FirestoreMoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.navigation.Routes
 
@@ -41,11 +39,9 @@ fun MoneyAccountsScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val service = remember { FirestoreMoneyService() }
-    val repository = remember { FirestoreMoneyAccountRepository(service) }
     
     val viewModel: MoneyAccountsViewModel = viewModel(
-        factory = MoneyAccountsViewModelFactory(repository)
+        factory = MoneyAccountsViewModelFactory(application.container.moneyAccountRepository)
     )
     
     val state by viewModel.state.collectAsState()
