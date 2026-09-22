@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.inventory.data.repository.StockRepository
 import com.akari.retailer.features.inventory.domain.models.StockMovement
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,19 +27,24 @@ class StockHistoryViewModel(
     private val _state = MutableStateFlow(StockHistoryState())
     val state: StateFlow<StockHistoryState> = _state.asStateFlow()
 
+    private var loadJob: Job? = null
+
     init {
         loadMovements()
     }
 
     fun loadMovements() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 repository.getMovementsForProduct(productId).collect { movements ->
                     val totalIn = movements.filter { it.quantity > 0 }.sumOf { it.quantity }
                     val totalOut = movements.filter { it.quantity < 0 }.sumOf { kotlin.math.abs(it.quantity) }
-                    val currentStock = movements.lastOrNull()?.newStock ?: 0
-                    
+                    // Service returns movements sorted by createdAt DESC.
+                    // `first()` = newest movement = current stock.
+                    val currentStock = movements.firstOrNull()?.newStock ?: 0
+
                     _state.value = _state.value.copy(
                         movements = movements,
                         isLoading = false,

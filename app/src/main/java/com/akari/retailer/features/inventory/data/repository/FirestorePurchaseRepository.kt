@@ -2,7 +2,6 @@ package com.akari.retailer.features.inventory.data.repository
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.Query
 import com.akari.retailer.features.inventory.domain.models.Purchase
 import com.akari.retailer.features.inventory.domain.models.PurchaseItem
@@ -13,54 +12,45 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 class FirestorePurchaseRepository : PurchaseRepository {
-    
+
     private val TAG = "FirestorePurchase"
-    private val db: FirebaseFirestore?
-    
-    init {
-        db = try {
-            val instance = FirebaseFirestore.getInstance()
-            val settings = FirebaseFirestoreSettings.Builder()
-                .setPersistenceEnabled(true)
-                .build()
-            instance.firestoreSettings = settings
-            instance
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed: ${e.message}")
-            null
-        }
+    private val db: FirebaseFirestore? = try {
+        FirebaseFirestore.getInstance()
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed: ${e.message}")
+        null
     }
-    
+
     private fun getCollection() = db?.collection("purchases")
-    
+
     override suspend fun createPurchase(purchase: Purchase): Result<String> {
         return try {
             val collection = getCollection()
                 ?: return Result.failure(Exception("Firestore not available"))
-            
+
             val docRef = collection.document()
             val purchaseWithId = purchase.copy(id = docRef.id)
             docRef.set(purchaseToMap(purchaseWithId)).await()
-            Log.d(TAG, "✅ Purchase created: ${docRef.id}")
+            Log.d(TAG, "Purchase created: ${docRef.id}")
             Result.success(docRef.id)
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Create error: ${e.message}")
+            Log.e(TAG, "Create error: ${e.message}")
             Result.failure(e)
         }
     }
-    
+
     override fun getPurchases(): Flow<List<Purchase>> = callbackFlow {
         val collection = getCollection()
         if (collection == null) {
             trySend(emptyList()); close(); return@callbackFlow
         }
-        
+
         val listener = collection
             .orderBy("purchaseDate", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) { close(error); return@addSnapshotListener }
                 if (snapshot == null) { trySend(emptyList()); return@addSnapshotListener }
-                
+
                 val purchases = snapshot.documents.mapNotNull { doc ->
                     val data = doc.data ?: return@mapNotNull null
                     mapToPurchase(doc.id, data)
@@ -69,11 +59,11 @@ class FirestorePurchaseRepository : PurchaseRepository {
             }
         awaitClose { listener.remove() }
     }
-    
+
     override fun getPurchaseById(purchaseId: String): Flow<Purchase?> = callbackFlow {
         val collection = getCollection()
         if (collection == null) { trySend(null); close(); return@callbackFlow }
-        
+
         val listener = collection.document(purchaseId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) { close(error); return@addSnapshotListener }
@@ -84,7 +74,7 @@ class FirestorePurchaseRepository : PurchaseRepository {
             }
         awaitClose { listener.remove() }
     }
-    
+
     override suspend fun deletePurchase(purchaseId: String): Result<Unit> {
         return try {
             val collection = getCollection()
@@ -93,7 +83,7 @@ class FirestorePurchaseRepository : PurchaseRepository {
             Result.success(Unit)
         } catch (e: Exception) { Result.failure(e) }
     }
-    
+
     private fun purchaseToMap(purchase: Purchase): Map<String, Any> {
         return mapOf(
             "orderId" to purchase.orderId,
@@ -120,7 +110,7 @@ class FirestorePurchaseRepository : PurchaseRepository {
             "createdAt" to purchase.createdAt
         )
     }
-    
+
     private fun mapToPurchase(id: String, data: Map<String, Any>): Purchase {
         val items = (data["items"] as? List<*>)?.mapNotNull { itemData ->
             if (itemData is Map<*, *>) {
@@ -133,22 +123,21 @@ class FirestorePurchaseRepository : PurchaseRepository {
                 )
             } else null
         } ?: emptyList()
-        
-        // Read payments (backward compat)
+
         val paymentsList = (data["payments"] as? List<*>)?.mapNotNull { p ->
             if (p is Map<*, *>) PaymentEntry(
                 accountId = p["accountId"] as? String ?: "default_cash",
                 amount = (p["amount"] as? Number)?.toInt() ?: 0
             ) else null
         } ?: emptyList()
-        
+
         val finalPayments = if (paymentsList.isEmpty()) {
             listOf(PaymentEntry(
                 accountId = data["accountId"] as? String ?: "default_cash",
                 amount = (data["totalCost"] as? Number)?.toInt() ?: 0
             ))
         } else paymentsList
-        
+
         return Purchase(
             id = id,
             orderId = data["orderId"] as? String ?: "",

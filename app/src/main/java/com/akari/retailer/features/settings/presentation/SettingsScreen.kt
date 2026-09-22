@@ -26,42 +26,18 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
-    val activity = context as? androidx.activity.ComponentActivity
-    
+
     val viewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModelFactory(application)
     )
-    
-    LaunchedEffect(activity) {
-        activity?.let { viewModel.setActivity(it) }
-    }
-    
+
     val state by viewModel.state.collectAsState()
-    
-    var showRestartDialog by remember { mutableStateOf(false) }
-    var pendingLanguageCode by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(state.success) {
         if (state.success) {
             delay(1500)
             viewModel.handleEvent(SettingsEvent.ResetSuccess)
         }
-    }
-
-    if (showRestartDialog) {
-        AppRestartDialog(
-            onDismiss = {
-                showRestartDialog = false
-                pendingLanguageCode = null
-            },
-            onConfirm = {
-                showRestartDialog = false
-                pendingLanguageCode?.let { code ->
-                    viewModel.handleEvent(SettingsEvent.LanguageSelected(code))
-                }
-                pendingLanguageCode = null
-            }
-        )
     }
 
     AppScreen(
@@ -84,18 +60,17 @@ fun SettingsScreen(
                     } else {
                         stringResource(R.string.myanmar)
                     }
-                    
+
                     AppListItem(
                         text = "${option.flag} $displayName",
                         isSelected = state.currentLanguage == option.code,
                         onClick = {
                             if (state.currentLanguage != option.code) {
-                                pendingLanguageCode = option.code
-                                showRestartDialog = true
+                                viewModel.handleEvent(SettingsEvent.LanguageSelected(option.code))
                             }
                         }
                     )
-                    
+
                     if (option != LanguageManager.getAvailableLanguages().last()) {
                         Divider(
                             modifier = Modifier.padding(
