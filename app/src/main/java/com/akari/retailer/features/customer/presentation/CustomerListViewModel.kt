@@ -3,6 +3,7 @@ package com.akari.retailer.features.customer.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.customer.data.repository.CustomerRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,6 +15,8 @@ class CustomerListViewModel(
 
     private val _state = MutableStateFlow(CustomerListState())
     val state: StateFlow<CustomerListState> = _state.asStateFlow()
+
+    private var loadCustomersJob: Job? = null
 
     init {
         loadCustomers()
@@ -31,7 +34,8 @@ class CustomerListViewModel(
     }
 
     private fun loadCustomers() {
-        viewModelScope.launch {
+        loadCustomersJob?.cancel()
+        loadCustomersJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 repository.getCustomers().collect { customers ->
@@ -51,9 +55,7 @@ class CustomerListViewModel(
         }
     }
 
-    private fun refreshCustomers() {
-        loadCustomers()
-    }
+    private fun refreshCustomers() = loadCustomers()
 
     private fun deleteCustomer(customerId: String) {
         viewModelScope.launch {
@@ -90,7 +92,6 @@ class CustomerListViewModel(
     private fun applySearch() {
         val query = _state.value.searchQuery.lowercase().trim()
         val allCustomers = _state.value.allCustomers
-        
         val filtered = if (query.isEmpty()) {
             allCustomers
         } else {
@@ -100,11 +101,22 @@ class CustomerListViewModel(
                 customer.email.lowercase().contains(query)
             }
         }
-        
         _state.value = _state.value.copy(customers = filtered)
     }
 
     private fun clearError() {
         _state.value = _state.value.copy(error = null)
+    }
+}
+
+class CustomerListViewModelFactory(
+    private val repository: CustomerRepository
+) : androidx.lifecycle.ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(CustomerListViewModel::class.java)) {
+            return CustomerListViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }

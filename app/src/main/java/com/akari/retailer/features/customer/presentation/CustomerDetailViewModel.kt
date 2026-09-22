@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.customer.data.repository.CustomerRepository
 import com.akari.retailer.features.customer.domain.models.Customer
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +29,8 @@ class CustomerDetailViewModel(
     private val _state = MutableStateFlow(CustomerDetailState())
     val state: StateFlow<CustomerDetailState> = _state.asStateFlow()
 
+    private var loadJob: Job? = null
+
     init {
         loadCustomer()
     }
@@ -40,7 +43,8 @@ class CustomerDetailViewModel(
     }
 
     private fun loadCustomer() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 repository.getCustomerById(customerId).collect { customer ->

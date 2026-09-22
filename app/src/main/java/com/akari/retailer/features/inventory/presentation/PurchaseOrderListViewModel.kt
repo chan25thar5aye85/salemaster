@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.inventory.data.repository.PurchaseOrderRepository
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrder
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,6 +33,8 @@ class PurchaseOrderListViewModel(
     private val _state = MutableStateFlow(PurchaseOrderListState())
     val state: StateFlow<PurchaseOrderListState> = _state.asStateFlow()
 
+    private var loadJob: Job? = null
+
     init {
         loadOrders()
     }
@@ -47,7 +50,8 @@ class PurchaseOrderListViewModel(
     }
 
     private fun loadOrders() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 repository.getOrders().collect { orders ->
@@ -68,23 +72,20 @@ class PurchaseOrderListViewModel(
 
     private fun filterByStatus(status: PurchaseOrderStatus?) {
         _state.value = _state.value.copy(filterStatus = status)
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
-                if (status == null) {
-                    repository.getOrders().collect { orders ->
-                        _state.value = _state.value.copy(
-                            orders = orders,
-                            isLoading = false
-                        )
-                    }
+                val flow = if (status == null) {
+                    repository.getOrders()
                 } else {
-                    repository.getOrdersByStatus(status).collect { orders ->
-                        _state.value = _state.value.copy(
-                            orders = orders,
-                            isLoading = false
-                        )
-                    }
+                    repository.getOrdersByStatus(status)
+                }
+                flow.collect { orders ->
+                    _state.value = _state.value.copy(
+                        orders = orders,
+                        isLoading = false
+                    )
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
@@ -100,14 +101,11 @@ class PurchaseOrderListViewModel(
             _state.value = _state.value.copy(isLoading = true)
             try {
                 val result = repository.deleteOrder(orderId)
-                if (result.isSuccess) {
-                    loadOrders()
-                } else {
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        error = result.exceptionOrNull()?.message ?: "Failed to delete order"
-                    )
-                }
+                if (result.isSuccess) loadOrders()
+                else _state.value = _state.value.copy(
+                    isLoading = false,
+                    error = result.exceptionOrNull()?.message ?: "Failed to delete order"
+                )
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     isLoading = false,
@@ -122,14 +120,11 @@ class PurchaseOrderListViewModel(
             _state.value = _state.value.copy(isLoading = true)
             try {
                 val result = repository.updateStatus(orderId, newStatus)
-                if (result.isSuccess) {
-                    loadOrders()
-                } else {
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        error = result.exceptionOrNull()?.message ?: "Failed to update status"
-                    )
-                }
+                if (result.isSuccess) loadOrders()
+                else _state.value = _state.value.copy(
+                    isLoading = false,
+                    error = result.exceptionOrNull()?.message ?: "Failed to update status"
+                )
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     isLoading = false,

@@ -27,6 +27,7 @@ import com.akari.retailer.features.money.domain.models.PaymentEntry
 import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransactionUseCase
 import com.akari.retailer.features.supplier.data.repository.FirestoreSupplierRepository
 import com.akari.retailer.features.supplier.data.remote.FirestoreSupplierService
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,7 +53,7 @@ data class PurchaseOrderDetailState(
     fun getTotalPaid(): Int = paymentRows.sumOf { it.amount.toIntOrNull() ?: 0 }
     fun getRemaining(): Int = getTotalCost() - getTotalPaid()
     fun isFullyPaid(): Boolean = getTotalPaid() == getTotalCost() && getTotalCost() > 0
-    
+
     fun getPayments(): List<PaymentEntry> {
         return paymentRows
             .filter { it.amount.toIntOrNull()?.let { it > 0 } == true }
@@ -71,11 +72,14 @@ class PurchaseOrderDetailViewModel(
 
     private var nextPaymentRowId = 2L
 
-    private val moneyAccountRepository by lazy { 
-        FirestoreMoneyAccountRepository(FirestoreMoneyService()) 
+    private var loadOrderJob: Job? = null
+    private var loadAccountsJob: Job? = null
+
+    private val moneyAccountRepository by lazy {
+        FirestoreMoneyAccountRepository(FirestoreMoneyService())
     }
-    private val transactionRepo by lazy { 
-        FirestoreMoneyTransactionRepository(FirestoreMoneyTransactionService()) 
+    private val transactionRepo by lazy {
+        FirestoreMoneyTransactionRepository(FirestoreMoneyTransactionService())
     }
     private val processMoneyTransactionUseCase by lazy {
         ProcessMoneyTransactionUseCase(moneyAccountRepository, transactionRepo)
@@ -89,20 +93,20 @@ class PurchaseOrderDetailViewModel(
     }
 
     fun loadOrder(orderId: String) {
-        viewModelScope.launch {
+        loadOrderJob?.cancel()
+        loadOrderJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
                 repository.getOrder(orderId).collect { loadedOrder ->
                     val totalCost = loadedOrder?.receivedItems?.sumOf { it.total } ?: 0
-                    
-                    // ✅ Auto-fill first payment row with total if not touched
-                    val updatedPayments = if (_state.value.paymentRows.size == 1 && 
+
+                    val updatedPayments = if (_state.value.paymentRows.size == 1 &&
                         !_state.value.userTouchedAmounts && totalCost > 0) {
                         listOf(_state.value.paymentRows[0].copy(amount = totalCost.toString()))
                     } else {
                         _state.value.paymentRows
                     }
-                    
+
                     _state.value = _state.value.copy(
                         order = loadedOrder,
                         isLoading = false,
@@ -121,7 +125,8 @@ class PurchaseOrderDetailViewModel(
     }
 
     fun loadAccounts() {
-        viewModelScope.launch {
+        loadAccountsJob?.cancel()
+        loadAccountsJob = viewModelScope.launch {
             try {
                 moneyAccountRepository.getAccounts().collect { accounts ->
                     _state.value = _state.value.copy(accounts = accounts.filter { it.isActive })
@@ -184,21 +189,21 @@ class PurchaseOrderDetailViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isUpdating = true)
             val currentOrder = _state.value.order ?: return@launch
-            
+
             val currentReceivedItems = currentOrder.receivedItems.toMutableList()
             selectedItems.forEach { item ->
                 if (!currentReceivedItems.any { it.productId == item.productId }) {
                     currentReceivedItems.add(item)
                 }
             }
-            
+
             val updatedOrder = currentOrder.copy(
                 receivedItems = currentReceivedItems,
                 receivedTotal = currentReceivedItems.sumOf { it.total },
                 receivedDate = if (currentReceivedItems.isNotEmpty()) System.currentTimeMillis() else currentOrder.receivedDate,
                 updatedAt = System.currentTimeMillis()
             )
-            
+
             repository.updateOrder(updatedOrder)
             loadOrder(orderId)
             _state.value = _state.value.copy(isUpdating = false)
@@ -209,30 +214,30 @@ class PurchaseOrderDetailViewModel(
         return try {
             val currentOrder = _state.value.order
                 ?: return Result.failure(Exception("Order not found"))
-            
+
             if (currentOrder.status == PurchaseOrderStatus.COMPLETED) {
                 return Result.failure(Exception("Purchase already created"))
             }
-            
+
             if (currentOrder.receivedItems.isEmpty()) {
                 return Result.failure(Exception("No items to purchase"))
             }
-            
+
             val payments = _state.value.getPayments()
             val totalCost = currentOrder.receivedItems.sumOf { it.total }
-            
+
             if (payments.isEmpty()) {
                 return Result.failure(Exception("Add at least one payment"))
             }
-            
+
             if (payments.sumOf { it.amount } != totalCost) {
                 return Result.failure(Exception(
                     "Payments (${payments.sumOf { it.amount }}) must equal total ($totalCost)"
                 ))
             }
-            
+
             val receiptNumber = generateReceiptNumber()
-            
+
             val purchase = Purchase(
                 orderId = currentOrder.id,
                 orderName = currentOrder.orderName,
@@ -254,13 +259,13 @@ class PurchaseOrderDetailViewModel(
                 notes = currentOrder.notes,
                 receiptNumber = receiptNumber
             )
-            
+
             val purchaseRepo = FirestorePurchaseRepository()
             val purchaseResult = purchaseRepo.createPurchase(purchase)
             if (purchaseResult.isFailure) {
                 return Result.failure(Exception(purchaseResult.exceptionOrNull()?.message ?: "Failed"))
             }
-            
+
             // Update stock
             val inventoryRepo = FirestoreInventoryRepository(FirestoreInventoryService())
             currentOrder.receivedItems.forEach { item ->
@@ -277,7 +282,7 @@ class PurchaseOrderDetailViewModel(
                     }
                 }
             }
-            
+
             // Create expense
             val expenseRepo = FirestoreExpenseRepository(FirestoreExpenseService())
             expenseRepo.addExpense(
@@ -290,14 +295,14 @@ class PurchaseOrderDetailViewModel(
                     date = System.currentTimeMillis()
                 )
             )
-            
+
             // Process money transactions
             processMoneyTransactionUseCase.processPurchase(
                 payments = payments,
                 purchaseId = purchaseResult.getOrNull() ?: "",
                 description = "PO #${currentOrder.orderNumber}"
             )
-            
+
             // Update supplier
             try {
                 val supplierRepo = FirestoreSupplierRepository(FirestoreSupplierService())
@@ -313,12 +318,12 @@ class PurchaseOrderDetailViewModel(
                     )
                 }
             } catch (e: Exception) { }
-            
+
             val statusResult = repository.updateStatus(orderId, PurchaseOrderStatus.COMPLETED)
             if (statusResult.isFailure) {
                 return Result.failure(Exception(statusResult.exceptionOrNull()?.message ?: "Failed"))
             }
-            
+
             loadOrder(orderId)
             Result.success(Unit)
         } catch (e: Exception) {
@@ -338,7 +343,7 @@ class PurchaseOrderDetailViewModel(
     suspend fun deleteOrder(orderId: String): Result<Unit> {
         return repository.deleteOrder(orderId)
     }
-    
+
     private fun generateReceiptNumber(): String {
         val date = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
         val random = (1000..9999).random()

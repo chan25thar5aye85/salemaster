@@ -3,6 +3,7 @@ package com.akari.retailer.features.inventory.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.inventory.data.repository.InventoryRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,6 +15,8 @@ class InventoryListViewModel(
 
     private val _state = MutableStateFlow(InventoryListState())
     val state: StateFlow<InventoryListState> = _state.asStateFlow()
+
+    private var loadJob: Job? = null
 
     init {
         loadProducts()
@@ -32,7 +35,8 @@ class InventoryListViewModel(
     }
 
     private fun loadProducts() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 repository.getProducts().collect { products ->
@@ -53,23 +57,18 @@ class InventoryListViewModel(
         }
     }
 
-    private fun refreshProducts() {
-        loadProducts()
-    }
+    private fun refreshProducts() = loadProducts()
 
     private fun deleteProduct(productId: String) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
                 val result = repository.deleteProduct(productId)
-                if (result.isSuccess) {
-                    loadProducts()
-                } else {
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        error = result.exceptionOrNull()?.message ?: "Failed to delete product"
-                    )
-                }
+                if (result.isSuccess) loadProducts()
+                else _state.value = _state.value.copy(
+                    isLoading = false,
+                    error = result.exceptionOrNull()?.message ?: "Failed to delete product"
+                )
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     isLoading = false,
@@ -98,9 +97,7 @@ class InventoryListViewModel(
         val query = _state.value.searchQuery.lowercase().trim()
         val allProducts = _state.value.allProducts
         val showLowStockOnly = _state.value.showLowStockOnly
-        
         var filtered = allProducts
-        
         if (query.isNotEmpty()) {
             filtered = filtered.filter { product ->
                 product.name.lowercase().contains(query) ||
@@ -108,15 +105,25 @@ class InventoryListViewModel(
                 product.sku.lowercase().contains(query)
             }
         }
-        
         if (showLowStockOnly) {
             filtered = filtered.filter { it.isLowStock || it.isOutOfStock }
         }
-        
         _state.value = _state.value.copy(products = filtered)
     }
 
     private fun clearError() {
         _state.value = _state.value.copy(error = null)
+    }
+}
+
+class InventoryListViewModelFactory(
+    private val repository: InventoryRepository
+) : androidx.lifecycle.ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(InventoryListViewModel::class.java)) {
+            return InventoryListViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }

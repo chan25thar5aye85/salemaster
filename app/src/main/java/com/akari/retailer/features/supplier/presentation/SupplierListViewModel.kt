@@ -109,3 +109,15 @@ class SupplierListViewModel(
         _state.value = _state.value.copy(error = null)
     }
 }
+
+class SupplierListViewModelFactory(
+    private val repository: SupplierRepository
+) : androidx.lifecycle.ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SupplierListViewModel::class.java)) {
+            return SupplierListViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
+}

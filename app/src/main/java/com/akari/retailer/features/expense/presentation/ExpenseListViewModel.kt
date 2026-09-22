@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.expense.data.repository.CategoryRepository
 import com.akari.retailer.features.expense.data.repository.ExpenseRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +17,9 @@ class ExpenseListViewModel(
 
     private val _state = MutableStateFlow(ExpenseListState())
     val state: StateFlow<ExpenseListState> = _state.asStateFlow()
+
+    private var loadExpensesJob: Job? = null
+    private var loadCategoriesJob: Job? = null
 
     init {
         loadExpenses()
@@ -36,19 +40,19 @@ class ExpenseListViewModel(
     }
 
     private fun loadCategories() {
-        viewModelScope.launch {
+        loadCategoriesJob?.cancel()
+        loadCategoriesJob = viewModelScope.launch {
             try {
                 categoryRepository.getCategories().collect { categories ->
                     _state.value = _state.value.copy(categories = categories)
                 }
-            } catch (e: Exception) {
-                // Handle silently
-            }
+            } catch (e: Exception) { }
         }
     }
 
     private fun loadExpenses() {
-        viewModelScope.launch {
+        loadExpensesJob?.cancel()
+        loadExpensesJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 expenseRepository.getExpenses().collect { expenses ->
@@ -69,23 +73,18 @@ class ExpenseListViewModel(
         }
     }
 
-    private fun refreshExpenses() {
-        loadExpenses()
-    }
+    private fun refreshExpenses() = loadExpenses()
 
     private fun deleteExpense(expenseId: String) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
                 val result = expenseRepository.deleteExpense(expenseId)
-                if (result.isSuccess) {
-                    loadExpenses()
-                } else {
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        error = result.exceptionOrNull()?.message ?: "Failed to delete expense"
-                    )
-                }
+                if (result.isSuccess) loadExpenses()
+                else _state.value = _state.value.copy(
+                    isLoading = false,
+                    error = result.exceptionOrNull()?.message ?: "Failed to delete expense"
+                )
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     isLoading = false,
@@ -96,13 +95,9 @@ class ExpenseListViewModel(
     }
 
     private fun toggleCategoryFilter(categoryId: String) {
-        val currentSelected = _state.value.selectedCategoryIds.toMutableSet()
-        if (currentSelected.contains(categoryId)) {
-            currentSelected.remove(categoryId)
-        } else {
-            currentSelected.add(categoryId)
-        }
-        _state.value = _state.value.copy(selectedCategoryIds = currentSelected.toSet())
+        val current = _state.value.selectedCategoryIds.toMutableSet()
+        if (current.contains(categoryId)) current.remove(categoryId) else current.add(categoryId)
+        _state.value = _state.value.copy(selectedCategoryIds = current.toSet())
         applyFilters()
     }
 
@@ -126,24 +121,17 @@ class ExpenseListViewModel(
         val allExpenses = _state.value.allExpenses
         val categories = _state.value.categories
         val selectedCategoryIds = _state.value.selectedCategoryIds
-        
+
         var filtered = allExpenses
-        
-        // Apply category filter
         if (selectedCategoryIds.isNotEmpty()) {
-            filtered = filtered.filter { expense ->
-                selectedCategoryIds.contains(expense.categoryId)
-            }
+            filtered = filtered.filter { selectedCategoryIds.contains(it.categoryId) }
         }
-        
-        // Apply search filter
         if (query.isNotEmpty()) {
             filtered = filtered.filter { expense ->
                 expense.title.lowercase().contains(query) ||
                 categories.find { it.id == expense.categoryId }?.name?.lowercase()?.contains(query) == true
             }
         }
-        
         _state.value = _state.value.copy(expenses = filtered)
     }
 

@@ -6,6 +6,7 @@ import com.akari.retailer.features.expense.data.repository.CategoryRepository
 import com.akari.retailer.features.expense.data.repository.ExpenseRepository
 import com.akari.retailer.features.expense.domain.models.Expense
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,6 +33,9 @@ class ExpenseDetailViewModel(
     private val _state = MutableStateFlow(ExpenseDetailState())
     val state: StateFlow<ExpenseDetailState> = _state.asStateFlow()
 
+    private var loadExpenseJob: Job? = null
+    private var loadCategoriesJob: Job? = null
+
     init {
         loadCategories()
         loadExpense()
@@ -45,19 +49,19 @@ class ExpenseDetailViewModel(
     }
 
     private fun loadCategories() {
-        viewModelScope.launch {
+        loadCategoriesJob?.cancel()
+        loadCategoriesJob = viewModelScope.launch {
             try {
                 categoryRepository.getCategories().collect { categories ->
                     _state.value = _state.value.copy(categories = categories)
                 }
-            } catch (e: Exception) {
-                // Handle silently
-            }
+            } catch (e: Exception) { }
         }
     }
 
     private fun loadExpense() {
-        viewModelScope.launch {
+        loadExpenseJob?.cancel()
+        loadExpenseJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 expenseRepository.getExpenseById(expenseId).collect { expense ->

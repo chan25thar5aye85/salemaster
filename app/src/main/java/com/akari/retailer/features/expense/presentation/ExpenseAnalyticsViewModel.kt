@@ -7,6 +7,7 @@ import com.akari.retailer.features.expense.data.repository.ExpenseRepository
 import com.akari.retailer.features.expense.domain.models.Expense
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 import com.akari.retailer.features.expense.domain.models.ExpenseType
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +24,8 @@ class ExpenseAnalyticsViewModel(
     private val _state = MutableStateFlow(ExpenseAnalyticsState())
     val state: StateFlow<ExpenseAnalyticsState> = _state.asStateFlow()
 
+    private var loadJob: Job? = null
+
     private val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
     init {
@@ -30,16 +33,15 @@ class ExpenseAnalyticsViewModel(
     }
 
     fun loadAnalytics() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
-            
             try {
                 val calendar = Calendar.getInstance()
                 _state.value = _state.value.copy(
                     selectedMonth = calendar.get(Calendar.MONTH),
                     selectedYear = calendar.get(Calendar.YEAR)
                 )
-                
                 combine(
                     expenseRepository.getExpenses(),
                     categoryRepository.getCategories()
@@ -69,27 +71,14 @@ class ExpenseAnalyticsViewModel(
         categories: List<ExpenseCategory>
     ): ExpenseAnalyticsState {
         val timeRange = _state.value.timeRange
-        val typeFilter = _state.value.typeFilter  // ✅ NEW
+        val typeFilter = _state.value.typeFilter
         val now = System.currentTimeMillis()
         val calendar = Calendar.getInstance()
-        
-        // Calculate date range
+
         val (startDate, endDate, label) = when (timeRange) {
-            AnalyticsTimeRange.TODAY -> {
-                val start = getDayStart(now)
-                val end = getDayEnd(now)
-                Triple(start, end, "Today")
-            }
-            AnalyticsTimeRange.THIS_WEEK -> {
-                val start = getWeekStart(now)
-                val end = getWeekEnd(now)
-                Triple(start, end, "This Week")
-            }
-            AnalyticsTimeRange.THIS_MONTH -> {
-                val start = getMonthStart(now)
-                val end = getMonthEnd(now)
-                Triple(start, end, "This Month")
-            }
+            AnalyticsTimeRange.TODAY -> Triple(getDayStart(now), getDayEnd(now), "Today")
+            AnalyticsTimeRange.THIS_WEEK -> Triple(getWeekStart(now), getWeekEnd(now), "This Week")
+            AnalyticsTimeRange.THIS_MONTH -> Triple(getMonthStart(now), getMonthEnd(now), "This Month")
             AnalyticsTimeRange.LAST_MONTH -> {
                 calendar.add(Calendar.MONTH, -1)
                 val start = getMonthStart(calendar.timeInMillis)
@@ -101,43 +90,30 @@ class ExpenseAnalyticsViewModel(
             AnalyticsTimeRange.CUSTOM -> {
                 val start = _state.value.customStartDate ?: getMonthStart(now)
                 val end = _state.value.customEndDate ?: getMonthEnd(now)
-                val label = "${dateFormat.format(Date(start))} - ${dateFormat.format(Date(end))}"
-                Triple(start, end, label)
+                Triple(start, end, "${dateFormat.format(Date(start))} - ${dateFormat.format(Date(end))}")
             }
         }
-        
-        _state.value = _state.value.copy(rangeLabel = label)
-        
-        // ✅ Filter by date range AND expense type
+
         val filteredExpenses = expenses.filter { expense ->
-            // Date filter
             val dateMatch = expense.date in startDate..endDate
-            
-            // Type filter
             val typeMatch = when (typeFilter) {
                 ExpenseTypeFilter.ALL -> true
                 ExpenseTypeFilter.BUSINESS -> expense.type == ExpenseType.BUSINESS
                 ExpenseTypeFilter.PERSONAL -> expense.type == ExpenseType.PERSONAL
                 ExpenseTypeFilter.MIXED -> expense.type == ExpenseType.MIXED
             }
-            
             dateMatch && typeMatch
         }
-        
+
         val total = filteredExpenses.sumOf { it.amount }
-        
-        // Group by category
         val categoryMap = mutableMapOf<ExpenseCategory, Pair<Int, Int>>()
-        
         filteredExpenses.forEach { expense ->
             val category = categories.find { it.id == expense.categoryId }
                 ?: categories.find { it.id == "default_other" }
                 ?: return@forEach
-            
             val current = categoryMap[category] ?: (0 to 0)
             categoryMap[category] = (current.first + expense.amount) to (current.second + 1)
         }
-        
         val categorySpending = categoryMap.map { (category, data) ->
             CategorySpending(
                 category = category,
@@ -146,15 +122,12 @@ class ExpenseAnalyticsViewModel(
                 percentage = if (total > 0) (data.first.toDouble() / total) * 100 else 0.0
             )
         }.sortedByDescending { it.totalSpent }
-        
-        val topCategory = categorySpending.firstOrNull()
-        val monthlyAverage = if (filteredExpenses.isNotEmpty()) total / filteredExpenses.size else 0
-        
+
         return ExpenseAnalyticsState(
             totalExpenses = total,
             categorySpending = categorySpending,
-            topCategory = topCategory,
-            monthlyAverage = monthlyAverage,
+            topCategory = categorySpending.firstOrNull(),
+            monthlyAverage = if (filteredExpenses.isNotEmpty()) total / filteredExpenses.size else 0,
             selectedMonth = _state.value.selectedMonth,
             selectedYear = _state.value.selectedYear,
             timeRange = timeRange,
@@ -165,72 +138,44 @@ class ExpenseAnalyticsViewModel(
         )
     }
 
-    // Date helper functions
-    private fun getDayStart(timestamp: Long): Long {
-        val calendar = Calendar.getInstance().apply { timeInMillis = timestamp }
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        return calendar.timeInMillis
-    }
+    private fun getDayStart(t: Long): Long = Calendar.getInstance().apply {
+        timeInMillis = t; set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
 
-    private fun getDayEnd(timestamp: Long): Long {
-        val calendar = Calendar.getInstance().apply { timeInMillis = timestamp }
-        calendar.set(Calendar.HOUR_OF_DAY, 23)
-        calendar.set(Calendar.MINUTE, 59)
-        calendar.set(Calendar.SECOND, 59)
-        calendar.set(Calendar.MILLISECOND, 999)
-        return calendar.timeInMillis
-    }
+    private fun getDayEnd(t: Long): Long = Calendar.getInstance().apply {
+        timeInMillis = t; set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59)
+        set(Calendar.SECOND, 59); set(Calendar.MILLISECOND, 999)
+    }.timeInMillis
 
-    private fun getWeekStart(timestamp: Long): Long {
-        val calendar = Calendar.getInstance().apply { timeInMillis = timestamp }
-        calendar.set(Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        return calendar.timeInMillis
-    }
+    private fun getWeekStart(t: Long): Long = Calendar.getInstance().apply {
+        timeInMillis = t; set(Calendar.DAY_OF_WEEK, firstDayOfWeek); set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
 
-    private fun getWeekEnd(timestamp: Long): Long {
-        val calendar = Calendar.getInstance().apply { timeInMillis = timestamp }
-        calendar.set(Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
-        calendar.add(Calendar.DAY_OF_WEEK, 6)
-        calendar.set(Calendar.HOUR_OF_DAY, 23)
-        calendar.set(Calendar.MINUTE, 59)
-        calendar.set(Calendar.SECOND, 59)
-        calendar.set(Calendar.MILLISECOND, 999)
-        return calendar.timeInMillis
-    }
+    private fun getWeekEnd(t: Long): Long = Calendar.getInstance().apply {
+        timeInMillis = t; set(Calendar.DAY_OF_WEEK, firstDayOfWeek)
+        add(Calendar.DAY_OF_WEEK, 6); set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59)
+        set(Calendar.SECOND, 59); set(Calendar.MILLISECOND, 999)
+    }.timeInMillis
 
-    private fun getMonthStart(timestamp: Long): Long {
-        val calendar = Calendar.getInstance().apply { timeInMillis = timestamp }
-        calendar.set(Calendar.DAY_OF_MONTH, 1)
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        return calendar.timeInMillis
-    }
+    private fun getMonthStart(t: Long): Long = Calendar.getInstance().apply {
+        timeInMillis = t; set(Calendar.DAY_OF_MONTH, 1); set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
 
-    private fun getMonthEnd(timestamp: Long): Long {
-        val calendar = Calendar.getInstance().apply { timeInMillis = timestamp }
-        calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH))
-        calendar.set(Calendar.HOUR_OF_DAY, 23)
-        calendar.set(Calendar.MINUTE, 59)
-        calendar.set(Calendar.SECOND, 59)
-        calendar.set(Calendar.MILLISECOND, 999)
-        return calendar.timeInMillis
-    }
+    private fun getMonthEnd(t: Long): Long = Calendar.getInstance().apply {
+        timeInMillis = t; set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
+        set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59)
+        set(Calendar.SECOND, 59); set(Calendar.MILLISECOND, 999)
+    }.timeInMillis
 
     fun setTimeRange(range: AnalyticsTimeRange) {
         _state.value = _state.value.copy(timeRange = range)
         loadAnalytics()
     }
 
-    fun setTypeFilter(filter: ExpenseTypeFilter) {  // ✅ NEW
+    fun setTypeFilter(filter: ExpenseTypeFilter) {
         _state.value = _state.value.copy(typeFilter = filter)
         loadAnalytics()
     }
@@ -246,25 +191,23 @@ class ExpenseAnalyticsViewModel(
 
     fun changeMonth(month: Int, year: Int) {
         _state.value = _state.value.copy(selectedMonth = month, selectedYear = year)
-        val calendar = Calendar.getInstance().apply {
-            set(year, month, 1)
-        }
-        val start = getMonthStart(calendar.timeInMillis)
-        val end = getMonthEnd(calendar.timeInMillis)
-        setCustomDateRange(start, end)
+        val calendar = Calendar.getInstance().apply { set(year, month, 1) }
+        setCustomDateRange(getMonthStart(calendar.timeInMillis), getMonthEnd(calendar.timeInMillis))
     }
 
     fun previousMonth() {
-        val calendar = Calendar.getInstance()
-        calendar.set(_state.value.selectedYear, _state.value.selectedMonth, 1)
-        calendar.add(Calendar.MONTH, -1)
+        val calendar = Calendar.getInstance().apply {
+            set(_state.value.selectedYear, _state.value.selectedMonth, 1)
+            add(Calendar.MONTH, -1)
+        }
         changeMonth(calendar.get(Calendar.MONTH), calendar.get(Calendar.YEAR))
     }
 
     fun nextMonth() {
-        val calendar = Calendar.getInstance()
-        calendar.set(_state.value.selectedYear, _state.value.selectedMonth, 1)
-        calendar.add(Calendar.MONTH, 1)
+        val calendar = Calendar.getInstance().apply {
+            set(_state.value.selectedYear, _state.value.selectedMonth, 1)
+            add(Calendar.MONTH, 1)
+        }
         changeMonth(calendar.get(Calendar.MONTH), calendar.get(Calendar.YEAR))
     }
 }

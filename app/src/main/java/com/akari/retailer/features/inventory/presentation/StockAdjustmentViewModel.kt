@@ -7,6 +7,7 @@ import com.akari.retailer.features.inventory.data.repository.StockRepository
 import com.akari.retailer.features.inventory.domain.models.MovementType
 import com.akari.retailer.features.inventory.domain.models.Product
 import com.akari.retailer.features.inventory.domain.models.StockMovement
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,6 +45,8 @@ class StockAdjustmentViewModel(
     private val _state = MutableStateFlow(StockAdjustmentState())
     val state: StateFlow<StockAdjustmentState> = _state.asStateFlow()
 
+    private var loadJob: Job? = null
+
     init {
         loadProducts()
     }
@@ -62,7 +65,8 @@ class StockAdjustmentViewModel(
     }
 
     private fun loadProducts() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 inventoryRepository.getProducts().collect { products ->
@@ -93,37 +97,35 @@ class StockAdjustmentViewModel(
     private fun saveAdjustment() {
         val currentState = _state.value
         val product = currentState.selectedProduct
-        
+
         if (product == null) {
             _state.value = _state.value.copy(error = "Select a product")
             return
         }
-        
+
         val newStockInt = currentState.newStock.toIntOrNull()
         if (newStockInt == null || newStockInt < 0) {
             _state.value = _state.value.copy(error = "Enter a valid stock quantity")
             return
         }
-        
+
         if (currentState.reason.isBlank()) {
             _state.value = _state.value.copy(error = "Enter a reason for adjustment")
             return
         }
-        
+
         if (newStockInt == product.stockQuantity) {
             _state.value = _state.value.copy(error = "Stock quantity is the same")
             return
         }
-        
+
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
-            
             try {
                 val updatedProduct = product.copy(
                     stockQuantity = newStockInt,
                     updatedAt = System.currentTimeMillis()
                 )
-                
                 val updateResult = inventoryRepository.updateProduct(updatedProduct)
                 if (updateResult.isFailure) {
                     _state.value = _state.value.copy(
@@ -132,7 +134,6 @@ class StockAdjustmentViewModel(
                     )
                     return@launch
                 }
-                
                 val movement = StockMovement(
                     productId = product.id,
                     type = MovementType.ADJUSTMENT,
@@ -142,7 +143,6 @@ class StockAdjustmentViewModel(
                     reason = currentState.reason,
                     userId = "default"
                 )
-                
                 val movementResult = stockRepository.addMovement(movement)
                 if (movementResult.isFailure) {
                     _state.value = _state.value.copy(
@@ -151,25 +151,17 @@ class StockAdjustmentViewModel(
                     )
                     return@launch
                 }
-                
                 _state.value = _state.value.copy(
                     isSaving = false,
                     saveSuccess = true,
-                    error = null
-                )
-                
-                // Reset form after success
-                _state.value = _state.value.copy(
+                    error = null,
                     selectedProduct = null,
                     currentStock = 0,
                     newStock = "",
                     reason = "",
                     notes = ""
                 )
-                
-                // Reload products to refresh stock display
                 loadProducts()
-                
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     isSaving = false,

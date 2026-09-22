@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.inventory.data.repository.InventoryRepository
 import com.akari.retailer.features.inventory.domain.models.Product
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +29,8 @@ class InventoryDetailViewModel(
     private val _state = MutableStateFlow(InventoryDetailState())
     val state: StateFlow<InventoryDetailState> = _state.asStateFlow()
 
+    private var loadJob: Job? = null
+
     init {
         loadProduct()
     }
@@ -40,7 +43,8 @@ class InventoryDetailViewModel(
     }
 
     private fun loadProduct() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 repository.getProductById(productId).collect { product ->

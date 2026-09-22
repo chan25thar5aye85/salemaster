@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.expense.data.repository.CategoryRepository
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,6 +16,8 @@ class CategoryManagementViewModel(
 
     private val _state = MutableStateFlow(CategoryManagementState())
     val state: StateFlow<CategoryManagementState> = _state.asStateFlow()
+
+    private var loadJob: Job? = null
 
     init {
         loadCategories()
@@ -36,13 +39,13 @@ class CategoryManagementViewModel(
     }
 
     private fun loadCategories() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 repository.getCategories().collect { categories ->
                     val defaultCats = categories.filter { it.isDefault }
                     val customCats = categories.filter { !it.isDefault }
-                    
                     _state.value = _state.value.copy(
                         categories = categories,
                         defaultCategories = defaultCats,
@@ -65,14 +68,11 @@ class CategoryManagementViewModel(
             _state.value = _state.value.copy(isLoading = true)
             try {
                 val result = repository.deleteCategory(categoryId)
-                if (result.isSuccess) {
-                    loadCategories()
-                } else {
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        error = result.exceptionOrNull()?.message ?: "Failed to delete category"
-                    )
-                }
+                if (result.isSuccess) loadCategories()
+                else _state.value = _state.value.copy(
+                    isLoading = false,
+                    error = result.exceptionOrNull()?.message ?: "Failed to delete category"
+                )
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     isLoading = false,
@@ -120,12 +120,11 @@ class CategoryManagementViewModel(
 
     private fun saveCategory() {
         val name = _state.value.dialogName.trim()
-        
+
         if (name.isBlank()) {
             _state.value = _state.value.copy(error = "Category name is required")
             return
         }
-        
         if (name.length < 2) {
             _state.value = _state.value.copy(error = "Name must be at least 2 characters")
             return
@@ -133,42 +132,24 @@ class CategoryManagementViewModel(
 
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
-            
             try {
                 val editing = _state.value.editingCategory
-                
                 if (editing != null) {
-                    // Update existing category
-                    val updated = editing.copy(
-                        name = name,
-                        updatedAt = System.currentTimeMillis()
-                    )
+                    val updated = editing.copy(name = name, updatedAt = System.currentTimeMillis())
                     val result = repository.updateCategory(updated)
-                    if (result.isSuccess) {
-                        dismissDialog()
-                        loadCategories()
-                    } else {
-                        _state.value = _state.value.copy(
-                            isSaving = false,
-                            error = result.exceptionOrNull()?.message ?: "Failed to update category"
-                        )
-                    }
-                } else {
-                    // Add new category
-                    val newCategory = ExpenseCategory(
-                        name = name,
-                        isDefault = false
+                    if (result.isSuccess) { dismissDialog(); loadCategories() }
+                    else _state.value = _state.value.copy(
+                        isSaving = false,
+                        error = result.exceptionOrNull()?.message ?: "Failed to update category"
                     )
+                } else {
+                    val newCategory = ExpenseCategory(name = name, isDefault = false)
                     val result = repository.addCategory(newCategory)
-                    if (result.isSuccess) {
-                        dismissDialog()
-                        loadCategories()
-                    } else {
-                        _state.value = _state.value.copy(
-                            isSaving = false,
-                            error = result.exceptionOrNull()?.message ?: "Failed to add category"
-                        )
-                    }
+                    if (result.isSuccess) { dismissDialog(); loadCategories() }
+                    else _state.value = _state.value.copy(
+                        isSaving = false,
+                        error = result.exceptionOrNull()?.message ?: "Failed to add category"
+                    )
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
@@ -190,5 +171,17 @@ class CategoryManagementViewModel(
             2 -> _state.value.customCategories
             else -> _state.value.categories
         }
+    }
+}
+
+class CategoryManagementViewModelFactory(
+    private val repository: CategoryRepository
+) : androidx.lifecycle.ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(CategoryManagementViewModel::class.java)) {
+            return CategoryManagementViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }

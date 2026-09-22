@@ -6,9 +6,11 @@ import com.akari.retailer.features.expense.data.repository.CategoryRepository
 import com.akari.retailer.features.expense.data.repository.ExpenseRepository
 import com.akari.retailer.features.expense.domain.models.Expense
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 data class ExpenseEditState(
@@ -44,6 +46,9 @@ class ExpenseEditViewModel(
     private val _state = MutableStateFlow(ExpenseEditState(id = expenseId))
     val state: StateFlow<ExpenseEditState> = _state.asStateFlow()
 
+    private var loadExpenseJob: Job? = null
+    private var loadCategoriesJob: Job? = null
+
     init {
         loadCategories()
         loadExpense()
@@ -63,39 +68,38 @@ class ExpenseEditViewModel(
     }
 
     private fun loadCategories() {
-        viewModelScope.launch {
+        loadCategoriesJob?.cancel()
+        loadCategoriesJob = viewModelScope.launch {
             try {
                 categoryRepository.getCategories().collect { categories ->
                     _state.value = _state.value.copy(categories = categories)
                 }
-            } catch (e: Exception) {
-                // Handle silently
-            }
+            } catch (e: Exception) { }
         }
     }
 
     private fun loadExpense() {
-        viewModelScope.launch {
+        loadExpenseJob?.cancel()
+        loadExpenseJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                expenseRepository.getExpenseById(expenseId).collect { expense ->
-                    if (expense != null) {
-                        val category = _state.value.categories.find { it.id == expense.categoryId }
-                        _state.value = _state.value.copy(
-                            id = expense.id,
-                            title = expense.title,
-                            amount = expense.amount.toString(),
-                            selectedCategory = category,
-                            description = expense.description,
-                            isLoading = false,
-                            error = null
-                        )
-                    } else {
-                        _state.value = _state.value.copy(
-                            isLoading = false,
-                            error = "Expense not found"
-                        )
-                    }
+                val expense = expenseRepository.getExpenseById(expenseId).first()
+                if (expense != null) {
+                    val category = _state.value.categories.find { it.id == expense.categoryId }
+                    _state.value = _state.value.copy(
+                        id = expense.id,
+                        title = expense.title,
+                        amount = expense.amount.toString(),
+                        selectedCategory = category,
+                        description = expense.description,
+                        isLoading = false,
+                        error = null
+                    )
+                } else {
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = "Expense not found"
+                    )
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
@@ -108,36 +112,50 @@ class ExpenseEditViewModel(
 
     private fun saveExpense() {
         val currentState = _state.value
-        
+
         if (currentState.title.isBlank()) {
             _state.value = _state.value.copy(error = "Title is required")
             return
         }
-        
+
         val amountInt = currentState.amount.toIntOrNull()
         if (amountInt == null || amountInt <= 0) {
             _state.value = _state.value.copy(error = "Enter a valid amount")
             return
         }
-        
+
         if (currentState.selectedCategory == null) {
             _state.value = _state.value.copy(error = "Select a category")
             return
         }
-        
+
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
-            
-            val expense = Expense(
-                id = currentState.id,
+
+            // Fetch the current version so we don't accidentally wipe
+            // payments / type / businessPercentage on save.
+            val existing = try {
+                expenseRepository.getExpenseById(expenseId).first()
+            } catch (e: Exception) { null }
+
+            if (existing == null) {
+                _state.value = _state.value.copy(
+                    isSaving = false,
+                    error = "Expense not found"
+                )
+                return@launch
+            }
+
+            val updated = existing.copy(
                 title = currentState.title.trim(),
                 amount = amountInt,
-                categoryId = currentState.selectedCategory.id,  // ✅ Fixed
-                description = currentState.description.trim()
+                categoryId = currentState.selectedCategory.id,
+                description = currentState.description.trim(),
+                updatedAt = System.currentTimeMillis()
             )
-            
-            val result = expenseRepository.updateExpense(expense)
-            
+
+            val result = expenseRepository.updateExpense(updated)
+
             if (result.isSuccess) {
                 _state.value = _state.value.copy(
                     isSaving = false,

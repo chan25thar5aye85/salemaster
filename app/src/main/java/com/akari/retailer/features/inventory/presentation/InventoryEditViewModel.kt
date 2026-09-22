@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.inventory.data.repository.InventoryRepository
 import com.akari.retailer.features.inventory.domain.models.Product
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 data class InventoryEditState(
@@ -48,6 +50,8 @@ class InventoryEditViewModel(
     private val _state = MutableStateFlow(InventoryEditState(id = productId))
     val state: StateFlow<InventoryEditState> = _state.asStateFlow()
 
+    private var loadJob: Job? = null
+
     init {
         loadProduct()
     }
@@ -70,30 +74,30 @@ class InventoryEditViewModel(
     }
 
     private fun loadProduct() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                repository.getProductById(productId).collect { product ->
-                    if (product != null) {
-                        _state.value = _state.value.copy(
-                            id = product.id,
-                            name = product.name,
-                            category = product.category,
-                            sku = product.sku,
-                            costPrice = product.costPrice.toString(),
-                            sellPrice = product.sellPrice.toString(),
-                            stockQuantity = product.stockQuantity.toString(),
-                            minStockLevel = product.minStockLevel.toString(),
-                            supplierId = product.supplierId,
-                            isLoading = false,
-                            error = null
-                        )
-                    } else {
-                        _state.value = _state.value.copy(
-                            isLoading = false,
-                            error = "Product not found"
-                        )
-                    }
+                val product = repository.getProductById(productId).first()
+                if (product != null) {
+                    _state.value = _state.value.copy(
+                        id = product.id,
+                        name = product.name,
+                        category = product.category,
+                        sku = product.sku,
+                        costPrice = product.costPrice.toString(),
+                        sellPrice = product.sellPrice.toString(),
+                        stockQuantity = product.stockQuantity.toString(),
+                        minStockLevel = product.minStockLevel.toString(),
+                        supplierId = product.supplierId,
+                        isLoading = false,
+                        error = null
+                    )
+                } else {
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = "Product not found"
+                    )
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
@@ -106,49 +110,61 @@ class InventoryEditViewModel(
 
     private fun saveProduct() {
         val currentState = _state.value
-        
+
         if (currentState.name.isBlank()) {
             _state.value = _state.value.copy(error = "Product name is required")
             return
         }
-        
+
         val sellPriceInt = currentState.sellPrice.toIntOrNull()
         if (sellPriceInt == null || sellPriceInt <= 0) {
             _state.value = _state.value.copy(error = "Enter a valid sell price")
             return
         }
-        
+
         val costPriceInt = currentState.costPrice.toIntOrNull() ?: 0
         val stockQuantityInt = currentState.stockQuantity.toIntOrNull() ?: 0
         val minStockLevelInt = currentState.minStockLevel.toIntOrNull() ?: 0
-        
+
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
-            
-            val product = Product(
-                id = currentState.id,
-                name = currentState.name.trim(),
-                category = currentState.category.trim(),
-                sku = currentState.sku.trim(),
-                costPrice = costPriceInt,
-                sellPrice = sellPriceInt,
-                stockQuantity = stockQuantityInt,
-                minStockLevel = minStockLevelInt,
-                supplierId = currentState.supplierId.trim()
-            )
-            
-            val result = repository.updateProduct(product)
-            
-            if (result.isSuccess) {
-                _state.value = _state.value.copy(
-                    isSaving = false,
-                    saveSuccess = true,
-                    error = null
+            try {
+                val existing = repository.getProductById(productId).first()
+                if (existing == null) {
+                    _state.value = _state.value.copy(
+                        isSaving = false,
+                        error = "Product not found"
+                    )
+                    return@launch
+                }
+                val updated = existing.copy(
+                    name = currentState.name.trim(),
+                    category = currentState.category.trim(),
+                    sku = currentState.sku.trim(),
+                    costPrice = costPriceInt,
+                    sellPrice = sellPriceInt,
+                    stockQuantity = stockQuantityInt,
+                    minStockLevel = minStockLevelInt,
+                    supplierId = currentState.supplierId.trim(),
+                    updatedAt = System.currentTimeMillis()
                 )
-            } else {
+                val result = repository.updateProduct(updated)
+                if (result.isSuccess) {
+                    _state.value = _state.value.copy(
+                        isSaving = false,
+                        saveSuccess = true,
+                        error = null
+                    )
+                } else {
+                    _state.value = _state.value.copy(
+                        isSaving = false,
+                        error = result.exceptionOrNull()?.message ?: "Failed to update product"
+                    )
+                }
+            } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     isSaving = false,
-                    error = result.exceptionOrNull()?.message ?: "Failed to update product"
+                    error = e.message ?: "Failed to update product"
                 )
             }
         }

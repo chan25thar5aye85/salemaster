@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.customer.data.repository.CustomerRepository
 import com.akari.retailer.features.customer.domain.models.Customer
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 data class CustomerEditState(
@@ -44,6 +46,8 @@ class CustomerEditViewModel(
     private val _state = MutableStateFlow(CustomerEditState(id = customerId))
     val state: StateFlow<CustomerEditState> = _state.asStateFlow()
 
+    private var loadJob: Job? = null
+
     init {
         loadCustomer()
     }
@@ -63,29 +67,31 @@ class CustomerEditViewModel(
     }
 
     private fun loadCustomer() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                repository.getCustomerById(customerId).collect { customer ->
-                    if (customer != null) {
-                        _state.value = _state.value.copy(
-                            id = customer.id,
-                            name = customer.name,
-                            phone = customer.phone,
-                            email = customer.email,
-                            address = customer.address,
-                            notes = customer.notes,
-                            totalSpent = customer.totalSpent,
-                            totalOrders = customer.totalOrders,
-                            isLoading = false,
-                            error = null
-                        )
-                    } else {
-                        _state.value = _state.value.copy(
-                            isLoading = false,
-                            error = "Customer not found"
-                        )
-                    }
+                // Use first() — this is an edit screen; remote changes
+                // should not overwrite the user's in-progress edits.
+                val customer = repository.getCustomerById(customerId).first()
+                if (customer != null) {
+                    _state.value = _state.value.copy(
+                        id = customer.id,
+                        name = customer.name,
+                        phone = customer.phone,
+                        email = customer.email,
+                        address = customer.address,
+                        notes = customer.notes,
+                        totalSpent = customer.totalSpent,
+                        totalOrders = customer.totalOrders,
+                        isLoading = false,
+                        error = null
+                    )
+                } else {
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = "Customer not found"
+                    )
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
@@ -98,15 +104,12 @@ class CustomerEditViewModel(
 
     private fun saveCustomer() {
         val currentState = _state.value
-        
         if (currentState.name.isBlank()) {
             _state.value = _state.value.copy(error = "Customer name is required")
             return
         }
-        
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
-            
             val customer = Customer(
                 id = currentState.id,
                 name = currentState.name.trim(),
@@ -117,15 +120,9 @@ class CustomerEditViewModel(
                 totalSpent = currentState.totalSpent,
                 totalOrders = currentState.totalOrders
             )
-            
             val result = repository.updateCustomer(customer)
-            
             if (result.isSuccess) {
-                _state.value = _state.value.copy(
-                    isSaving = false,
-                    saveSuccess = true,
-                    error = null
-                )
+                _state.value = _state.value.copy(isSaving = false, saveSuccess = true, error = null)
             } else {
                 _state.value = _state.value.copy(
                     isSaving = false,

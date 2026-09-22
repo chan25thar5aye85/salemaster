@@ -148,3 +148,15 @@ class SaleHistoryViewModel(
         // No-op
     }
 }
+
+class SaleHistoryViewModelFactory(
+    private val repository: com.akari.retailer.data.repository.SaleRepository
+) : androidx.lifecycle.ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SaleHistoryViewModel::class.java)) {
+            return SaleHistoryViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
+}
