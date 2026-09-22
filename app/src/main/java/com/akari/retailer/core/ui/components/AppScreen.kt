@@ -48,10 +48,10 @@ fun AppScreen(
         topBar = {
             if (hasTopBar) {
                 TopAppBar(
-                    title = { 
+                    title = {
                         Text(
                             title,
-                            color = Color.Black
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     },
                     navigationIcon = {
@@ -60,7 +60,7 @@ fun AppScreen(
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = stringResource(R.string.back),
-                                    tint = Color.Black
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -71,7 +71,7 @@ fun AppScreen(
                                 Icon(
                                     Icons.Default.FilterList,
                                     contentDescription = "Filter",
-                                    tint = Color.Black
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -80,7 +80,7 @@ fun AppScreen(
                                 Icon(
                                     Icons.Default.Analytics,
                                     contentDescription = "Analytics",
-                                    tint = Color.Black
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -89,7 +89,7 @@ fun AppScreen(
                                 Icon(
                                     Icons.Default.Add,
                                     contentDescription = "Add",
-                                    tint = Color.Black
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -98,7 +98,7 @@ fun AppScreen(
                                 Icon(
                                     Icons.Default.Search,
                                     contentDescription = "Search",
-                                    tint = Color.Black
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -107,7 +107,7 @@ fun AppScreen(
                                 Icon(
                                     Icons.Default.DateRange,
                                     contentDescription = "Filter by date",
-                                    tint = Color.Black
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -116,7 +116,7 @@ fun AppScreen(
                                 Icon(
                                     Icons.Default.History,
                                     contentDescription = "History",
-                                    tint = Color.Black
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }

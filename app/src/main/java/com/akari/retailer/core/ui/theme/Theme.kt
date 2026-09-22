@@ -17,12 +17,12 @@ private val LightColors = lightColorScheme(
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Primary,
-    background = Background,
-    surface = Surface,
-    onPrimary = Color.White,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary
+    primary = DarkPrimary,
+    background = DarkBackground,
+    surface = DarkSurface,
+    onPrimary = DarkOnPrimary,
+    onBackground = DarkTextPrimary,
+    onSurface = DarkTextPrimary
 )
 
 @Composable
@@ -31,7 +31,7 @@ fun AppTheme(
 ) {
     val darkTheme = isSystemInDarkTheme()
     val colors = if (darkTheme) DarkColors else LightColors
-    
+
     MaterialTheme(
         colorScheme = colors,
         typography = MaterialTheme.typography,

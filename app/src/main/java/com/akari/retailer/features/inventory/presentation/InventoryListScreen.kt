@@ -133,15 +133,17 @@ fun InventoryListScreen(
                     AppCard(
                         modifier = Modifier.weight(1f)
                     ) {
-                        val lowStockCount = state.allProducts.count { it.isLowStock || it.isOutOfStock }
+                        val lowStockCount = state.allProducts.count { it.isLowStock }
+                        val outOfStockCount = state.allProducts.count { it.isOutOfStock }
+                        val attentionCount = lowStockCount + outOfStockCount
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "$lowStockCount",
+                                text = "$attentionCount",
                                 style = AppTypography.title,
-                                color = if (lowStockCount > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                                color = if (attentionCount > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                text = stringResource(R.string.low_stock_products),
+                                text = "Low: $lowStockCount  Out: $outOfStockCount",
                                 style = AppTypography.small,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
