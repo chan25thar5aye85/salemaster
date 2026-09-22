@@ -11,6 +11,7 @@ import com.akari.retailer.features.expense.data.remote.FirestoreExpenseService
 import com.akari.retailer.features.expense.domain.models.Expense
 import com.akari.retailer.features.inventory.data.repository.FirestoreInventoryRepository
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
+import com.akari.retailer.features.inventory.data.repository.PurchaseOrderRepository
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseRepository
 import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
 import com.akari.retailer.features.inventory.domain.models.Purchase
@@ -63,7 +64,7 @@ data class PurchaseOrderDetailState(
 }
 
 class PurchaseOrderDetailViewModel(
-    private val repository: FirestorePurchaseOrderRepository,
+    private val repository: PurchaseOrderRepository,
     private val appContext: Context
 ) : ViewModel() {
 
@@ -421,7 +422,7 @@ class PurchaseOrderDetailViewModel(
 }
 
 class PurchaseOrderDetailViewModelFactory(
-    private val repository: FirestorePurchaseOrderRepository,
+    private val repository: PurchaseOrderRepository,
     private val appContext: Context
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")

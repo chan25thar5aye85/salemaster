@@ -18,7 +18,6 @@ import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus
 import com.akari.retailer.navigation.Routes
 
@@ -30,10 +29,9 @@ fun PurchaseOrderListScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val repository = remember { FirestorePurchaseOrderRepository() }
     
     val viewModel: PurchaseOrderListViewModel = viewModel(
-        factory = PurchaseOrderListViewModelFactory(repository)
+        factory = PurchaseOrderListViewModelFactory(application.container.purchaseOrderRepository)
     )
     
     val state by viewModel.state.collectAsState()

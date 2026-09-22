@@ -20,8 +20,6 @@ import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.inventory.data.repository.FirestoreInventoryRepository
-import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
 import com.akari.retailer.features.inventory.domain.models.Product
 import com.akari.retailer.navigation.Routes
 
@@ -36,11 +34,9 @@ fun InventoryDetailScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val service = remember { FirestoreInventoryService() }
-    val repository = remember { FirestoreInventoryRepository(service) }
     
     val viewModel: InventoryDetailViewModel = viewModel(
-        factory = InventoryDetailViewModelFactory(repository, productId)
+        factory = InventoryDetailViewModelFactory(application.container.inventoryRepository, productId)
     )
     
     val state by viewModel.state.collectAsState()

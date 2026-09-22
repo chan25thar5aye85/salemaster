@@ -6,24 +6,28 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
+import androidx.compose.ui.platform.LocalContext
+import com.akari.retailer.RetailApplication
 
 @Composable
 fun PurchaseOrderReceiptWrapper(
     orderId: String,
     onBack: () -> Unit
 ) {
-    val repository = remember { FirestorePurchaseOrderRepository() }
+    val context = LocalContext.current
+    val application = context.applicationContext as RetailApplication
+    val repository = application.container.purchaseOrderRepository
+
     var order by remember { mutableStateOf<com.akari.retailer.features.inventory.domain.models.PurchaseOrder?>(null) }
     var isLoading by remember { mutableStateOf(true) }
-    
+
     LaunchedEffect(orderId) {
         repository.getOrder(orderId).collect { loadedOrder ->
             order = loadedOrder
             isLoading = false
         }
     }
-    
+
     if (isLoading) {
         Box(
             modifier = Modifier.fillMaxSize(),

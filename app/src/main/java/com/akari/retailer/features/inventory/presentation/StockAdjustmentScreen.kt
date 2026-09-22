@@ -19,10 +19,6 @@ import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.inventory.data.repository.FirestoreInventoryRepository
-import com.akari.retailer.features.inventory.data.repository.FirestoreStockRepository
-import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
-import com.akari.retailer.features.inventory.data.remote.FirestoreStockService
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,13 +28,9 @@ fun StockAdjustmentScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val inventoryService = remember { FirestoreInventoryService() }
-    val inventoryRepository = remember { FirestoreInventoryRepository(inventoryService) }
-    val stockService = remember { FirestoreStockService() }
-    val stockRepository = remember { FirestoreStockRepository(stockService) }
     
     val viewModel: StockAdjustmentViewModel = viewModel(
-        factory = StockAdjustmentViewModelFactory(inventoryRepository, stockRepository)
+        factory = StockAdjustmentViewModelFactory(application.container.inventoryRepository, application.container.stockRepository)
     )
     
     val state by viewModel.state.collectAsState()

@@ -23,9 +23,6 @@ import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.components.PaymentListComponent
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
-import com.akari.retailer.features.inventory.data.repository.FirestoreInventoryRepository
-import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderItem
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderStatus
 import com.akari.retailer.navigation.Routes
@@ -42,14 +39,11 @@ fun PurchaseOrderDetailScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val application = context.applicationContext as com.akari.retailer.RetailApplication
     val scope = rememberCoroutineScope()
-    
-    val repository = remember { FirestorePurchaseOrderRepository() }
-    val inventoryService = remember { FirestoreInventoryService() }
-    val inventoryRepository = remember { FirestoreInventoryRepository(inventoryService) }
-    
+
     val viewModel: PurchaseOrderDetailViewModel = viewModel(
-        factory = PurchaseOrderDetailViewModelFactory(repository, context)
+        factory = PurchaseOrderDetailViewModelFactory(application.container.purchaseOrderRepository, context)
     )
     
     val state by viewModel.state.collectAsState()
@@ -77,7 +71,7 @@ fun PurchaseOrderDetailScreen(
     
     // Load products
     LaunchedEffect(Unit) {
-        inventoryRepository.getProducts().collect { productList ->
+        application.container.inventoryRepository.getProducts().collect { productList ->
             products = productList
         }
     }

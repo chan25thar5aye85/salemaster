@@ -19,8 +19,6 @@ import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.inventory.data.repository.FirestoreInventoryRepository
-import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,11 +29,9 @@ fun InventoryAddScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val service = remember { FirestoreInventoryService() }
-    val repository = remember { FirestoreInventoryRepository(service) }
     
     val viewModel: InventoryAddViewModel = viewModel(
-        factory = InventoryAddViewModelFactory(repository)
+        factory = InventoryAddViewModelFactory(application.container.inventoryRepository)
     )
     
     val state by viewModel.state.collectAsState()

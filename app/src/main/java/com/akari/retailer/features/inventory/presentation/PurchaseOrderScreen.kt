@@ -24,12 +24,7 @@ import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.inventory.data.repository.FirestoreInventoryRepository
-import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
-import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderItem
-import com.akari.retailer.features.supplier.data.repository.FirestoreSupplierRepository
-import com.akari.retailer.features.supplier.data.remote.FirestoreSupplierService
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -42,17 +37,12 @@ fun PurchaseOrderScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val inventoryService = remember { FirestoreInventoryService() }
-    val inventoryRepository = remember { FirestoreInventoryRepository(inventoryService) }
-    val supplierService = remember { FirestoreSupplierService() }
-    val supplierRepository = remember { FirestoreSupplierRepository(supplierService) }
-    val purchaseOrderRepository = remember { FirestorePurchaseOrderRepository() }
     
     val viewModel: PurchaseOrderViewModel = viewModel(
         factory = PurchaseOrderViewModelFactory(
-            inventoryRepository, 
-            purchaseOrderRepository,
-            supplierRepository
+            application.container.inventoryRepository,
+            application.container.purchaseOrderRepository,
+            application.container.supplierRepository
         )
     )
     

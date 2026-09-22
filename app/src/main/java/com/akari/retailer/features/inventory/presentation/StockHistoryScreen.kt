@@ -18,8 +18,6 @@ import com.akari.retailer.core.ui.components.AppCard
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.inventory.data.repository.FirestoreStockRepository
-import com.akari.retailer.features.inventory.data.remote.FirestoreStockService
 import com.akari.retailer.features.inventory.domain.models.MovementType
 import com.akari.retailer.features.inventory.domain.models.StockMovement
 import java.text.SimpleDateFormat
@@ -34,11 +32,9 @@ fun StockHistoryScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val service = remember { FirestoreStockService() }
-    val repository = remember { FirestoreStockRepository(service) }
     
     val viewModel: StockHistoryViewModel = viewModel(
-        factory = StockHistoryViewModelFactory(repository, productId)
+        factory = StockHistoryViewModelFactory(application.container.stockRepository, productId)
     )
     
     val state by viewModel.state.collectAsState()

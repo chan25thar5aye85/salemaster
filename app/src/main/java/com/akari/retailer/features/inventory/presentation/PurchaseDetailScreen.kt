@@ -19,7 +19,6 @@ import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseRepository
 import com.akari.retailer.features.inventory.domain.models.Purchase
 import com.akari.retailer.navigation.Routes
 import java.text.SimpleDateFormat
@@ -34,7 +33,6 @@ fun PurchaseDetailScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val repository = remember { FirestorePurchaseRepository() }
     
     var purchase by remember { mutableStateOf<Purchase?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -52,7 +50,7 @@ fun PurchaseDetailScreen(
     LaunchedEffect(purchaseId) {
         isLoading = true
         try {
-            repository.getPurchaseById(purchaseId).collect { loadedPurchase ->
+            application.container.purchaseRepository.getPurchaseById(purchaseId).collect { loadedPurchase ->
                 purchase = loadedPurchase
                 isLoading = false
                 if (loadedPurchase == null) {

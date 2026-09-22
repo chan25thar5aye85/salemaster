@@ -18,7 +18,6 @@ import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
-import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseRepository
 import com.akari.retailer.features.inventory.domain.models.Purchase
 import com.akari.retailer.navigation.Routes
 import java.text.SimpleDateFormat
@@ -32,7 +31,6 @@ fun PurchaseListScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     
-    val repository = remember { FirestorePurchaseRepository() }
     
     var purchases by remember { mutableStateOf<List<Purchase>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -44,7 +42,7 @@ fun PurchaseListScreen(
         isLoading = true
         error = null
         try {
-            repository.getPurchases().collect { list ->
+            application.container.purchaseRepository.getPurchases().collect { list ->
                 purchases = list
                 isLoading = false
             }
