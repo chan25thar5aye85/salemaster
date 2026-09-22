@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -243,7 +244,6 @@ class PurchaseOrderDetailViewModel(
             if (currentOrder.status == PurchaseOrderStatus.COMPLETED) {
                 return Result.failure(Exception("Purchase already created"))
             }
-
             if (currentOrder.receivedItems.isEmpty()) {
                 return Result.failure(Exception("No items to purchase"))
             }
@@ -254,7 +254,6 @@ class PurchaseOrderDetailViewModel(
             if (payments.isEmpty()) {
                 return Result.failure(Exception("Add at least one payment"))
             }
-
             if (payments.sumOf { it.amount } != totalCost) {
                 return Result.failure(Exception(
                     "Payments (${payments.sumOf { it.amount }}) must equal total ($totalCost)"
@@ -262,75 +261,141 @@ class PurchaseOrderDetailViewModel(
             }
 
             val receiptNumber = generateReceiptNumber()
+            val now = System.currentTimeMillis()
 
-            val purchase = Purchase(
-                orderId = currentOrder.id,
-                orderName = currentOrder.orderName,
-                orderNumber = currentOrder.orderNumber,
-                supplierId = currentOrder.supplierId,
-                supplierName = currentOrder.supplierName,
-                items = currentOrder.receivedItems.map { item ->
-                    PurchaseItem(
-                        productId = item.productId,
-                        productName = item.productName,
-                        quantity = item.quantity,
-                        costPrice = item.costPrice,
-                        total = item.total
+            // ── Atomic transaction: purchase + stock + expense + money + supplier + status ──
+            // Purchase doc ID = orderId → idempotent on retry.
+            val db = repository.firestore
+            val purchaseOrderRef = db.collection("purchase_orders").document(orderId)
+            val purchasesCol = db.collection("purchases")
+            val productsCol = db.collection("products")
+            val stockMovementsCol = db.collection("stock_movements")
+            val expensesCol = db.collection("expenses")
+            val accountsCol = db.collection("money_accounts")
+            val moneyTxnsCol = db.collection("money_transactions")
+            val suppliersCol = db.collection("suppliers")
+
+            db.runTransaction { txn ->
+                // READ order — reject if already completed (idempotency guard)
+                val orderSnap = txn.get(purchaseOrderRef)
+                if (orderSnap.exists()) {
+                    val status = orderSnap.getString("status")
+                    if (status == PurchaseOrderStatus.COMPLETED.name) {
+                        throw IllegalStateException("Purchase already created")
+                    }
+                }
+
+                // WRITE purchase doc (id = orderId)
+                txn.set(purchasesCol.document(orderId), mapOf(
+                    "orderId" to currentOrder.id,
+                    "orderName" to currentOrder.orderName,
+                    "orderNumber" to currentOrder.orderNumber,
+                    "supplierId" to currentOrder.supplierId,
+                    "supplierName" to currentOrder.supplierName,
+                    "items" to currentOrder.receivedItems.map { item ->
+                        mapOf(
+                            "productId" to item.productId,
+                            "productName" to item.productName,
+                            "quantity" to item.quantity,
+                            "costPrice" to item.costPrice,
+                            "total" to item.total
+                        )
+                    },
+                    "totalCost" to totalCost,
+                    "payments" to payments.map { p ->
+                        mapOf("accountId" to p.accountId, "amount" to p.amount)
+                    },
+                    "purchaseDate" to now,
+                    "notes" to currentOrder.notes,
+                    "receiptNumber" to receiptNumber,
+                    "createdAt" to now
+                ))
+
+                // WRITE stock increments + movement records
+                currentOrder.receivedItems.forEach { item ->
+                    txn.update(
+                        productsCol.document(item.productId),
+                        "stockQuantity", com.google.firebase.firestore.FieldValue.increment(item.quantity.toLong()),
+                        "updatedAt", now
                     )
-                },
-                totalCost = totalCost,
-                payments = payments,
-                purchaseDate = System.currentTimeMillis(),
-                notes = currentOrder.notes,
-                receiptNumber = receiptNumber
-            )
+                    txn.set(stockMovementsCol.document(), mapOf(
+                        "productId" to item.productId,
+                        "type" to "PURCHASE",
+                        "quantity" to item.quantity,
+                        "previousStock" to 0,   // not known inside txn without reading product
+                        "newStock" to 0,        // same
+                        "reason" to "Purchase: ${currentOrder.orderName}",
+                        "saleId" to "",
+                        "purchaseOrderId" to orderId,
+                        "createdAt" to now,
+                        "userId" to "default"
+                    ))
+                }
 
-            val purchaseRepo = FirestorePurchaseRepository()
-            val purchaseResult = purchaseRepo.createPurchase(purchase)
-            if (purchaseResult.isFailure) {
-                return Result.failure(Exception(purchaseResult.exceptionOrNull()?.message ?: "Failed"))
-            }
+                // WRITE expense doc
+                txn.set(expensesCol.document(), mapOf(
+                    "title" to "Purchase Order: ${currentOrder.orderName}",
+                    "amount" to totalCost,
+                    "categoryId" to "default_inventory",
+                    "type" to "BUSINESS",
+                    "businessPercentage" to 100,
+                    "payments" to payments.map { p ->
+                        mapOf("accountId" to p.accountId, "amount" to p.amount)
+                    },
+                    "description" to "PO #${currentOrder.orderNumber} from ${currentOrder.supplierName}",
+                    "date" to now,
+                    "createdAt" to now,
+                    "updatedAt" to now
+                ))
 
-            // Update stock atomically (FieldValue.increment — no read-modify-write).
-            val inventoryRepo = FirestoreInventoryRepository(FirestoreInventoryService())
-            currentOrder.receivedItems.forEach { item ->
-                inventoryRepo.adjustStock(item.productId, item.quantity)
-            }
+                // WRITE money transactions + debit accounts
+                payments.forEach { payment ->
+                    txn.update(
+                        accountsCol.document(payment.accountId),
+                        "currentBalance", com.google.firebase.firestore.FieldValue.increment(-payment.amount.toLong()),
+                        "updatedAt", now
+                    )
+                    txn.set(moneyTxnsCol.document(), mapOf(
+                        "type" to "PURCHASE_OUT",
+                        "fromAccountId" to payment.accountId,
+                        "toAccountId" to "",
+                        "amount" to payment.amount,
+                        "fee" to 0,
+                        "feeType" to "NONE",
+                        "netAmount" to payment.amount,
+                        "description" to "PO #${currentOrder.orderNumber}",
+                        "referenceId" to orderId,
+                        "referenceType" to "PURCHASE",
+                        "externalAccountName" to "",
+                        "externalAccountNumber" to "",
+                        "date" to now,
+                        "createdAt" to now
+                    ))
+                }
 
-            // Create expense
-            val expenseRepo = FirestoreExpenseRepository(FirestoreExpenseService())
-            expenseRepo.addExpense(
-                Expense(
-                    title = "Purchase Order: ${currentOrder.orderName}",
-                    amount = totalCost,
-                    categoryId = "default_inventory",
-                    payments = payments,
-                    description = "PO #${currentOrder.orderNumber} from ${currentOrder.supplierName}",
-                    date = System.currentTimeMillis()
+                // WRITE supplier increment
+                if (currentOrder.supplierId.isNotEmpty()) {
+                    txn.update(
+                        suppliersCol.document(currentOrder.supplierId),
+                        "totalPurchased", com.google.firebase.firestore.FieldValue.increment(totalCost.toLong()),
+                        "lastOrderDate", now,
+                        "updatedAt", now
+                    )
+                }
+
+                // WRITE order status = COMPLETED
+                txn.update(
+                    purchaseOrderRef,
+                    "status", PurchaseOrderStatus.COMPLETED.name,
+                    "completedDate", now,
+                    "updatedAt", now
                 )
-            )
-
-            // Process money transactions
-            processMoneyTransactionUseCase.processPurchase(
-                payments = payments,
-                purchaseId = purchaseResult.getOrNull() ?: "",
-                description = "PO #${currentOrder.orderNumber}"
-            )
-
-            // Update supplier atomically (increment — no read-modify-write).
-            try {
-                val supplierRepo = FirestoreSupplierRepository(FirestoreSupplierService())
-                supplierRepo.incrementTotalPurchased(currentOrder.supplierId, totalCost)
-            } catch (e: Exception) { }
-
-            val statusResult = repository.updateStatus(orderId, PurchaseOrderStatus.COMPLETED)
-            if (statusResult.isFailure) {
-                return Result.failure(Exception(statusResult.exceptionOrNull()?.message ?: "Failed"))
-            }
+            }.await()
 
             loadOrder(orderId)
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e(TAG, "createPurchase failed: ${e.message}", e)
             Result.failure(e)
         }
     }

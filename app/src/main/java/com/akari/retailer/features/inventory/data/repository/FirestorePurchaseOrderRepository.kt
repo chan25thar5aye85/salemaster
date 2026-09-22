@@ -317,4 +317,7 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis()
         )
     }
+
+    override val firestore: FirebaseFirestore
+        get() = FirebaseFirestore.getInstance()
 }
