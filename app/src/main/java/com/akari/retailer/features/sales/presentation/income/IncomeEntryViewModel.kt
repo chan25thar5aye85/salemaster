@@ -1,6 +1,5 @@
 package com.akari.retailer.features.sales.presentation.income
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.core.ui.components.PaymentRow
@@ -74,7 +73,7 @@ class IncomeEntryViewModel(
     private val incomeStreamRepository: IncomeStreamRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
     private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
-    private val appContext: Context
+    private val paymentPreferences: PaymentPreferences
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(IncomeEntryState())
@@ -86,7 +85,7 @@ class IncomeEntryViewModel(
     private var nextRowId = 2L
 
     init {
-        val lastAccountId = PaymentPreferences.getLastUsedAccountId(appContext)
+        val lastAccountId = paymentPreferences.getLastUsedAccountId()
         _state.value = _state.value.copy(
             lastUsedAccountId = lastAccountId,
             paymentRows = listOf(PaymentRow(id = 1L, accountId = lastAccountId, amount = ""))
@@ -168,7 +167,7 @@ class IncomeEntryViewModel(
             if (row.id == rowId) row.copy(accountId = account.id) else row
         }
         _state.value = _state.value.copy(paymentRows = updated)
-        PaymentPreferences.setLastUsedAccountId(appContext, account.id)
+        paymentPreferences.setLastUsedAccountId(account.id)
     }
 
     private fun updatePaymentAmount(rowId: Long, amount: String) {
@@ -254,7 +253,7 @@ class IncomeEntryViewModel(
                 )
 
                 payments.firstOrNull()?.let {
-                    PaymentPreferences.setLastUsedAccountId(appContext, it.accountId)
+                    paymentPreferences.setLastUsedAccountId(it.accountId)
                 }
 
                 _state.value = _state.value.copy(
@@ -277,7 +276,7 @@ class IncomeEntryViewModelFactory(
     private val incomeStreamRepository: IncomeStreamRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
     private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
-    private val appContext: Context
+    private val paymentPreferences: PaymentPreferences
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
@@ -287,7 +286,7 @@ class IncomeEntryViewModelFactory(
                 incomeStreamRepository,
                 moneyAccountRepository,
                 processMoneyTransactionUseCase,
-                appContext
+                paymentPreferences
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

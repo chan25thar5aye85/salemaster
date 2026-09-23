@@ -1,8 +1,8 @@
 package com.akari.retailer.features.money.presentation
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.akari.retailer.core.utils.PaymentPreferences
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.FeeType
 import com.akari.retailer.features.money.domain.usecases.ExternalTransferUseCase
@@ -15,20 +15,13 @@ import kotlinx.coroutines.launch
 class ExternalTransferViewModel(
     private val accountRepository: MoneyAccountRepository,
     private val externalTransferUseCase: ExternalTransferUseCase,
-    private val appContext: Context
+    private val paymentPreferences: PaymentPreferences
 ) : ViewModel() {
-
-    companion object {
-        private const val PREFS_NAME = "external_transfer_prefs"
-        private const val KEY_LAST_ACCOUNT = "last_used_account_id"
-    }
 
     private val _state = MutableStateFlow(ExternalTransferState())
     val state: StateFlow<ExternalTransferState> = _state.asStateFlow()
 
     private var loadAccountsJob: Job? = null
-
-    private val prefs = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     init {
         loadLastUsedAccount()
@@ -55,12 +48,12 @@ class ExternalTransferViewModel(
     }
 
     private fun loadLastUsedAccount() {
-        val lastId = prefs.getString(KEY_LAST_ACCOUNT, "") ?: ""
+        val lastId = paymentPreferences.getLastExternalTransferAccountId()
         _state.value = _state.value.copy(lastUsedAccountId = lastId)
     }
 
     private fun saveLastUsedAccount(accountId: String) {
-        prefs.edit().putString(KEY_LAST_ACCOUNT, accountId).apply()
+        paymentPreferences.setLastExternalTransferAccountId(accountId)
     }
 
     private fun loadAccounts() {
@@ -154,12 +147,12 @@ class ExternalTransferViewModel(
 class ExternalTransferViewModelFactory(
     private val accountRepository: MoneyAccountRepository,
     private val externalTransferUseCase: ExternalTransferUseCase,
-    private val appContext: Context
+    private val paymentPreferences: PaymentPreferences
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ExternalTransferViewModel::class.java)) {
-            return ExternalTransferViewModel(accountRepository, externalTransferUseCase, appContext) as T
+            return ExternalTransferViewModel(accountRepository, externalTransferUseCase, paymentPreferences) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

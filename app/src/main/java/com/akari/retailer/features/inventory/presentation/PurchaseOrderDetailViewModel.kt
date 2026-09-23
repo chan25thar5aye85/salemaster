@@ -1,6 +1,5 @@
 package com.akari.retailer.features.inventory.presentation
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -65,7 +64,7 @@ data class PurchaseOrderDetailState(
 
 class PurchaseOrderDetailViewModel(
     private val repository: PurchaseOrderRepository,
-    private val appContext: Context
+    private val paymentPreferences: PaymentPreferences
 ) : ViewModel() {
 
     private val TAG = "PurchaseOrderDetailVM"
@@ -88,7 +87,7 @@ class PurchaseOrderDetailViewModel(
     }
 
     init {
-        val lastAccountId = PaymentPreferences.getLastUsedAccountId(appContext)
+        val lastAccountId = paymentPreferences.getLastUsedAccountId()
         _state.value = _state.value.copy(
             paymentRows = listOf(PaymentRow(id = 1L, accountId = lastAccountId, amount = ""))
         )
@@ -142,7 +141,7 @@ class PurchaseOrderDetailViewModel(
             if (row.id == rowId) row.copy(accountId = account.id) else row
         }
         _state.value = _state.value.copy(paymentRows = updated)
-        PaymentPreferences.setLastUsedAccountId(appContext, account.id)
+        paymentPreferences.setLastUsedAccountId(account.id)
     }
 
     fun updatePaymentAmount(rowId: Long, amount: String) {
@@ -423,12 +422,12 @@ class PurchaseOrderDetailViewModel(
 
 class PurchaseOrderDetailViewModelFactory(
     private val repository: PurchaseOrderRepository,
-    private val appContext: Context
+    private val paymentPreferences: PaymentPreferences
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PurchaseOrderDetailViewModel::class.java)) {
-            return PurchaseOrderDetailViewModel(repository, appContext) as T
+            return PurchaseOrderDetailViewModel(repository, paymentPreferences) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -43,7 +43,7 @@ fun PurchaseOrderDetailScreen(
     val scope = rememberCoroutineScope()
 
     val viewModel: PurchaseOrderDetailViewModel = viewModel(
-        factory = PurchaseOrderDetailViewModelFactory(application.container.purchaseOrderRepository, context)
+        factory = PurchaseOrderDetailViewModelFactory(application.container.purchaseOrderRepository, application.container.paymentPreferences)
     )
     
     val state by viewModel.state.collectAsState()

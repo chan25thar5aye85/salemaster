@@ -40,7 +40,7 @@ fun ExternalTransferScreen(
     }
     
     val viewModel: ExternalTransferViewModel = viewModel(
-        factory = ExternalTransferViewModelFactory(application.container.moneyAccountRepository, application.container.externalTransferUseCase, application)
+        factory = ExternalTransferViewModelFactory(application.container.moneyAccountRepository, application.container.externalTransferUseCase, application.container.paymentPreferences)
     )
     
     val state by viewModel.state.collectAsState()

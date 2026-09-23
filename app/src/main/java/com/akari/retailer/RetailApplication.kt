@@ -33,7 +33,7 @@ class RetailApplication : Application() {
         }
 
         // 3. DI container
-        container = AppContainer()
+        container = AppContainer(this)
 
         // 4. Seed defaults
         CoroutineScope(Dispatchers.IO).launch {

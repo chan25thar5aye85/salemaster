@@ -1,5 +1,6 @@
 package com.akari.retailer.di
 
+import com.akari.retailer.core.utils.PaymentPreferences
 import com.akari.retailer.data.remote.FirestoreService
 import com.akari.retailer.data.repository.FirestoreSaleRepository
 import com.akari.retailer.data.repository.SaleRepository
@@ -42,8 +43,11 @@ import com.akari.retailer.features.supplier.data.remote.FirestoreSupplierService
 import com.akari.retailer.features.supplier.data.repository.FirestoreSupplierRepository
 import com.akari.retailer.features.supplier.data.repository.SupplierRepository
 
-class AppContainer {
-    
+class AppContainer(private val appContext: android.content.Context) {
+
+    // Cross-cutting utilities
+    val paymentPreferences: PaymentPreferences by lazy { PaymentPreferences(appContext) }
+
     // Sales
     private val firestoreService by lazy { FirestoreService() }
     val saleRepository: SaleRepository by lazy { 

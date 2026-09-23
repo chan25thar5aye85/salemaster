@@ -44,7 +44,7 @@ fun IncomeEntryScreen(
             application.container.incomeStreamRepository,
             application.container.moneyAccountRepository,
             application.container.processMoneyTransactionUseCase,
-            application
+            application.container.paymentPreferences
         )
     )
     

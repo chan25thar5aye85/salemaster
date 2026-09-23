@@ -1,6 +1,5 @@
 package com.akari.retailer.features.sales.presentation.entry
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,7 +23,7 @@ class SaleEntryViewModel(
     private val repository: SaleRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
     private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
-    private val appContext: Context
+    private val paymentPreferences: PaymentPreferences
 ) : ViewModel() {
 
     private val TAG = "SaleEntryViewModel"
@@ -40,7 +39,7 @@ class SaleEntryViewModel(
     private var userTouchedPaymentAmounts = false
 
     init {
-        val lastAccountId = PaymentPreferences.getLastUsedAccountId(appContext)
+        val lastAccountId = paymentPreferences.getLastUsedAccountId()
         _state.value = _state.value.copy(
             paymentRows = listOf(PaymentRow(id = 1L, accountId = lastAccountId, amount = ""))
         )
@@ -64,7 +63,7 @@ class SaleEntryViewModel(
             }
             is SaleEntryEvent.PaymentAccountChanged -> {
                 updatePaymentAccount(event.rowId, event.account)
-                PaymentPreferences.setLastUsedAccountId(appContext, event.account.id)
+                paymentPreferences.setLastUsedAccountId(event.account.id)
             }
             is SaleEntryEvent.PaymentAmountChanged -> {
                 updatePaymentAmount(event.rowId, event.amount)
@@ -290,7 +289,7 @@ class SaleEntryViewModelFactory(
     private val repository: SaleRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
     private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
-    private val appContext: Context
+    private val paymentPreferences: PaymentPreferences
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
@@ -299,7 +298,7 @@ class SaleEntryViewModelFactory(
                 repository,
                 moneyAccountRepository,
                 processMoneyTransactionUseCase,
-                appContext
+                paymentPreferences
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

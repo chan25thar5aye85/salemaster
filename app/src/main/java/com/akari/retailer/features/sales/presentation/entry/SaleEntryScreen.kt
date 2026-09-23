@@ -41,7 +41,7 @@ fun SaleEntryScreen(
             repository,
             moneyAccountRepository,
             processMoneyTransactionUseCase,
-        application
+            application.container.paymentPreferences
         )
     )
     
