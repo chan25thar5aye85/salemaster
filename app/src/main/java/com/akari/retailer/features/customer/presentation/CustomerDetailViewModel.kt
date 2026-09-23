@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Source
+import kotlinx.coroutines.tasks.await
 
 data class CustomerDetailState(
     val customer: Customer? = null,
@@ -63,6 +66,28 @@ class CustomerDetailViewModel(
         loadCustomer()
         loadAccounts()
         loadCreditTransactions()
+        refreshFromServer()
+    }
+
+    /**
+     * Firestore's Android SDK serves cached values first. After a sale on
+     * credit, the creditBalance was written by a different ViewModel — the
+     * cache on this screen may still be stale. Force a server read so the
+     * listener downstream picks up the fresh value.
+     */
+    private fun refreshFromServer() {
+        viewModelScope.launch {
+            try {
+                FirebaseFirestore.getInstance()
+                    .collection("customers")
+                    .document(customerId)
+                    .get(Source.SERVER)
+                    .await()
+                // The existing listener on getCustomerById will now emit the fresh value
+            } catch (e: Exception) {
+                // Ignore — fallback to whatever the listener emits
+            }
+        }
     }
 
     fun handleEvent(event: CustomerDetailEvent) {
