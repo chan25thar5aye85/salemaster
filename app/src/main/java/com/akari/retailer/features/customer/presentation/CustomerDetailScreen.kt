@@ -38,6 +38,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomerDetailScreen(
+    navController: androidx.navigation.NavController,
     customerId: String,
     onBack: () -> Unit,
     onEdit: (Customer) -> Unit
@@ -286,7 +287,7 @@ fun CustomerDetailScreen(
                     }
                 }
 
-                // ── Credit history ──
+                // ── Credit history (preview + full button) ──
                 if (state.creditTransactions.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(Spacing.medium))
                     AppCard {
@@ -296,8 +297,20 @@ fun CustomerDetailScreen(
                                 style = AppTypography.title,
                                 modifier = Modifier.padding(bottom = Spacing.small)
                             )
-                            state.creditTransactions.take(5).forEach { txn ->
+                            state.creditTransactions.take(3).forEach { txn ->
                                 CreditHistoryRow(transaction = txn)
+                            }
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            OutlinedButton(
+                                onClick = {
+                                    navController.navigate(
+                                        com.akari.retailer.navigation.Routes.CREDIT_HISTORY
+                                            .replace("{customerId}", customerId)
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(stringResource(R.string.view_full_history))
                             }
                         }
                     }

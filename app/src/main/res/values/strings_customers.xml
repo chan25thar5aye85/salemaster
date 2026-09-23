@@ -35,4 +35,10 @@
     <string name="confirm">Confirm</string>
     <string name="outstanding_credit">Outstanding Credit</string>
     <string name="debtors_count">%1$d customers with credit</string>
+
+    <string name="current_balance">Current balance</string>
+    <string name="total_credit_given">Credit Given</string>
+    <string name="total_paid">Paid</string>
+    <string name="no_transactions_for_filter">No transactions for this filter</string>
+    <string name="view_full_history">View Full History</string>
 </resources>

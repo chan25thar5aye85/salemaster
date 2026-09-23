@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.akari.retailer.core.ui.components.FABMenu
 import com.akari.retailer.features.customer.presentation.CustomerAddScreen
+import com.akari.retailer.features.customer.presentation.CreditHistoryScreen
 import com.akari.retailer.features.customer.presentation.CustomerDetailScreen
 import com.akari.retailer.features.customer.presentation.CustomerEditScreen
 import com.akari.retailer.features.customer.presentation.CustomerListScreen
@@ -144,6 +145,7 @@ fun AppNavHost() {
                 ) { backStackEntry ->
                     val customerId = backStackEntry.arguments?.getString("customerId") ?: ""
                     CustomerDetailScreen(
+                        navController = navController,
                         customerId = customerId,
                         onBack = { navController.popBackStack() },
                         onEdit = { customer ->
@@ -152,6 +154,18 @@ fun AppNavHost() {
                     )
                 }
                 
+                composable(
+                    route = Routes.CREDIT_HISTORY,
+                    arguments = listOf(navArgument("customerId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val customerId = backStackEntry.arguments?.getString("customerId") ?: ""
+                    CreditHistoryScreen(
+                        navController = navController,
+                        customerId = customerId,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
                 composable(
                     route = Routes.CUSTOMER_EDIT,
                     arguments = listOf(navArgument("customerId") { type = NavType.StringType })
