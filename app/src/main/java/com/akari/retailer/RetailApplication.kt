@@ -44,8 +44,7 @@ class RetailApplication : Application() {
             }.onFailure { Log.e("RetailApplication", "Seeding failed", it) }
         }
 
-        // 5. Apply saved language
-        val languageCode = LanguageManager.getCurrentLanguage(this)
-        LanguageManager.applyLanguage(this, languageCode)
+        // 5. Apply saved language (AppCompat handles activity recreation automatically)
+        LanguageManager.syncOnAppStart(this)
     }
 }

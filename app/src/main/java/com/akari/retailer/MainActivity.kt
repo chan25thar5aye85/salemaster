@@ -2,9 +2,9 @@ package com.akari.retailer
 
 import android.graphics.Color
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.SideEffect
@@ -13,16 +13,12 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.akari.retailer.core.ui.theme.AppTheme
 import com.akari.retailer.core.ui.theme.Background
-import com.akari.retailer.core.utils.LanguageManager
 import com.akari.retailer.navigation.AppNavHost
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val languageCode = LanguageManager.getCurrentLanguage(this)
-        LanguageManager.applyLanguage(this, languageCode)
 
         // Enable edge-to-edge for Android 15 / targetSdk 35
         enableEdgeToEdge()
@@ -36,22 +32,18 @@ class MainActivity : ComponentActivity() {
             window.isNavigationBarContrastEnforced = false
         }
 
+        val activityWindow = window
+
         setContent {
             AppTheme {
 
                 val view = LocalView.current
 
                 SideEffect {
-                    val window =
-                        (view.context as ComponentActivity).window
+                    val controller = WindowCompat.getInsetsController(activityWindow, view)
 
-                    val controller =
-                        WindowCompat.getInsetsController(window, view)
-
-                    // DARK status-bar icons/text
-                    // Good for your light/transparent background
+                    // DARK status-bar icons/text (good for light/transparent background)
                     controller.isAppearanceLightStatusBars = true
-
                     // DARK navigation-bar icons/gesture handle
                     controller.isAppearanceLightNavigationBars = true
                 }
