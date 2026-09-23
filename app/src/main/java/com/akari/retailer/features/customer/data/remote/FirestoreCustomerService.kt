@@ -131,6 +131,7 @@ class FirestoreCustomerService {
                         address = data["address"] as? String ?: "",
                         totalSpent = (data["totalSpent"] as? Number)?.toInt() ?: 0,
                         totalOrders = (data["totalOrders"] as? Number)?.toInt() ?: 0,
+                        creditBalance = (data["creditBalance"] as? Number)?.toInt() ?: 0,
                         lastOrderDate = (data["lastOrderDate"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                         createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                         updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
