@@ -53,6 +53,7 @@ fun CustomerDetailScreen(
             application.container.moneyAccountRepository,
             application.container.recordCreditPaymentUseCase,
             application.container.getCreditTransactionsUseCase,
+            application.container.paymentPreferences,
             customerId
         )
     )
@@ -356,12 +357,14 @@ fun CustomerDetailScreen(
     if (state.showPaymentDialog && state.customer != null) {
         RecordCreditPaymentDialog(
             amount = state.paymentAmount,
+            notes = state.paymentNotes,
             accounts = state.accounts,
             selectedAccount = state.selectedAccount,
             error = state.paymentError,
             isProcessing = state.isRecordingPayment,
             maxAmount = state.customer!!.creditBalance,
             onAmountChange = { viewModel.handleEvent(CustomerDetailEvent.PaymentAmountChanged(it)) },
+            onNotesChange = { viewModel.handleEvent(CustomerDetailEvent.PaymentNotesChanged(it)) },
             onAccountSelected = { viewModel.handleEvent(CustomerDetailEvent.PaymentAccountSelected(it)) },
             onSubmit = { viewModel.handleEvent(CustomerDetailEvent.SubmitPayment) },
             onDismiss = { viewModel.handleEvent(CustomerDetailEvent.ClosePaymentDialog) }
@@ -406,12 +409,14 @@ private fun CreditHistoryRow(transaction: CreditTransaction) {
 @Composable
 private fun RecordCreditPaymentDialog(
     amount: String,
+    notes: String,
     accounts: List<MoneyAccount>,
     selectedAccount: MoneyAccount?,
     error: String?,
     isProcessing: Boolean,
     maxAmount: Int,
     onAmountChange: (String) -> Unit,
+    onNotesChange: (String) -> Unit,
     onAccountSelected: (MoneyAccount) -> Unit,
     onSubmit: () -> Unit,
     onDismiss: () -> Unit
@@ -438,6 +443,17 @@ private fun RecordCreditPaymentDialog(
                     singleLine = true,
                     enabled = !isProcessing,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.small))
+
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = onNotesChange,
+                    label = { Text(stringResource(R.string.notes_optional)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isProcessing,
+                    maxLines = 2
                 )
 
                 Spacer(modifier = Modifier.height(Spacing.small))

@@ -216,6 +216,19 @@ fun SaleEntryScreen(
                                         stringResource(R.string.change_customer)
                                 )
                             }
+
+                            if (state.creditCustomer != null) {
+                                Spacer(modifier = Modifier.height(Spacing.small))
+                                OutlinedTextField(
+                                    value = state.creditNotes,
+                                    onValueChange = {
+                                        viewModel.handleEvent(SaleEntryEvent.CreditNotesChanged(it))
+                                    },
+                                    label = { Text(stringResource(R.string.notes_optional)) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    maxLines = 2
+                                )
+                            }
                         }
                     }
                 } else {

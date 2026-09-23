@@ -20,6 +20,7 @@ sealed class SaleEntryEvent {
     data object OpenCreditCustomerPicker : SaleEntryEvent()
     data object CloseCreditCustomerPicker : SaleEntryEvent()
     data class CreditCustomerSelected(val customer: Customer) : SaleEntryEvent()
+    data class CreditNotesChanged(val value: String) : SaleEntryEvent()
 
     data object SaveSale : SaleEntryEvent()
     data object ClearError : SaleEntryEvent()

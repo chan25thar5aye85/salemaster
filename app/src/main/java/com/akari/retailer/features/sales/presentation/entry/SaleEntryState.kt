@@ -21,6 +21,7 @@ data class SaleEntryState(
     // ── Credit sale mode ──
     val isCreditSale: Boolean = false,
     val creditCustomer: Customer? = null,
+    val creditNotes: String = "",
     val customers: List<Customer> = emptyList(),
     val showCreditCustomerPicker: Boolean = false
 )

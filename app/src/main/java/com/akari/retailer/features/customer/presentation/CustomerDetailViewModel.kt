@@ -7,6 +7,7 @@ import com.akari.retailer.features.customer.domain.models.CreditTransaction
 import com.akari.retailer.features.customer.domain.models.Customer
 import com.akari.retailer.features.customer.domain.usecases.GetCreditTransactionsUseCase
 import com.akari.retailer.features.customer.domain.usecases.RecordCreditPaymentUseCase
+import com.akari.retailer.core.utils.PaymentPreferences
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 import kotlinx.coroutines.Job
@@ -29,6 +30,7 @@ data class CustomerDetailState(
     // Payment dialog
     val showPaymentDialog: Boolean = false,
     val paymentAmount: String = "",
+    val paymentNotes: String = "",
     val accounts: List<MoneyAccount> = emptyList(),
     val selectedAccount: MoneyAccount? = null,
     val isRecordingPayment: Boolean = false,
@@ -42,6 +44,7 @@ sealed class CustomerDetailEvent {
     data object OpenPaymentDialog : CustomerDetailEvent()
     data object ClosePaymentDialog : CustomerDetailEvent()
     data class PaymentAmountChanged(val value: String) : CustomerDetailEvent()
+    data class PaymentNotesChanged(val value: String) : CustomerDetailEvent()
     data class PaymentAccountSelected(val account: MoneyAccount) : CustomerDetailEvent()
     data object SubmitPayment : CustomerDetailEvent()
     data object ClearPaymentSuccess : CustomerDetailEvent()
@@ -52,6 +55,7 @@ class CustomerDetailViewModel(
     private val moneyAccountRepository: MoneyAccountRepository,
     private val recordCreditPaymentUseCase: RecordCreditPaymentUseCase,
     private val getCreditTransactionsUseCase: GetCreditTransactionsUseCase,
+    private val paymentPreferences: PaymentPreferences,
     private val customerId: String
 ) : ViewModel() {
 
@@ -97,6 +101,7 @@ class CustomerDetailViewModel(
             is CustomerDetailEvent.OpenPaymentDialog -> openPaymentDialog()
             is CustomerDetailEvent.ClosePaymentDialog -> closePaymentDialog()
             is CustomerDetailEvent.PaymentAmountChanged -> _state.value = _state.value.copy(paymentAmount = event.value.filter { it.isDigit() })
+            is CustomerDetailEvent.PaymentNotesChanged -> _state.value = _state.value.copy(paymentNotes = event.value)
             is CustomerDetailEvent.PaymentAccountSelected -> _state.value = _state.value.copy(selectedAccount = event.account)
             is CustomerDetailEvent.SubmitPayment -> submitPayment()
             is CustomerDetailEvent.ClearPaymentSuccess -> _state.value = _state.value.copy(paymentSuccess = false)
@@ -151,10 +156,17 @@ class CustomerDetailViewModel(
             _state.value = _state.value.copy(paymentError = "Customer has no outstanding credit")
             return
         }
+
+        // Prefer last-used account; fall back to first active account
+        val lastUsedId = paymentPreferences.getLastUsedAccountId()
+        val defaultAccount = _state.value.accounts.find { it.id == lastUsedId }
+            ?: _state.value.accounts.firstOrNull()
+
         _state.value = _state.value.copy(
             showPaymentDialog = true,
             paymentAmount = "",
-            selectedAccount = _state.value.accounts.firstOrNull(),
+            paymentNotes = "",
+            selectedAccount = defaultAccount,
             paymentError = null,
             paymentSuccess = false
         )
@@ -164,6 +176,7 @@ class CustomerDetailViewModel(
         _state.value = _state.value.copy(
             showPaymentDialog = false,
             paymentAmount = "",
+            paymentNotes = "",
             selectedAccount = null,
             paymentError = null
         )
@@ -196,14 +209,18 @@ class CustomerDetailViewModel(
                 customerId = customer.id,
                 amount = amount,
                 paymentAccountId = account.id,
-                description = "Credit payment"
+                description = _state.value.paymentNotes.trim().ifEmpty { "Credit payment" }
             )
             if (result.isSuccess) {
+                // Remember for next time
+                paymentPreferences.setLastUsedAccountId(account.id)
+
                 _state.value = _state.value.copy(
                     isRecordingPayment = false,
                     paymentSuccess = true,
                     showPaymentDialog = false,
-                    paymentAmount = ""
+                    paymentAmount = "",
+                    paymentNotes = ""
                 )
             } else {
                 _state.value = _state.value.copy(
@@ -224,6 +241,7 @@ class CustomerDetailViewModelFactory(
     private val moneyAccountRepository: MoneyAccountRepository,
     private val recordCreditPaymentUseCase: RecordCreditPaymentUseCase,
     private val getCreditTransactionsUseCase: GetCreditTransactionsUseCase,
+    private val paymentPreferences: PaymentPreferences,
     private val customerId: String
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -234,6 +252,7 @@ class CustomerDetailViewModelFactory(
                 moneyAccountRepository,
                 recordCreditPaymentUseCase,
                 getCreditTransactionsUseCase,
+                paymentPreferences,
                 customerId
             ) as T
         }

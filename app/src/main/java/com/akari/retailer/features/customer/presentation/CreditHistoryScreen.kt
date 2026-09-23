@@ -277,6 +277,14 @@ private fun CreditTxnRow(
                         style = AppTypography.small,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
+                    if (txn.description.isNotEmpty()) {
+                        Text(
+                            text = "📝 ${txn.description}",
+                            style = AppTypography.small,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            fontSize = 11.sp
+                        )
+                    }
                 }
                 Text(
                     text = (if (isCredit) "+" else "") + "${txn.amount}",

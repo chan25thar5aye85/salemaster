@@ -85,6 +85,7 @@ class SaleEntryViewModel(
             SaleEntryEvent.OpenCreditCustomerPicker -> openCreditCustomerPicker()
             SaleEntryEvent.CloseCreditCustomerPicker -> closeCreditCustomerPicker()
             is SaleEntryEvent.CreditCustomerSelected -> selectCreditCustomer(event.customer)
+            is SaleEntryEvent.CreditNotesChanged -> _state.value = _state.value.copy(creditNotes = event.value)
         }
     }
 
@@ -385,7 +386,7 @@ class SaleEntryViewModel(
                     customerId = customer.id,
                     amount = total,
                     saleId = saleId,
-                    description = "Sale on credit"
+                    description = currentState.creditNotes.trim().ifEmpty { "Sale on credit" }
                 )
 
                 if (creditResult.isFailure) {
@@ -408,6 +409,7 @@ class SaleEntryViewModel(
                     customers = currentState.customers,
                     isCreditSale = false,
                     creditCustomer = null,
+                    creditNotes = "",
                     paymentRows = listOf(PaymentRow(1L, "default_cash", ""))
                 )
                 userTouchedPaymentAmounts = false
