@@ -6,10 +6,12 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Warning
@@ -37,6 +39,8 @@ import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.material3.ExtendedFloatingActionButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,19 +110,54 @@ fun SaleEntryScreen(
         )
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        AppScreen(
-            title = stringResource(R.string.sale_entry),
-            showBackButton = false,
-            showTopBar = true
-        ) {
+    AppScreen(
+        title = stringResource(R.string.sale_entry),
+        showBackButton = false,
+        showTopBar = true,
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = {
+                    focusManager.clearFocus()
+                    viewModel.handleEvent(SaleEntryEvent.SaveSale)
+                },
+                icon = {
+                    if (state.isSaving) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = null
+                        )
+                    }
+                },
+                text = {
+                    Text(
+                        text = if (state.saveSuccess)
+                            stringResource(R.string.saved)
+                        else
+                            stringResource(R.string.save_sale),
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                expanded = true,
+                modifier = Modifier
+                    .imePadding()
+                    .navigationBarsPadding()
+            )
+        }
+    ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .imePadding()
-                    .padding(bottom = 88.dp)
-            ) {
+                                ) {
 
                 if (!isOnline) {
                     Card(
@@ -362,36 +401,7 @@ fun SaleEntryScreen(
                 Spacer(modifier = Modifier.height(Spacing.xxlarge))
             }
         }
-
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter),
-            color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 8.dp
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Spacing.large, vertical = Spacing.medium)
-            ) {
-                AppPrimaryButton(
-                    text = if (state.saveSuccess)
-                        "✅ ${stringResource(R.string.saved)}"
-                    else
-                        "💾 ${stringResource(R.string.save_sale)} · ${viewModel.getFormattedTotal()}",
-                    onClick = {
-                        focusManager.clearFocus()
-                        viewModel.handleEvent(SaleEntryEvent.SaveSale)
-                    },
-                    isLoading = state.isSaving,
-                    enabled = !state.isSaving &&
-                        if (state.isCreditSale) state.creditCustomer != null else true
-                )
-            }
-        }
     }
-}
 
 @Composable
 private fun SectionCard(

@@ -40,6 +40,7 @@ fun AppScreen(
     onFilterClick: (() -> Unit)? = null,
     showTopBar: Boolean = false,
     floatingActionButton: @Composable (() -> Unit)? = null,
+    bottomBar: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     val hasTopBar = showBackButton || showSearchButton || showDateFilter || showHistoryButton || showTopBar || showAddButton || showAnalyticsButton || showFilterButton
@@ -130,6 +131,9 @@ fun AppScreen(
         },
         floatingActionButton = {
             floatingActionButton?.invoke()
+        },
+        bottomBar = {
+            bottomBar?.invoke()
         }
     ) { paddingValues ->
         Column(
