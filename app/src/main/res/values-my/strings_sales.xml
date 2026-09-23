@@ -25,4 +25,5 @@
     <string name="payment_breakdown">ငွေပေးချေမှုအသေးစိတ်</string>
     <string name="no_sales_today">ယနေ့အရောင်းမရှိပါ</string>
     <string name="filter_by_date">ရက်စွဲအလိုက် စစ်ထုတ်ရန်</string>
+    <string name="sales">အရောင်းများ</string>
 </resources>

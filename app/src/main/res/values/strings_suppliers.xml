@@ -19,4 +19,5 @@
     <string name="failed_to_load_supplier">Failed to load supplier</string>
     <string name="failed_to_update_supplier">Failed to update supplier</string>
     <string name="total_purchased">Total Purchased</string>
+    <string name="company">Company</string>
 </resources>

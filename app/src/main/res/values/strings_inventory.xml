@@ -58,4 +58,9 @@
     <string name="current">Current</string>
     <string name="no_stock_movements">No stock movements</string>
     <string name="stock_tracked_message">Stock will be tracked when you make sales or purchases</string>
+    <string name="sku">SKU</string>
+    <string name="sell_price">Sell Price *</string>
+    <string name="stock_quantity">Stock Quantity</string>
+    <string name="min_stock_level">Min Stock Level</string>
+    <string name="supplier_id">Supplier ID</string>
 </resources>

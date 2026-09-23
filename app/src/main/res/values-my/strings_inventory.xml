@@ -58,4 +58,9 @@
     <string name="current">လက်ရှိ</string>
     <string name="no_stock_movements">ပစ္စည်းလှုပ်ရှားမှုမရှိပါ</string>
     <string name="stock_tracked_message">အရောင်းများ သို့မဟုတ် ဝယ်ယူမှုများပြုလုပ်သောအခါ ပစ္စည်းများကို ခြေရာခံမည်</string>
+    <string name="sku">SKU</string>
+    <string name="sell_price">ရောင်းဈေး *</string>
+    <string name="stock_quantity">ပစ္စည်းအရေအတွက်</string>
+    <string name="min_stock_level">အနည်းဆုံးအရေအတွက်</string>
+    <string name="supplier_id">ပေးသွင်းသူ ID</string>
 </resources>

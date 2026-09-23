@@ -25,4 +25,5 @@
     <string name="payment_breakdown">Payment Breakdown</string>
     <string name="no_sales_today">No sales today</string>
     <string name="filter_by_date">Filter by date</string>
+    <string name="sales">Sales</string>
 </resources>

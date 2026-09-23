@@ -19,4 +19,5 @@
     <string name="failed_to_load_supplier">ပေးသွင်းသူဖွင့်ရန် မအောင်မြင်ပါ</string>
     <string name="failed_to_update_supplier">ပေးသွင်းသူပြင်ရန် မအောင်မြင်ပါ</string>
     <string name="total_purchased">စုစုပေါင်းဝယ်ယူမှု</string>
+    <string name="company">ကုမ္ပဏီ</string>
 </resources>
