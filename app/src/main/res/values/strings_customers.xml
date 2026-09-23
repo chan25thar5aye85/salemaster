@@ -24,4 +24,13 @@
     <string name="last_order">Last Order</string>
     <string name="no_phone">No phone</string>
     <string name="customers_count">customers</string>
+    <string name="credit_balance_label">Credit Balance</string>
+    <string name="customer_owes_amount">Customer owes %1$d</string>
+    <string name="record_payment">Record Payment</string>
+    <string name="credit_history">Credit History</string>
+    <string name="credit_sale">Sale on credit</string>
+    <string name="credit_payment">Payment received</string>
+    <string name="amount_owed">Amount owed: %1$d</string>
+    <string name="payment_recorded">Payment recorded!</string>
+    <string name="confirm">Confirm</string>
 </resources>

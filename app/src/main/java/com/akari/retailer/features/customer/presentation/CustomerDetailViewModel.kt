@@ -3,7 +3,12 @@ package com.akari.retailer.features.customer.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.customer.data.repository.CustomerRepository
+import com.akari.retailer.features.customer.domain.models.CreditTransaction
 import com.akari.retailer.features.customer.domain.models.Customer
+import com.akari.retailer.features.customer.domain.usecases.GetCreditTransactionsUseCase
+import com.akari.retailer.features.customer.domain.usecases.RecordCreditPaymentUseCase
+import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
+import com.akari.retailer.features.money.domain.models.MoneyAccount
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,16 +18,37 @@ import kotlinx.coroutines.launch
 data class CustomerDetailState(
     val customer: Customer? = null,
     val isLoading: Boolean = true,
-    val error: String? = null
+    val error: String? = null,
+
+    // Credit
+    val creditTransactions: List<CreditTransaction> = emptyList(),
+
+    // Payment dialog
+    val showPaymentDialog: Boolean = false,
+    val paymentAmount: String = "",
+    val accounts: List<MoneyAccount> = emptyList(),
+    val selectedAccount: MoneyAccount? = null,
+    val isRecordingPayment: Boolean = false,
+    val paymentSuccess: Boolean = false,
+    val paymentError: String? = null
 )
 
 sealed class CustomerDetailEvent {
     data object LoadCustomer : CustomerDetailEvent()
     data object ClearError : CustomerDetailEvent()
+    data object OpenPaymentDialog : CustomerDetailEvent()
+    data object ClosePaymentDialog : CustomerDetailEvent()
+    data class PaymentAmountChanged(val value: String) : CustomerDetailEvent()
+    data class PaymentAccountSelected(val account: MoneyAccount) : CustomerDetailEvent()
+    data object SubmitPayment : CustomerDetailEvent()
+    data object ClearPaymentSuccess : CustomerDetailEvent()
 }
 
 class CustomerDetailViewModel(
     private val repository: CustomerRepository,
+    private val moneyAccountRepository: MoneyAccountRepository,
+    private val recordCreditPaymentUseCase: RecordCreditPaymentUseCase,
+    private val getCreditTransactionsUseCase: GetCreditTransactionsUseCase,
     private val customerId: String
 ) : ViewModel() {
 
@@ -30,15 +56,25 @@ class CustomerDetailViewModel(
     val state: StateFlow<CustomerDetailState> = _state.asStateFlow()
 
     private var loadJob: Job? = null
+    private var loadAccountsJob: Job? = null
+    private var loadCreditJob: Job? = null
 
     init {
         loadCustomer()
+        loadAccounts()
+        loadCreditTransactions()
     }
 
     fun handleEvent(event: CustomerDetailEvent) {
         when (event) {
             is CustomerDetailEvent.LoadCustomer -> loadCustomer()
             is CustomerDetailEvent.ClearError -> clearError()
+            is CustomerDetailEvent.OpenPaymentDialog -> openPaymentDialog()
+            is CustomerDetailEvent.ClosePaymentDialog -> closePaymentDialog()
+            is CustomerDetailEvent.PaymentAmountChanged -> _state.value = _state.value.copy(paymentAmount = event.value.filter { it.isDigit() })
+            is CustomerDetailEvent.PaymentAccountSelected -> _state.value = _state.value.copy(selectedAccount = event.account)
+            is CustomerDetailEvent.SubmitPayment -> submitPayment()
+            is CustomerDetailEvent.ClearPaymentSuccess -> _state.value = _state.value.copy(paymentSuccess = false)
         }
     }
 
@@ -63,19 +99,118 @@ class CustomerDetailViewModel(
         }
     }
 
+    private fun loadAccounts() {
+        loadAccountsJob?.cancel()
+        loadAccountsJob = viewModelScope.launch {
+            try {
+                moneyAccountRepository.getAccounts().collect { accounts ->
+                    _state.value = _state.value.copy(accounts = accounts.filter { it.isActive })
+                }
+            } catch (e: Exception) { }
+        }
+    }
+
+    private fun loadCreditTransactions() {
+        loadCreditJob?.cancel()
+        loadCreditJob = viewModelScope.launch {
+            try {
+                getCreditTransactionsUseCase.forCustomer(customerId).collect { txns ->
+                    _state.value = _state.value.copy(creditTransactions = txns.take(10))
+                }
+            } catch (e: Exception) { }
+        }
+    }
+
+    private fun openPaymentDialog() {
+        if ((_state.value.customer?.creditBalance ?: 0) <= 0) {
+            _state.value = _state.value.copy(paymentError = "Customer has no outstanding credit")
+            return
+        }
+        _state.value = _state.value.copy(
+            showPaymentDialog = true,
+            paymentAmount = "",
+            selectedAccount = _state.value.accounts.firstOrNull(),
+            paymentError = null,
+            paymentSuccess = false
+        )
+    }
+
+    private fun closePaymentDialog() {
+        _state.value = _state.value.copy(
+            showPaymentDialog = false,
+            paymentAmount = "",
+            selectedAccount = null,
+            paymentError = null
+        )
+    }
+
+    private fun submitPayment() {
+        val customer = _state.value.customer ?: return
+        val amount = _state.value.paymentAmount.toIntOrNull() ?: 0
+        val account = _state.value.selectedAccount
+
+        if (amount <= 0) {
+            _state.value = _state.value.copy(paymentError = "Enter a valid amount")
+            return
+        }
+        if (amount > customer.creditBalance) {
+            _state.value = _state.value.copy(
+                paymentError = "Amount exceeds owed (${customer.creditBalance})"
+            )
+            return
+        }
+        if (account == null) {
+            _state.value = _state.value.copy(paymentError = "Select a money account")
+            return
+        }
+
+        _state.value = _state.value.copy(isRecordingPayment = true, paymentError = null)
+
+        viewModelScope.launch {
+            val result = recordCreditPaymentUseCase.invoke(
+                customerId = customer.id,
+                amount = amount,
+                paymentAccountId = account.id,
+                description = "Credit payment"
+            )
+            if (result.isSuccess) {
+                _state.value = _state.value.copy(
+                    isRecordingPayment = false,
+                    paymentSuccess = true,
+                    showPaymentDialog = false,
+                    paymentAmount = ""
+                )
+            } else {
+                _state.value = _state.value.copy(
+                    isRecordingPayment = false,
+                    paymentError = result.exceptionOrNull()?.message ?: "Payment failed"
+                )
+            }
+        }
+    }
+
     private fun clearError() {
-        _state.value = _state.value.copy(error = null)
+        _state.value = _state.value.copy(error = null, paymentError = null)
     }
 }
 
 class CustomerDetailViewModelFactory(
     private val repository: CustomerRepository,
+    private val moneyAccountRepository: MoneyAccountRepository,
+    private val recordCreditPaymentUseCase: RecordCreditPaymentUseCase,
+    private val getCreditTransactionsUseCase: GetCreditTransactionsUseCase,
     private val customerId: String
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(CustomerDetailViewModel::class.java)) {
-            return CustomerDetailViewModel(repository, customerId) as T
+            return CustomerDetailViewModel(
+                repository,
+                moneyAccountRepository,
+                recordCreditPaymentUseCase,
+                getCreditTransactionsUseCase,
+                customerId
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

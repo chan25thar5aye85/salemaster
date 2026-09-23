@@ -24,4 +24,13 @@
     <string name="last_order">နောက်ဆုံးအော်ဒါ</string>
     <string name="no_phone">ဖုန်းမရှိပါ</string>
     <string name="customers_count">ဖောက်သည်များ</string>
+    <string name="credit_balance_label">အကြွေးလက်ကျန်</string>
+    <string name="customer_owes_amount">ဖောက်သည်အကြွေး %1$d</string>
+    <string name="record_payment">ငွေပေးချေမှုမှတ်တမ်းတင်ရန်</string>
+    <string name="credit_history">အကြွေးမှတ်တမ်း</string>
+    <string name="credit_sale">အကြွေးဖြင့်ရောင်းခြင်း</string>
+    <string name="credit_payment">ငွေလက်ခံရရှိမှု</string>
+    <string name="amount_owed">အကြွေးပမာဏ: %1$d</string>
+    <string name="payment_recorded">ငွေပေးချေမှု မှတ်တမ်းတင်ပြီး!</string>
+    <string name="confirm">အတည်ပြုမည်</string>
 </resources>
