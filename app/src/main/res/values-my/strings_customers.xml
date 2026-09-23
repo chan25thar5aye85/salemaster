@@ -33,4 +33,6 @@
     <string name="amount_owed">အကြွေးပမာဏ: %1$d</string>
     <string name="payment_recorded">ငွေပေးချေမှု မှတ်တမ်းတင်ပြီး!</string>
     <string name="confirm">အတည်ပြုမည်</string>
+    <string name="outstanding_credit">ပေးရန်ကျန်ရှိသောအကြွေး</string>
+    <string name="debtors_count">အကြွေးကျန်ဖောက်သည် %1$d ဦး</string>
 </resources>

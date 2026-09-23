@@ -7,4 +7,5 @@ sealed class CustomerListEvent {
     data object ClearError : CustomerListEvent()
     data class SearchQueryChanged(val query: String) : CustomerListEvent()
     data object ClearSearch : CustomerListEvent()
+    data object ToggleDebtorsOnly : CustomerListEvent()
 }

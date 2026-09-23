@@ -7,5 +7,6 @@ data class CustomerListState(
     val allCustomers: List<Customer> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null,
-    val searchQuery: String = ""
+    val searchQuery: String = "",
+    val showDebtorsOnly: Boolean = false
 )

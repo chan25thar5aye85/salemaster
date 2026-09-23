@@ -24,6 +24,9 @@ import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.customer.domain.models.Customer
 import com.akari.retailer.navigation.Routes
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Surface
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,6 +103,54 @@ fun CustomerListScreen(
                     placeholder = stringResource(R.string.search_customers),
                     modifier = Modifier.padding(bottom = Spacing.medium)
                 )
+            }
+
+            // ── Outstanding credit summary card ──
+            if (state.allCustomers.isNotEmpty()) {
+                val totalOwed = state.allCustomers.sumOf { it.creditBalance }
+                val debtorCount = state.allCustomers.count { it.owesCredit() }
+                if (totalOwed > 0) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = Spacing.medium)
+                            .clickable {
+                                viewModel.handleEvent(CustomerListEvent.ToggleDebtorsOnly)
+                            },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (state.showDebtorsOnly)
+                                MaterialTheme.colorScheme.errorContainer
+                            else
+                                MaterialTheme.colorScheme.primaryContainer
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Spacing.medium),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = "💳 ${stringResource(R.string.outstanding_credit)}",
+                                    style = AppTypography.title
+                                )
+                                Text(
+                                    text = "${stringResource(R.string.debtors_count, debtorCount)}",
+                                    style = AppTypography.small,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
+                            }
+                            Text(
+                                text = "${totalOwed}",
+                                style = AppTypography.header,
+                                color = MaterialTheme.colorScheme.error,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                            )
+                        }
+                    }
+                }
             }
 
             if (state.isLoading && state.customers.isEmpty()) {
@@ -283,6 +334,27 @@ fun CustomerCard(
                         style = AppTypography.small,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
+                }
+
+                // ── Credit badge ──
+                if (customer.owesCredit()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "💳 ${customer.creditBalance}",
+                                style = AppTypography.small,
+                                color = MaterialTheme.colorScheme.error,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
             

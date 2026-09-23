@@ -30,6 +30,7 @@ class CustomerListViewModel(
             is CustomerListEvent.ClearError -> clearError()
             is CustomerListEvent.SearchQueryChanged -> searchQueryChanged(event.query)
             is CustomerListEvent.ClearSearch -> clearSearch()
+            is CustomerListEvent.ToggleDebtorsOnly -> toggleDebtorsOnly()
         }
     }
 
@@ -89,13 +90,22 @@ class CustomerListViewModel(
         applySearch()
     }
 
+    private fun toggleDebtorsOnly() {
+        _state.value = _state.value.copy(showDebtorsOnly = !_state.value.showDebtorsOnly)
+        applySearch()
+    }
+
     private fun applySearch() {
         val query = _state.value.searchQuery.lowercase().trim()
         val allCustomers = _state.value.allCustomers
-        val filtered = if (query.isEmpty()) {
-            allCustomers
-        } else {
-            allCustomers.filter { customer ->
+        val showDebtorsOnly = _state.value.showDebtorsOnly
+
+        var filtered = allCustomers
+        if (showDebtorsOnly) {
+            filtered = filtered.filter { it.owesCredit() }
+        }
+        if (query.isNotEmpty()) {
+            filtered = filtered.filter { customer ->
                 customer.name.lowercase().contains(query) ||
                 customer.phone.lowercase().contains(query) ||
                 customer.email.lowercase().contains(query)

@@ -33,4 +33,6 @@
     <string name="amount_owed">Amount owed: %1$d</string>
     <string name="payment_recorded">Payment recorded!</string>
     <string name="confirm">Confirm</string>
+    <string name="outstanding_credit">Outstanding Credit</string>
+    <string name="debtors_count">%1$d customers with credit</string>
 </resources>
