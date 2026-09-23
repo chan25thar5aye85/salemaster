@@ -37,4 +37,7 @@
     <string name="no_customers_found_short">ဖောက်သည်မတွေ့ပါ</string>
     <string name="customer">ဖောက်သည်</string>
     <string name="owes_label">အကြွေးကျန်</string>
+
+    <string name="items">ပစ္စည်းများ</string>
+    <string name="offline_banner_sale">အင်တာနက်မရှိပါ။ အွန်လိုင်းရသောအခါ အရောင်းများ စင့်ခ်လုပ်ပါမည်။</string>
 </resources>

@@ -396,6 +396,14 @@ private fun CreditHistoryRow(transaction: CreditTransaction) {
                 style = AppTypography.small,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
+            if (transaction.description.isNotEmpty()) {
+                Text(
+                    text = "📝 ${transaction.description}",
+                    style = AppTypography.small,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    fontSize = 11.sp
+                )
+            }
         }
         Text(
             text = (if (isCredit) "+" else "") + "${transaction.amount}",

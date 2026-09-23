@@ -37,4 +37,7 @@
     <string name="no_customers_found_short">No customers found</string>
     <string name="customer">Customer</string>
     <string name="owes_label">Owes</string>
+
+    <string name="items">Items</string>
+    <string name="offline_banner_sale">No internet. Sales will sync when online.</string>
 </resources>
