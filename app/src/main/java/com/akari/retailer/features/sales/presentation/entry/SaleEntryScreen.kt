@@ -41,6 +41,8 @@ fun SaleEntryScreen(
             repository,
             moneyAccountRepository,
             processMoneyTransactionUseCase,
+            application.container.customerRepository,
+            application.container.extendCreditUseCase,
             application.container.paymentPreferences
         )
     )
@@ -80,6 +82,16 @@ fun SaleEntryScreen(
             delay(2000)
             viewModel.handleEvent(SaleEntryEvent.ResetSaveSuccess)
         }
+    }
+
+    if (state.showCreditCustomerPicker) {
+        CreditCustomerPickerDialog(
+            customers = state.customers,
+            onCustomerSelected = { customer ->
+                viewModel.handleEvent(SaleEntryEvent.CreditCustomerSelected(customer))
+            },
+            onDismiss = { viewModel.handleEvent(SaleEntryEvent.CloseCreditCustomerPicker) }
+        )
     }
 
     AppScreen(
@@ -138,20 +150,90 @@ fun SaleEntryScreen(
                 
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
-                // ✅ REUSABLE PAYMENT COMPONENT
-                PaymentListComponent(
-                    paymentRows = state.paymentRows,
-                    accounts = state.accounts,
-                    totalAmount = viewModel.getTotal(),
-                    onAccountSelected = { rowId, account ->
-                        viewModel.handleEvent(SaleEntryEvent.PaymentAccountChanged(rowId, account))
-                    },
-                    onAmountChanged = { rowId, amount ->
-                        viewModel.handleEvent(SaleEntryEvent.PaymentAmountChanged(rowId, amount))
-                    },
-                    onAddRow = { viewModel.handleEvent(SaleEntryEvent.AddPaymentRow) },
-                    onRemoveRow = { rowId -> viewModel.handleEvent(SaleEntryEvent.RemovePaymentRow(rowId)) }
-                )
+                // ── Payment mode toggle ──
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+                ) {
+                    CreditModeButton(
+                        text = stringResource(R.string.normal_payment),
+                        isSelected = !state.isCreditSale,
+                        onClick = {
+                            if (state.isCreditSale) {
+                                viewModel.handleEvent(SaleEntryEvent.ToggleCreditSale)
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                    CreditModeButton(
+                        text = "💳 ${stringResource(R.string.credit)}",
+                        isSelected = state.isCreditSale,
+                        onClick = {
+                            if (!state.isCreditSale) {
+                                viewModel.handleEvent(SaleEntryEvent.ToggleCreditSale)
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Spacing.small))
+
+                if (state.isCreditSale) {
+                    // Credit sale UI
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Spacing.medium)
+                        ) {
+                            Text(
+                                text = "💳 ${stringResource(R.string.sell_on_credit)}",
+                                style = AppTypography.title
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = state.creditCustomer?.let {
+                                    "${stringResource(R.string.customer)}: ${it.name}" +
+                                    if (it.owesCredit()) " (owes ${it.creditBalance})" else ""
+                                } ?: stringResource(R.string.no_customer_selected),
+                                style = AppTypography.body
+                            )
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            OutlinedButton(
+                                onClick = { viewModel.handleEvent(SaleEntryEvent.OpenCreditCustomerPicker) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    if (state.creditCustomer == null)
+                                        stringResource(R.string.select_customer)
+                                    else
+                                        stringResource(R.string.change_customer)
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // Normal payment component
+                    PaymentListComponent(
+                        paymentRows = state.paymentRows,
+                        accounts = state.accounts,
+                        totalAmount = viewModel.getTotal(),
+                        onAccountSelected = { rowId, account ->
+                            viewModel.handleEvent(SaleEntryEvent.PaymentAccountChanged(rowId, account))
+                        },
+                        onAmountChanged = { rowId, amount ->
+                            viewModel.handleEvent(SaleEntryEvent.PaymentAmountChanged(rowId, amount))
+                        },
+                        onAddRow = { viewModel.handleEvent(SaleEntryEvent.AddPaymentRow) },
+                        onRemoveRow = { rowId -> viewModel.handleEvent(SaleEntryEvent.RemovePaymentRow(rowId)) }
+                    )
+                }
 
                 state.error?.let { error ->
                     Spacer(modifier = Modifier.height(8.dp))
@@ -171,7 +253,8 @@ fun SaleEntryScreen(
                         viewModel.handleEvent(SaleEntryEvent.SaveSale)
                     },
                     isLoading = state.isSaving,
-                    enabled = !state.isSaving
+                    enabled = !state.isSaving &&
+                        if (state.isCreditSale) state.creditCustomer != null else true
                 )
             }
 
@@ -185,5 +268,31 @@ fun SaleEntryScreen(
 
             Spacer(modifier = Modifier.height(Spacing.xxlarge))
         }
+    }
+}
+
+
+@Composable
+fun CreditModeButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = if (isSelected)
+                MaterialTheme.colorScheme.onPrimary
+            else
+                MaterialTheme.colorScheme.onSurface
+        )
+    ) {
+        Text(text, fontSize = 13.sp)
     }
 }

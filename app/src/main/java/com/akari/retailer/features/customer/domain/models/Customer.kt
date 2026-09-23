@@ -8,6 +8,7 @@ data class Customer(
     val address: String = "",
     val totalSpent: Int = 0,
     val totalOrders: Int = 0,
+    val creditBalance: Int = 0,
     val lastOrderDate: Long = System.currentTimeMillis(),
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
@@ -18,4 +19,8 @@ data class Customer(
     fun getPhoneDisplay(): String = phone.ifEmpty { "No phone" }
     
     fun getTotalSpentFormatted(): String = totalSpent.toString()
+
+    fun owesCredit(): Boolean = creditBalance > 0
+
+    fun getCreditBalanceFormatted(): String = creditBalance.toString()
 }

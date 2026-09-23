@@ -26,4 +26,15 @@
     <string name="no_sales_today">ယနေ့အရောင်းမရှိပါ</string>
     <string name="filter_by_date">ရက်စွဲအလိုက် စစ်ထုတ်ရန်</string>
     <string name="sales">အရောင်းများ</string>
+    <string name="normal_payment">ပုံမှန်ငွေပေးချေမှု</string>
+    <string name="credit">အကြွေး</string>
+    <string name="sell_on_credit">အကြွေးဖြင့်ရောင်းမည်</string>
+    <string name="no_customer_selected">ဖောက်သည်မရွေးရသေးပါ</string>
+    <string name="select_customer">ဖောက်သည်ရွေးပါ</string>
+    <string name="change_customer">ဖောက်သည်ပြောင်းပါ</string>
+    <string name="select_customer_for_credit">အကြွေးအတွက် ဖောက်သည်ရွေးပါ</string>
+    <string name="search_customers_short">ဖောက်သည်ရှာဖွေရန်...</string>
+    <string name="no_customers_found_short">ဖောက်သည်မတွေ့ပါ</string>
+    <string name="customer">ဖောက်သည်</string>
+    <string name="owes_label">အကြွေးကျန်</string>
 </resources>

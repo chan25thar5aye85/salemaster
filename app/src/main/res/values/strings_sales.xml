@@ -26,4 +26,15 @@
     <string name="no_sales_today">No sales today</string>
     <string name="filter_by_date">Filter by date</string>
     <string name="sales">Sales</string>
+    <string name="normal_payment">Normal Payment</string>
+    <string name="credit">Credit</string>
+    <string name="sell_on_credit">Sell on Credit</string>
+    <string name="no_customer_selected">No customer selected</string>
+    <string name="select_customer">Select Customer</string>
+    <string name="change_customer">Change Customer</string>
+    <string name="select_customer_for_credit">Select Customer for Credit</string>
+    <string name="search_customers_short">Search customers...</string>
+    <string name="no_customers_found_short">No customers found</string>
+    <string name="customer">Customer</string>
+    <string name="owes_label">Owes</string>
 </resources>

@@ -13,6 +13,9 @@ import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransaction
 import com.akari.retailer.features.sales.domain.models.Sale
 import com.akari.retailer.features.sales.domain.models.SaleItem
 import com.akari.retailer.core.utils.MoneyFormatter
+import com.akari.retailer.features.customer.data.repository.CustomerRepository
+import com.akari.retailer.features.customer.domain.models.Customer
+import com.akari.retailer.features.customer.domain.usecases.ExtendCreditUseCase
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +26,8 @@ class SaleEntryViewModel(
     private val repository: SaleRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
     private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
+    private val customerRepository: CustomerRepository,
+    private val extendCreditUseCase: ExtendCreditUseCase,
     private val paymentPreferences: PaymentPreferences
 ) : ViewModel() {
 
@@ -34,6 +39,7 @@ class SaleEntryViewModel(
 
     private var loadAccountsJob: Job? = null
     private var loadRecentSalesJob: Job? = null
+    private var loadCustomersJob: Job? = null
 
     private var nextPaymentRowId = 2L
     private var userTouchedPaymentAmounts = false
@@ -45,6 +51,7 @@ class SaleEntryViewModel(
         )
         loadRecentSales()
         loadAccounts()
+        loadCustomers()
     }
 
     fun handleEvent(event: SaleEntryEvent) {
@@ -74,6 +81,10 @@ class SaleEntryViewModel(
             SaleEntryEvent.SaveSale -> saveSale()
             SaleEntryEvent.ClearError -> clearError()
             SaleEntryEvent.ResetSaveSuccess -> resetSaveSuccess()
+            SaleEntryEvent.ToggleCreditSale -> toggleCreditSale()
+            SaleEntryEvent.OpenCreditCustomerPicker -> openCreditCustomerPicker()
+            SaleEntryEvent.CloseCreditCustomerPicker -> closeCreditCustomerPicker()
+            is SaleEntryEvent.CreditCustomerSelected -> selectCreditCustomer(event.customer)
         }
     }
 
@@ -145,6 +156,52 @@ class SaleEntryViewModel(
         )
     }
 
+    private fun loadCustomers() {
+        loadCustomersJob?.cancel()
+        loadCustomersJob = viewModelScope.launch {
+            try {
+                customerRepository.getCustomers().collect { customers ->
+                    _state.value = _state.value.copy(customers = customers)
+                }
+            } catch (e: Exception) { }
+        }
+    }
+
+    // ── Credit sale helpers ──
+
+    private fun toggleCreditSale() {
+        val goingCredit = !_state.value.isCreditSale
+        if (goingCredit) {
+            _state.value = _state.value.copy(
+                isCreditSale = true,
+                error = null
+            )
+        } else {
+            // Back to normal payment mode
+            _state.value = _state.value.copy(
+                isCreditSale = false,
+                creditCustomer = null,
+                error = null
+            )
+        }
+    }
+
+    private fun openCreditCustomerPicker() {
+        _state.value = _state.value.copy(showCreditCustomerPicker = true)
+    }
+
+    private fun closeCreditCustomerPicker() {
+        _state.value = _state.value.copy(showCreditCustomerPicker = false)
+    }
+
+    private fun selectCreditCustomer(customer: Customer) {
+        _state.value = _state.value.copy(
+            creditCustomer = customer,
+            showCreditCustomerPicker = false,
+            error = null
+        )
+    }
+
     private fun updateAmount(rowId: Long, value: String) {
         _state.value = stateManager.updateAmount(_state.value, rowId, value)
     }
@@ -207,6 +264,18 @@ class SaleEntryViewModel(
 
         val total = items.sum()
 
+        // ── Credit sale path ──
+        if (currentState.isCreditSale) {
+            val customer = currentState.creditCustomer
+            if (customer == null) {
+                _state.value = stateManager.setError(currentState, "Select a customer for credit sale")
+                return
+            }
+            saveCreditSale(currentState, items, total, customer, cashierId)
+            return
+        }
+
+        // ── Normal payment path ──
         val payments = currentState.paymentRows
             .filter { it.amount.toIntOrNull()?.let { it > 0 } == true }
             .map { PaymentEntry(it.accountId, it.amount.toIntOrNull() ?: 0) }
@@ -252,12 +321,12 @@ class SaleEntryViewModel(
                     )
                     Log.d(TAG, "Sale saved")
 
-                    // Reset AFTER success
                     _state.value = stateManager.resetState().copy(
                         isSaving = false,
                         saveSuccess = true,
                         recentSales = currentRecentSales,
                         accounts = currentState.accounts,
+                        customers = currentState.customers,
                         paymentRows = listOf(PaymentRow(1L, lastAccountId, ""))
                     )
                     userTouchedPaymentAmounts = false
@@ -276,6 +345,81 @@ class SaleEntryViewModel(
         }
     }
 
+    private fun saveCreditSale(
+        currentState: SaleEntryState,
+        items: List<Int>,
+        total: Int,
+        customer: Customer,
+        cashierId: String
+    ) {
+        val currentRecentSales = currentState.recentSales
+        val saleItems = items.map { amount ->
+            SaleItem(productId = "", quantity = 1, price = amount, total = amount)
+        }
+
+        _state.value = currentState.copy(isSaving = true, error = null)
+
+        viewModelScope.launch {
+            try {
+                // 1. Save the sale (with no payments — it's credit)
+                val sale = Sale(
+                    items = saleItems,
+                    total = total,
+                    payments = emptyList(),  // credit — no money moved
+                    cashierId = cashierId
+                )
+
+                val saleResult = repository.saveSale(sale)
+                if (saleResult.isFailure) {
+                    _state.value = currentState.copy(
+                        isSaving = false,
+                        error = saleResult.exceptionOrNull()?.message ?: "Failed to save sale"
+                    )
+                    return@launch
+                }
+
+                val saleId = saleResult.getOrNull() ?: ""
+
+                // 2. Extend credit (atomic: bumps customer.creditBalance + writes CreditTransaction)
+                val creditResult = extendCreditUseCase.invoke(
+                    customerId = customer.id,
+                    amount = total,
+                    saleId = saleId,
+                    description = "Sale on credit"
+                )
+
+                if (creditResult.isFailure) {
+                    // Sale was saved but credit failed — surface the error
+                    _state.value = currentState.copy(
+                        isSaving = false,
+                        error = "Sale saved but credit failed: ${creditResult.exceptionOrNull()?.message}"
+                    )
+                    return@launch
+                }
+
+                Log.d(TAG, "Credit sale saved: customer=${customer.id}, amount=$total")
+
+                // Success — reset the form
+                _state.value = stateManager.resetState().copy(
+                    isSaving = false,
+                    saveSuccess = true,
+                    recentSales = currentRecentSales,
+                    accounts = currentState.accounts,
+                    customers = currentState.customers,
+                    isCreditSale = false,
+                    creditCustomer = null,
+                    paymentRows = listOf(PaymentRow(1L, "default_cash", ""))
+                )
+                userTouchedPaymentAmounts = false
+            } catch (e: Exception) {
+                _state.value = currentState.copy(
+                    isSaving = false,
+                    error = e.message ?: "Failed to save credit sale"
+                )
+            }
+        }
+    }
+
     private fun clearError() {
         _state.value = stateManager.setError(_state.value, null)
     }
@@ -289,6 +433,8 @@ class SaleEntryViewModelFactory(
     private val repository: SaleRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
     private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
+    private val customerRepository: CustomerRepository,
+    private val extendCreditUseCase: ExtendCreditUseCase,
     private val paymentPreferences: PaymentPreferences
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -298,6 +444,8 @@ class SaleEntryViewModelFactory(
                 repository,
                 moneyAccountRepository,
                 processMoneyTransactionUseCase,
+                customerRepository,
+                extendCreditUseCase,
                 paymentPreferences
             ) as T
         }
