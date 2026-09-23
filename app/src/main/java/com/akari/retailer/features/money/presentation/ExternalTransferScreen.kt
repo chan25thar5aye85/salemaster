@@ -185,7 +185,7 @@ fun ExternalTransferScreen(
                         onValueChange = { 
                             viewModel.handleEvent(ExternalTransferEvent.ExternalAccountNameChanged(it)) 
                         },
-                        placeholder = { Text("Name", fontSize = 13.sp) },
+                        placeholder = { Text(stringResource(R.string.name_field), fontSize = 13.sp) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )

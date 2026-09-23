@@ -333,7 +333,7 @@ fun PurchaseOrderDetailScreen(
                 showEditDialog = false
                 editingIndex = -1
             },
-            title = { Text("Edit Item") },
+            title = { Text(stringResource(R.string.edit_item)) },
             text = {
                 Column {
                     Text(
@@ -345,7 +345,7 @@ fun PurchaseOrderDetailScreen(
                     OutlinedTextField(
                         value = editQuantity,
                         onValueChange = { editQuantity = it },
-                        label = { Text("Quantity") },
+                        label = { Text(stringResource(R.string.quantity_short)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
@@ -356,7 +356,7 @@ fun PurchaseOrderDetailScreen(
                     OutlinedTextField(
                         value = editPrice,
                         onValueChange = { editPrice = it },
-                        label = { Text("Price") },
+                        label = { Text(stringResource(R.string.price)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
@@ -381,7 +381,7 @@ fun PurchaseOrderDetailScreen(
                         editingIndex = -1
                     }
                 ) {
-                    Text("Save")
+                    Text(stringResource(R.string.save))
                 }
             },
             dismissButton = {
@@ -402,8 +402,8 @@ fun PurchaseOrderDetailScreen(
                 showDeleteConfirmation = false
                 deleteIndex = -1
             },
-            title = { Text("Delete Item") },
-            text = { Text("Are you sure you want to delete this item?") },
+            title = { Text(stringResource(R.string.delete_item)) },
+            text = { Text(stringResource(R.string.delete_item_confirmation)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -447,13 +447,13 @@ fun PurchaseOrderDetailScreen(
         
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            title = { Text("Add Item") },
+            title = { Text(stringResource(R.string.add_item)) },
             text = {
                 Column {
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        label = { Text("Search products...") },
+                        label = { Text(stringResource(R.string.search_products_hint)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -513,7 +513,7 @@ fun PurchaseOrderDetailScreen(
                         OutlinedTextField(
                             value = addQuantity,
                             onValueChange = { addQuantity = it },
-                            label = { Text("Quantity") },
+                            label = { Text(stringResource(R.string.quantity_short)) },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth()
@@ -524,7 +524,7 @@ fun PurchaseOrderDetailScreen(
                         OutlinedTextField(
                             value = addPrice,
                             onValueChange = { addPrice = it },
-                            label = { Text("Price") },
+                            label = { Text(stringResource(R.string.price)) },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth()
@@ -554,7 +554,7 @@ fun PurchaseOrderDetailScreen(
                         showAddDialog = false
                     }
                 ) {
-                    Text("Add")
+                    Text(stringResource(R.string.add))
                 }
             },
             dismissButton = {

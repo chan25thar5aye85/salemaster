@@ -41,7 +41,7 @@ fun CategoryDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = onNameChange,
-                    label = { Text("Category Name") },
+                    label = { Text(stringResource(R.string.category_name)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp),
@@ -65,7 +65,7 @@ fun CategoryDialog(
                 enabled = !isSaving
             ) {
                 if (isSaving) {
-                    Text("Saving...")
+                    Text(stringResource(R.string.saving_dots))
                 } else {
                     Text(if (isEditing) "Update" else "Add")
                 }

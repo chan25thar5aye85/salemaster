@@ -48,8 +48,8 @@ fun IncomeStreamManagementScreen(
                 showDeleteDialog = false
                 pendingDeleteId = null
             },
-            title = { Text("Delete Income Stream") },
-            text = { Text("Are you sure you want to delete this income stream?") },
+            title = { Text(stringResource(R.string.delete_income_stream)) },
+            text = { Text(stringResource(R.string.delete_income_stream_confirmation)) },
             confirmButton = {
                 Button(
                     onClick = {

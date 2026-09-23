@@ -152,8 +152,8 @@ fun PurchaseOrderScreen(
                 value = if (state.expectedDeliveryDate > 0) dateFormat.format(Date(state.expectedDeliveryDate)) else "",
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Expected Delivery Date") },
-                placeholder = { Text("Select date") },
+                label = { Text(stringResource(R.string.expected_delivery_date)) },
+                placeholder = { Text(stringResource(R.string.select_date)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showDatePicker = true },
@@ -341,7 +341,7 @@ fun PurchaseOrderScreen(
                         showDatePicker = false
                     }
                 ) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             },
             dismissButton = {

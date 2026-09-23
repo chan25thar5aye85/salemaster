@@ -107,4 +107,17 @@
     <string name="order_number">အော်ဒါနံပါတ်</string>
     <string name="supplier">ပေးသွင်းသူ</string>
     <string name="items_count">ပစ္စည်းများ</string>
+    <string name="edit_item">ပစ္စည်းပြင်ရန်</string>
+    <string name="add_item">ပစ္စည်းထည့်ရန်</string>
+    <string name="add_item_from_products">ပစ္စည်းစာရင်းမှ ထည့်ရန်</string>
+    <string name="delete_item">ပစ္စည်းဖျက်ရန်</string>
+    <string name="delete_item_confirmation">ဤပစ္စည်းကို ဖျက်ရန် သေချာပါသလား?</string>
+    <string name="delete_order_confirmation">ဤအော်ဒါကို ဖျက်ရန် သေချာပါသလား?</string>
+    <string name="quantity_short">အရေအတွက်</string>
+    <string name="price">ဈေးနှုန်း</string>
+    <string name="search_products_hint">ပစ္စည်းရှာဖွေရန်...</string>
+    <string name="expected_delivery_date">မျှော်မှန်းပို့ဆောင်ရမည့်ရက်</string>
+    <string name="select_date">ရက်စွဲရွေးပါ</string>
+    <string name="order_not_found_msg">အော်ဒါမတွေ့ပါ</string>
+    <string name="view_purchases">ဝယ်ယူမှုများကြည့်ရန်</string>
 </resources>

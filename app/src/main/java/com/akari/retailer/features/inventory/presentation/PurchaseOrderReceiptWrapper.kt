@@ -8,6 +8,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.akari.retailer.RetailApplication
+import androidx.compose.ui.res.stringResource
+import com.akari.retailer.R
 
 @Composable
 fun PurchaseOrderReceiptWrapper(
@@ -45,7 +47,7 @@ fun PurchaseOrderReceiptWrapper(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("Order not found")
+            Text(stringResource(R.string.order_not_found_msg))
         }
     }
 }

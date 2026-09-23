@@ -41,7 +41,7 @@ fun IncomeStreamDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = onNameChange,
-                    label = { Text("Income Stream Name") },
+                    label = { Text(stringResource(R.string.income_stream_name)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp),
@@ -65,7 +65,7 @@ fun IncomeStreamDialog(
                 enabled = !isSaving
             ) {
                 if (isSaving) {
-                    Text("Saving...")
+                    Text(stringResource(R.string.saving_dots))
                 } else {
                     Text(if (isEditing) "Update" else "Add")
                 }

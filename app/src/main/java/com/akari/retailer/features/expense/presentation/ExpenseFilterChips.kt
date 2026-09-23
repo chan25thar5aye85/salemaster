@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
+import androidx.compose.ui.res.stringResource
+import com.akari.retailer.R
 
 @Composable
 fun ExpenseFilterChips(
@@ -31,7 +33,7 @@ fun ExpenseFilterChips(
             )
             if (selectedCategories.isNotEmpty()) {
                 TextButton(onClick = onClearAll) {
-                    Text("Clear All")
+                    Text(stringResource(R.string.clear_all))
                 }
             }
         }
@@ -51,7 +53,7 @@ fun ExpenseFilterChips(
                             onClearAll()
                         }
                     },
-                    label = { Text("All") }
+                    label = { Text(stringResource(R.string.all)) }
                 )
             }
             

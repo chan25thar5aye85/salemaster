@@ -61,4 +61,5 @@
     <string name="income_personal_label">Personal</string>
     <string name="income_business_icon">💼 Business</string>
     <string name="income_personal_icon">👤 Personal</string>
+    <string name="search_income_types_hint">Search income types...</string>
 </resources>

@@ -34,4 +34,13 @@
     <string name="error">အမှား</string>
     <string name="updating">ပြင်နေသည်...</string>
     <string name="view_analytics">ခွဲခြမ်းစိတ်ဖြာချက်ကြည့်ရန်</string>
+    <string name="clear_all">အားလုံးရှင်းမည်</string>
+    <string name="all">အားလုံး</string>
+    <string name="save">သိမ်းမည်</string>
+    <string name="add">ထည့်မည်</string>
+    <string name="search">ရှာဖွေရန်</string>
+    <string name="saving_dots">သိမ်းနေသည်...</string>
+    <string name="name_field">အမည်</string>
+    <string name="amount_field">ပမာဏ</string>
+    <string name="apply_filter_count">စစ်ထုတ်မှုအသုံးပြုရန် (%1$d)</string>
 </resources>

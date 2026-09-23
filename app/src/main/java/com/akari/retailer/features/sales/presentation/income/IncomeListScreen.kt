@@ -57,7 +57,7 @@ fun IncomeListScreen(
                 pendingDeleteId = null
             },
             title = { Text(stringResource(R.string.delete)) },
-            text = { Text("Are you sure you want to delete this income entry?") },
+            text = { Text(stringResource(R.string.income_entry_delete_confirmation)) },
             confirmButton = {
                 Button(
                     onClick = {

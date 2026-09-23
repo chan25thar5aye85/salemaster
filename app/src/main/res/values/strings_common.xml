@@ -34,4 +34,13 @@
     <string name="error">Error</string>
     <string name="updating">Updating...</string>
     <string name="view_analytics">View Analytics</string>
+    <string name="clear_all">Clear All</string>
+    <string name="all">All</string>
+    <string name="save">Save</string>
+    <string name="add">Add</string>
+    <string name="search">Search</string>
+    <string name="saving_dots">Saving...</string>
+    <string name="name_field">Name</string>
+    <string name="amount_field">Amount</string>
+    <string name="apply_filter_count">Apply Filter (%1$d)</string>
 </resources>

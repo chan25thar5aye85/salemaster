@@ -17,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.akari.retailer.core.ui.theme.Spacing
+import androidx.compose.ui.res.stringResource
+import com.akari.retailer.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,12 +97,12 @@ fun SearchDialog(
                 onSearch()
                 onDismiss()
             }) {
-                Text("Search")
+                Text(stringResource(R.string.search))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

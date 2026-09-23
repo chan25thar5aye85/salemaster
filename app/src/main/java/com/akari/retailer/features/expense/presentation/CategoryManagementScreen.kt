@@ -48,8 +48,8 @@ fun CategoryManagementScreen(
                 showDeleteDialog = false
                 pendingDeleteId = null
             },
-            title = { Text("Delete Category") },
-            text = { Text("Are you sure you want to delete this category?") },
+            title = { Text(stringResource(R.string.delete_category)) },
+            text = { Text(stringResource(R.string.delete_category_confirmation)) },
             confirmButton = {
                 Button(
                     onClick = {

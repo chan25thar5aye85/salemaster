@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.sales.domain.models.IncomeStream
+import androidx.compose.ui.res.stringResource
+import com.akari.retailer.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +52,7 @@ fun IncomeFilterDialog(
                 )
                 if (selectedStreams.isNotEmpty()) {
                     TextButton(onClick = onClearAll) {
-                        Text("Clear All")
+                        Text(stringResource(R.string.clear_all))
                     }
                 }
             }
@@ -65,7 +67,7 @@ fun IncomeFilterDialog(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search income types...") },
+                    placeholder = { Text(stringResource(R.string.search_income_types_hint)) },
                     leadingIcon = {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     },
@@ -130,7 +132,7 @@ fun IncomeFilterDialog(
                 onClick = onApply,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Apply Filter (${selectedStreams.size})")
+                Text(stringResource(R.string.apply_filter_count, selectedStreams.size))
             }
         },
         dismissButton = {
@@ -138,7 +140,7 @@ fun IncomeFilterDialog(
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

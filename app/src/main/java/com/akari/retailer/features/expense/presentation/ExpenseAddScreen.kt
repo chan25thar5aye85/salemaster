@@ -169,7 +169,7 @@ fun ExpenseAddScreen(
                             viewModel.handleEvent(ExpenseAddEvent.BusinessPercentageChanged(it))
                         }
                     },
-                    label = { Text("Business % (0-100)") },
+                    label = { Text(stringResource(R.string.business_percentage_hint)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)

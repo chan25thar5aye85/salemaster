@@ -133,7 +133,7 @@ fun SaleHistoryScreen(
                                 viewModel.handleEvent(SaleHistoryEvent.ClearDateFilter)
                             }
                         ) {
-                            Text("Clear")
+                            Text(stringResource(R.string.clear))
                         }
                     }
                 }

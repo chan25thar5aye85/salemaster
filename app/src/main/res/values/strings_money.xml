@@ -17,7 +17,6 @@
     <string name="tap_add_account">Tap + to add your first account</string>
     <string name="icon">Icon</string>
     <string name="color">Color</string>
-    <string name="add">Add</string>
     <string name="update">Update</string>
     <string name="edit">Edit</string>
     <string name="money_account">Money Account</string>
@@ -55,7 +54,6 @@
     <string name="fees_paid">Fees Paid</string>
     <string name="fees_earned">Fees Earned</string>
     <string name="filters">Filters</string>
-    <string name="clear_all">Clear All</string>
     <string name="time_range">Time Range</string>
     <string name="transaction_type">Transaction Type</string>
     <string name="all_accounts">All Accounts</string>
@@ -68,4 +66,7 @@
     <string name="net_fee">Net Fee</string>
     <string name="fee_comparison">Fee Comparison</string>
     <string name="net_flow">Net Flow</string>
+    <string name="add_another_payment">Add Another Payment</string>
+    <string name="account_field">Account</string>
+    <string name="payments">Payments</string>
 </resources>

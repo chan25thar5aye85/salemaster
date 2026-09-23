@@ -158,7 +158,7 @@ fun ExpenseListScreen(
                         TextButton(
                             onClick = { viewModel.handleEvent(ExpenseListEvent.ClearCategoryFilters) }
                         ) {
-                            Text("Clear")
+                            Text(stringResource(R.string.clear))
                         }
                     }
                 }

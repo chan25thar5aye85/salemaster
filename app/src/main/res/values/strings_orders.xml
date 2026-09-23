@@ -107,4 +107,17 @@
     <string name="order_number">Order Number</string>
     <string name="supplier">Supplier</string>
     <string name="items_count">Items</string>
+    <string name="edit_item">Edit Item</string>
+    <string name="add_item">Add Item</string>
+    <string name="add_item_from_products">Add Item from Products</string>
+    <string name="delete_item">Delete Item</string>
+    <string name="delete_item_confirmation">Are you sure you want to delete this item?</string>
+    <string name="delete_order_confirmation">Are you sure you want to delete this order?</string>
+    <string name="quantity_short">Quantity</string>
+    <string name="price">Price</string>
+    <string name="search_products_hint">Search products...</string>
+    <string name="expected_delivery_date">Expected Delivery Date</string>
+    <string name="select_date">Select date</string>
+    <string name="order_not_found_msg">Order not found</string>
+    <string name="view_purchases">View Purchases</string>
 </resources>

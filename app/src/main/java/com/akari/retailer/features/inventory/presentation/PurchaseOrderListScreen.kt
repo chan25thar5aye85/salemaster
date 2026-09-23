@@ -49,7 +49,7 @@ fun PurchaseOrderListScreen(
                 pendingDeleteId = null
             },
             title = { Text(stringResource(R.string.delete)) },
-            text = { Text("Are you sure you want to delete this order?") },
+            text = { Text(stringResource(R.string.delete_order_confirmation)) },
             confirmButton = {
                 Button(
                     onClick = {

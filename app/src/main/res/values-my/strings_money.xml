@@ -17,7 +17,6 @@
     <string name="tap_add_account">ပထမဆုံးအကောင့်ထည့်ရန် + ကိုနှိပ်ပါ</string>
     <string name="icon">အိုင်ကွန်</string>
     <string name="color">အရောင်</string>
-    <string name="add">ထည့်မည်</string>
     <string name="update">ပြင်မည်</string>
     <string name="edit">ပြင်မည်</string>
     <string name="money_account">ငွေအကောင့်</string>
@@ -55,7 +54,6 @@
     <string name="fees_paid">ပေးရသည့်အခ</string>
     <string name="fees_earned">ရသည့်အခ</string>
     <string name="filters">စစ်ထုတ်ရန်</string>
-    <string name="clear_all">အားလုံးရှင်းမည်</string>
     <string name="time_range">ကာလ</string>
     <string name="transaction_type">ငွေလွှဲမှုအမျိုးအစား</string>
     <string name="all_accounts">အကောင့်အားလုံး</string>
@@ -68,4 +66,7 @@
     <string name="net_fee">အသားတင်အခ</string>
     <string name="fee_comparison">အခကြေးငွေနှိုင်းယှဉ်ချက်</string>
     <string name="net_flow">အသားတင်စီးဆင်းမှု</string>
+    <string name="add_another_payment">နောက်ထပ်ငွေပေးချေမှုထည့်ရန်</string>
+    <string name="account_field">အကောင့်</string>
+    <string name="payments">ငွေပေးချေမှုများ</string>
 </resources>

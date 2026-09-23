@@ -14,6 +14,8 @@ import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.inventory.domain.models.Product
 import com.akari.retailer.features.inventory.domain.models.PurchaseOrderItem
+import androidx.compose.ui.res.stringResource
+import com.akari.retailer.R
 
 @Composable
 fun EditItemDialog(
@@ -33,7 +35,7 @@ fun EditItemDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Item") },
+        title = { Text(stringResource(R.string.edit_item)) },
         text = {
             Column {
                 Text(
@@ -45,7 +47,7 @@ fun EditItemDialog(
                 OutlinedTextField(
                     value = tempQuantity,
                     onValueChange = { tempQuantity = it },
-                    label = { Text("Quantity") },
+                    label = { Text(stringResource(R.string.quantity_short)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
@@ -56,7 +58,7 @@ fun EditItemDialog(
                 OutlinedTextField(
                     value = tempPrice,
                     onValueChange = { tempPrice = it },
-                    label = { Text("Price") },
+                    label = { Text(stringResource(R.string.price)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
@@ -75,12 +77,12 @@ fun EditItemDialog(
                     }
                 }
             ) {
-                Text("Save")
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -107,13 +109,13 @@ fun AddItemDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Item from Products") },
+        title = { Text(stringResource(R.string.add_item_from_products)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = productSearch,
                     onValueChange = { productSearch = it },
-                    label = { Text("Search products...") },
+                    label = { Text(stringResource(R.string.search_products_hint)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -173,7 +175,7 @@ fun AddItemDialog(
                     OutlinedTextField(
                         value = addQuantity,
                         onValueChange = { addQuantity = it },
-                        label = { Text("Quantity") },
+                        label = { Text(stringResource(R.string.quantity_short)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
@@ -199,12 +201,12 @@ fun AddItemDialog(
                     onAdd(product, qty)
                 }
             ) {
-                Text("Add")
+                Text(stringResource(R.string.add))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

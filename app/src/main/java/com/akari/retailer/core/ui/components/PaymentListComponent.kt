@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.sp
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.money.domain.models.MoneyAccount
+import androidx.compose.ui.res.stringResource
+import com.akari.retailer.R
 
 /**
  * A single payment row (account + amount).
@@ -54,7 +56,7 @@ fun PaymentListComponent(
     Column(modifier = modifier.fillMaxWidth()) {
         // Header
         Text(
-            text = "Payments",
+            text = stringResource(R.string.payments),
             style = AppTypography.title,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = Spacing.small)
@@ -80,7 +82,7 @@ fun PaymentListComponent(
         ) {
             Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(4.dp))
-            Text("Add Another Payment")
+            Text(stringResource(R.string.add_another_payment))
         }
         
         // Summary card
@@ -165,7 +167,7 @@ private fun SinglePaymentRow(
                 value = selectedAccount?.getDisplayName() ?: "Select Account",
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Account", fontSize = 12.sp) },
+                label = { Text(stringResource(R.string.account_field), fontSize = 12.sp) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor(),
@@ -210,7 +212,7 @@ private fun SinglePaymentRow(
                 val digitsOnly = value.filter { it.isDigit() }
                 onAmountChanged(digitsOnly)
             },
-            label = { Text("Amount", fontSize = 12.sp) },
+            label = { Text(stringResource(R.string.amount_field), fontSize = 12.sp) },
             modifier = Modifier.weight(1f),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)

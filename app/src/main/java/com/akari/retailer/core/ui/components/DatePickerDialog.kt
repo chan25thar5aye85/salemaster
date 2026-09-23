@@ -31,7 +31,7 @@ fun DatePickerDialog(
                     onDismiss()
                 }
             ) {
-                Text("OK")
+                Text(stringResource(R.string.ok))
             }
         },
         dismissButton = {
@@ -72,7 +72,7 @@ fun DateRangePickerDialog(
                 enabled = dateRangePickerState.selectedStartDateMillis != null &&
                           dateRangePickerState.selectedEndDateMillis != null
             ) {
-                Text("OK")
+                Text(stringResource(R.string.ok))
             }
         },
         dismissButton = {
