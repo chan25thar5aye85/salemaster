@@ -7,6 +7,7 @@ import com.akari.retailer.features.customer.domain.models.CreditTransaction
 import com.akari.retailer.features.customer.domain.models.Customer
 import com.akari.retailer.features.customer.domain.usecases.GetCreditTransactionsUseCase
 import com.akari.retailer.features.customer.domain.usecases.RecordCreditPaymentUseCase
+import com.akari.retailer.features.customer.domain.usecases.RecordCreditRefundUseCase
 import com.akari.retailer.core.utils.PaymentPreferences
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.MoneyAccount
@@ -27,7 +28,7 @@ data class CustomerDetailState(
     // Credit
     val creditTransactions: List<CreditTransaction> = emptyList(),
 
-    // Payment dialog
+    // Payment dialog (they pay us)
     val showPaymentDialog: Boolean = false,
     val paymentAmount: String = "",
     val paymentNotes: String = "",
@@ -35,7 +36,16 @@ data class CustomerDetailState(
     val selectedAccount: MoneyAccount? = null,
     val isRecordingPayment: Boolean = false,
     val paymentSuccess: Boolean = false,
-    val paymentError: String? = null
+    val paymentError: String? = null,
+
+    // Refund dialog (we pay them)
+    val showRefundDialog: Boolean = false,
+    val refundAmount: String = "",
+    val refundNotes: String = "",
+    val selectedRefundAccount: MoneyAccount? = null,
+    val isRecordingRefund: Boolean = false,
+    val refundSuccess: Boolean = false,
+    val refundError: String? = null
 )
 
 sealed class CustomerDetailEvent {
@@ -48,12 +58,22 @@ sealed class CustomerDetailEvent {
     data class PaymentAccountSelected(val account: MoneyAccount) : CustomerDetailEvent()
     data object SubmitPayment : CustomerDetailEvent()
     data object ClearPaymentSuccess : CustomerDetailEvent()
+
+    // Refund events
+    data object OpenRefundDialog : CustomerDetailEvent()
+    data object CloseRefundDialog : CustomerDetailEvent()
+    data class RefundAmountChanged(val value: String) : CustomerDetailEvent()
+    data class RefundNotesChanged(val value: String) : CustomerDetailEvent()
+    data class RefundAccountSelected(val account: MoneyAccount) : CustomerDetailEvent()
+    data object SubmitRefund : CustomerDetailEvent()
+    data object ClearRefundSuccess : CustomerDetailEvent()
 }
 
 class CustomerDetailViewModel(
     private val repository: CustomerRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
     private val recordCreditPaymentUseCase: RecordCreditPaymentUseCase,
+    private val recordCreditRefundUseCase: RecordCreditRefundUseCase,
     private val getCreditTransactionsUseCase: GetCreditTransactionsUseCase,
     private val paymentPreferences: PaymentPreferences,
     private val customerId: String
@@ -105,6 +125,80 @@ class CustomerDetailViewModel(
             is CustomerDetailEvent.PaymentAccountSelected -> _state.value = _state.value.copy(selectedAccount = event.account)
             is CustomerDetailEvent.SubmitPayment -> submitPayment()
             is CustomerDetailEvent.ClearPaymentSuccess -> _state.value = _state.value.copy(paymentSuccess = false)
+            is CustomerDetailEvent.OpenRefundDialog -> openRefundDialog()
+            is CustomerDetailEvent.CloseRefundDialog -> closeRefundDialog()
+            is CustomerDetailEvent.RefundAmountChanged -> _state.value = _state.value.copy(refundAmount = event.value.filter { it.isDigit() })
+            is CustomerDetailEvent.RefundNotesChanged -> _state.value = _state.value.copy(refundNotes = event.value)
+            is CustomerDetailEvent.RefundAccountSelected -> _state.value = _state.value.copy(selectedRefundAccount = event.account)
+            is CustomerDetailEvent.SubmitRefund -> submitRefund()
+            is CustomerDetailEvent.ClearRefundSuccess -> _state.value = _state.value.copy(refundSuccess = false)
+        }
+    }
+
+    private fun openRefundDialog() {
+        // Prefer last-used account
+        val lastUsedId = paymentPreferences.getLastUsedAccountId()
+        val defaultAccount = _state.value.accounts.find { it.id == lastUsedId }
+            ?: _state.value.accounts.firstOrNull()
+
+        _state.value = _state.value.copy(
+            showRefundDialog = true,
+            refundAmount = "",
+            refundNotes = "",
+            selectedRefundAccount = defaultAccount,
+            refundError = null,
+            refundSuccess = false
+        )
+    }
+
+    private fun closeRefundDialog() {
+        _state.value = _state.value.copy(
+            showRefundDialog = false,
+            refundAmount = "",
+            refundNotes = "",
+            selectedRefundAccount = null,
+            refundError = null
+        )
+    }
+
+    private fun submitRefund() {
+        val customer = _state.value.customer ?: return
+        val amount = _state.value.refundAmount.toIntOrNull() ?: 0
+        val account = _state.value.selectedRefundAccount
+
+        if (amount <= 0) {
+            _state.value = _state.value.copy(refundError = "Enter a valid amount")
+            return
+        }
+        if (account == null) {
+            _state.value = _state.value.copy(refundError = "Select a money account")
+            return
+        }
+
+        _state.value = _state.value.copy(isRecordingRefund = true, refundError = null)
+
+        viewModelScope.launch {
+            val result = recordCreditRefundUseCase.invoke(
+                customerId = customer.id,
+                amount = amount,
+                paymentAccountId = account.id,
+                description = _state.value.refundNotes.trim().ifEmpty { "Customer refund" }
+            )
+            if (result.isSuccess) {
+                paymentPreferences.setLastUsedAccountId(account.id)
+                _state.value = _state.value.copy(
+                    isRecordingRefund = false,
+                    refundSuccess = true,
+                    showRefundDialog = false,
+                    refundAmount = "",
+                    refundNotes = ""
+                )
+            } else {
+                _state.value = _state.value.copy(
+                    isRecordingRefund = false,
+                    refundError = result.exceptionOrNull()?.message ?: "Refund failed"
+                )
+            }
         }
     }
 
@@ -240,6 +334,7 @@ class CustomerDetailViewModelFactory(
     private val repository: CustomerRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
     private val recordCreditPaymentUseCase: RecordCreditPaymentUseCase,
+    private val recordCreditRefundUseCase: RecordCreditRefundUseCase,
     private val getCreditTransactionsUseCase: GetCreditTransactionsUseCase,
     private val paymentPreferences: PaymentPreferences,
     private val customerId: String
@@ -251,6 +346,7 @@ class CustomerDetailViewModelFactory(
                 repository,
                 moneyAccountRepository,
                 recordCreditPaymentUseCase,
+                recordCreditRefundUseCase,
                 getCreditTransactionsUseCase,
                 paymentPreferences,
                 customerId

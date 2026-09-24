@@ -60,4 +60,11 @@
     <string name="payables">Payables</string>
     <string name="n_parties_owe">%1$d parties</string>
     <string name="n_parties">%1$d parties</string>
+
+    <string name="you_owe_customer">You owe customer %1$d</string>
+    <string name="customer_owes_you">Customer owes you %1$d</string>
+    <string name="record_refund">Record Refund</string>
+    <string name="refund_amount">Refund amount</string>
+    <string name="refund_from_account">Refund from account</string>
+    <string name="refund_recorded">Refund recorded!</string>
 </resources>

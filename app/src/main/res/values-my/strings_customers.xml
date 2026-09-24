@@ -60,4 +60,11 @@
     <string name="payables">ပေးရန်</string>
     <string name="n_parties_owe">%1$d ဦး</string>
     <string name="n_parties">%1$d ဦး</string>
+
+    <string name="you_owe_customer">ဖောက်သည်အား သင်ပေးရန် %1$d</string>
+    <string name="customer_owes_you">ဖောက်သည်က သင်အား %1$d အကြွေးကျန်သည်</string>
+    <string name="record_refund">ပြန်အမ်းငွေမှတ်တမ်းတင်ရန်</string>
+    <string name="refund_amount">ပြန်အမ်းငွေပမာဏ</string>
+    <string name="refund_from_account">ပြန်အမ်းငွေထုတ်သည့်အကောင့်</string>
+    <string name="refund_recorded">ပြန်အမ်းငွေ မှတ်တမ်းတင်ပြီး!</string>
 </resources>

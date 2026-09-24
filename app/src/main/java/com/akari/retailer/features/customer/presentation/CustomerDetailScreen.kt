@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,6 +35,10 @@ import java.util.Date
 import java.util.Locale
 import com.akari.retailer.features.customer.domain.models.CreditTransactionType
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.font.FontWeight
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +57,7 @@ fun CustomerDetailScreen(
             application.container.customerRepository,
             application.container.moneyAccountRepository,
             application.container.recordCreditPaymentUseCase,
+            application.container.recordCreditRefundUseCase,
             application.container.getCreditTransactionsUseCase,
             application.container.paymentPreferences,
             customerId
@@ -243,8 +249,8 @@ fun CustomerDetailScreen(
                     }
                 }
 
-                // ── Credit balance card ──
-                if ((customer.creditBalance) > 0 || state.creditTransactions.isNotEmpty()) {
+                // ── Credit balance card (bidirectional) ──
+                if (!customer.isSettled() || state.creditTransactions.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(Spacing.medium))
                     AppCard {
                         Column(modifier = Modifier.fillMaxWidth()) {
@@ -258,19 +264,25 @@ fun CustomerDetailScreen(
                                     style = AppTypography.title
                                 )
                                 Text(
-                                    text = "${customer.creditBalance}",
+                                    text = when {
+                                        customer.owesCredit() -> "+${customer.creditBalance}"
+                                        customer.weOweCustomer() -> "${customer.creditBalance}"
+                                        else -> "0"
+                                    },
                                     style = AppTypography.header,
-                                    color = if (customer.owesCredit())
-                                        MaterialTheme.colorScheme.error
-                                    else
-                                        MaterialTheme.colorScheme.primary
+                                    color = when {
+                                        customer.owesCredit() -> MaterialTheme.colorScheme.error
+                                        customer.weOweCustomer() -> Color(0xFF4CAF50)  // green
+                                        else -> MaterialTheme.colorScheme.onSurface
+                                    }
                                 )
                             }
 
                             if (customer.owesCredit()) {
+                                // They owe us — collect
                                 Spacer(modifier = Modifier.height(Spacing.small))
                                 Text(
-                                    text = stringResource(R.string.customer_owes_amount, customer.creditBalance),
+                                    text = stringResource(R.string.customer_owes_you, customer.creditBalance),
                                     style = AppTypography.small,
                                     color = MaterialTheme.colorScheme.error
                                 )
@@ -282,6 +294,27 @@ fun CustomerDetailScreen(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(stringResource(R.string.record_payment))
+                                }
+                            } else if (customer.weOweCustomer()) {
+                                // We owe them — refund
+                                Spacer(modifier = Modifier.height(Spacing.small))
+                                Text(
+                                    text = stringResource(R.string.you_owe_customer, customer.getBalanceAbsolute()),
+                                    style = AppTypography.small,
+                                    color = Color(0xFF4CAF50)
+                                )
+                                Spacer(modifier = Modifier.height(Spacing.small))
+                                Button(
+                                    onClick = {
+                                        viewModel.handleEvent(CustomerDetailEvent.OpenRefundDialog)
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF4CAF50),
+                                        contentColor = Color.White
+                                    )
+                                ) {
+                                    Text(stringResource(R.string.record_refund))
                                 }
                             }
                         }
@@ -339,6 +372,27 @@ fun CustomerDetailScreen(
                     }
                 }
 
+                if (state.refundSuccess) {
+                    Spacer(modifier = Modifier.height(Spacing.small))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    ) {
+                        Text(
+                            text = "✅ ${stringResource(R.string.refund_recorded)}",
+                            style = AppTypography.body,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(Spacing.medium)
+                        )
+                    }
+                    LaunchedEffect(Unit) {
+                        kotlinx.coroutines.delay(2000)
+                        viewModel.handleEvent(CustomerDetailEvent.ClearRefundSuccess)
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
                 AppPrimaryButton(
@@ -368,6 +422,23 @@ fun CustomerDetailScreen(
             onAccountSelected = { viewModel.handleEvent(CustomerDetailEvent.PaymentAccountSelected(it)) },
             onSubmit = { viewModel.handleEvent(CustomerDetailEvent.SubmitPayment) },
             onDismiss = { viewModel.handleEvent(CustomerDetailEvent.ClosePaymentDialog) }
+        )
+    }
+
+    // ── Refund dialog ──
+    if (state.showRefundDialog && state.customer != null) {
+        RecordCreditRefundDialog(
+            amount = state.refundAmount,
+            notes = state.refundNotes,
+            accounts = state.accounts,
+            selectedAccount = state.selectedRefundAccount,
+            error = state.refundError,
+            isProcessing = state.isRecordingRefund,
+            onAmountChange = { viewModel.handleEvent(CustomerDetailEvent.RefundAmountChanged(it)) },
+            onNotesChange = { viewModel.handleEvent(CustomerDetailEvent.RefundNotesChanged(it)) },
+            onAccountSelected = { viewModel.handleEvent(CustomerDetailEvent.RefundAccountSelected(it)) },
+            onSubmit = { viewModel.handleEvent(CustomerDetailEvent.SubmitRefund) },
+            onDismiss = { viewModel.handleEvent(CustomerDetailEvent.CloseRefundDialog) }
         )
     }
 }
@@ -532,4 +603,129 @@ private fun RecordCreditPaymentDialog(
         }
     )
 
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RecordCreditRefundDialog(
+    amount: String,
+    notes: String,
+    accounts: List<MoneyAccount>,
+    selectedAccount: MoneyAccount?,
+    error: String?,
+    isProcessing: Boolean,
+    onAmountChange: (String) -> Unit,
+    onNotesChange: (String) -> Unit,
+    onAccountSelected: (MoneyAccount) -> Unit,
+    onSubmit: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var accountExpanded by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = { if (!isProcessing) onDismiss() },
+        title = { Text(stringResource(R.string.record_refund)) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = onAmountChange,
+                    label = { Text(stringResource(R.string.refund_amount)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    enabled = !isProcessing,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.small))
+
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = onNotesChange,
+                    label = { Text(stringResource(R.string.notes_optional)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isProcessing,
+                    maxLines = 2
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.small))
+
+                ExposedDropdownMenuBox(
+                    expanded = accountExpanded,
+                    onExpandedChange = { if (!isProcessing) accountExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = selectedAccount?.getDisplayName() ?: stringResource(R.string.select_account),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.refund_from_account)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        enabled = !isProcessing,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) }
+                    )
+                    ExposedDropdownMenu(
+                        expanded = accountExpanded,
+                        onDismissRequest = { accountExpanded = false }
+                    ) {
+                        accounts.forEach { acc ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(acc.getDisplayName(), fontSize = 13.sp)
+                                        Text(
+                                            text = "${acc.currentBalance}",
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    onAccountSelected(acc)
+                                    accountExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                if (error != null) {
+                    Spacer(modifier = Modifier.height(Spacing.small))
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = AppTypography.small
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onSubmit,
+                enabled = !isProcessing
+            ) {
+                if (isProcessing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(stringResource(R.string.confirm))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isProcessing
+            ) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
