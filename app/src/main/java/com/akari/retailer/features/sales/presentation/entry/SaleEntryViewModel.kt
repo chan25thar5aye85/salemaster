@@ -11,6 +11,7 @@ import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.features.money.domain.models.CreditAccount
 import com.akari.retailer.features.money.domain.models.PaymentEntry
 import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransactionUseCase
+import com.akari.retailer.features.sales.data.repository.SaleFinalizer
 import com.akari.retailer.features.sales.domain.models.Sale
 import com.akari.retailer.features.sales.domain.models.SaleItem
 import com.akari.retailer.core.utils.MoneyFormatter
@@ -25,6 +26,7 @@ import kotlinx.coroutines.launch
 
 class SaleEntryViewModel(
     private val repository: SaleRepository,
+    private val saleFinalizer: SaleFinalizer,
     private val moneyAccountRepository: MoneyAccountRepository,
     private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
     private val customerRepository: CustomerRepository,
@@ -330,12 +332,8 @@ class SaleEntryViewModel(
             return
         }
 
-        // Split into money vs credit
-        val creditEntries = allPaymentEntries.filter { it.isCredit }
-        val moneyEntries = allPaymentEntries.filter { !it.isCredit }
-
         // Validate credit rows
-        for (creditRow in creditEntries) {
+        for (creditRow in allPaymentEntries.filter { it.isCredit }) {
             if (creditRow.customerId.isEmpty()) {
                 _state.value = stateManager.setError(
                     currentState,
@@ -363,30 +361,9 @@ class SaleEntryViewModel(
                     cashierId = cashierId
                 )
 
-                val result = repository.saveSale(sale)
+                val result = saleFinalizer.finalizeSale(sale)
                 if (result.isSuccess) {
-                    val saleId = result.getOrNull() ?: ""
-
-                    // Process money payments
-                    if (moneyEntries.isNotEmpty()) {
-                        processMoneyTransactionUseCase.processSale(
-                            payments = moneyEntries,
-                            saleId = saleId,
-                            description = "Sale"
-                        )
-                    }
-
-                    // Process credit rows — one extension per entry
-                    creditEntries.forEach { creditRow ->
-                        extendCreditUseCase.invoke(
-                            customerId = creditRow.customerId,
-                            amount = creditRow.amount,
-                            saleId = saleId,
-                            description = "Sale on credit (partial)"
-                        )
-                    }
-
-                    Log.d(TAG, "Sale saved (money: ${moneyEntries.size}, credit: ${creditEntries.size})")
+                    Log.d(TAG, "Sale saved atomically (payments: ${allPaymentEntries.size})")
 
                     _state.value = stateManager.resetState().copy(
                         isSaving = false,
@@ -499,6 +476,7 @@ class SaleEntryViewModel(
 
 class SaleEntryViewModelFactory(
     private val repository: SaleRepository,
+    private val saleFinalizer: SaleFinalizer,
     private val moneyAccountRepository: MoneyAccountRepository,
     private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
     private val customerRepository: CustomerRepository,
@@ -510,6 +488,7 @@ class SaleEntryViewModelFactory(
         if (modelClass.isAssignableFrom(SaleEntryViewModel::class.java)) {
             return SaleEntryViewModel(
                 repository,
+                saleFinalizer,
                 moneyAccountRepository,
                 processMoneyTransactionUseCase,
                 customerRepository,

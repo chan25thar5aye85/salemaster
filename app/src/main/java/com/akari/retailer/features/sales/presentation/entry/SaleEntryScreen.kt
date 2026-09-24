@@ -57,6 +57,7 @@ fun SaleEntryScreen(
     val viewModel: SaleEntryViewModel = viewModel(
         factory = SaleEntryViewModelFactory(
             repository,
+            application.container.saleFinalizer,
             moneyAccountRepository,
             processMoneyTransactionUseCase,
             application.container.customerRepository,

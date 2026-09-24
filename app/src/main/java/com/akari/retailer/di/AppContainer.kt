@@ -48,6 +48,8 @@ import com.akari.retailer.features.customer.data.repository.FirestoreCreditRepos
 import com.akari.retailer.features.customer.domain.usecases.ExtendCreditUseCase
 import com.akari.retailer.features.customer.domain.usecases.GetCreditTransactionsUseCase
 import com.akari.retailer.features.customer.domain.usecases.RecordCreditPaymentUseCase
+import com.akari.retailer.features.sales.data.remote.FirestoreSaleFinalizer
+import com.akari.retailer.features.sales.data.repository.SaleFinalizer
 
 class AppContainer(private val appContext: android.content.Context) {
 
@@ -59,6 +61,7 @@ class AppContainer(private val appContext: android.content.Context) {
     val saleRepository: SaleRepository by lazy { 
         FirestoreSaleRepository(firestoreService)
     }
+    val saleFinalizer: SaleFinalizer by lazy { FirestoreSaleFinalizer() }
     
     // Income Streams
     private val incomeStreamService by lazy { FirestoreIncomeStreamService() }
