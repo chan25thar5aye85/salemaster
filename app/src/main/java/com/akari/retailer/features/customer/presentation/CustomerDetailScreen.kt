@@ -447,6 +447,15 @@ fun CustomerDetailScreen(
 @Composable
 private fun CreditHistoryRow(transaction: CreditTransaction) {
     val dateFormat = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
+
+    val (icon, label) = when (transaction.type) {
+        CreditTransactionType.SALE_ON_CREDIT ->
+            "🛒" to stringResource(R.string.credit_sale)
+        CreditTransactionType.PAYMENT ->
+            "💰" to stringResource(R.string.credit_payment)
+        CreditTransactionType.REFUND ->
+            "💸" to stringResource(R.string.credit_refund)
+    }
     val isCredit = transaction.type == CreditTransactionType.SALE_ON_CREDIT
 
     Row(
@@ -458,8 +467,7 @@ private fun CreditHistoryRow(transaction: CreditTransaction) {
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = if (isCredit) "🛒 ${stringResource(R.string.credit_sale)}" 
-                       else "💰 ${stringResource(R.string.credit_payment)}",
+                text = "$icon $label",
                 style = AppTypography.body
             )
             Text(

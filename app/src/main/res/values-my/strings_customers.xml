@@ -67,4 +67,6 @@
     <string name="refund_amount">ပြန်အမ်းငွေပမာဏ</string>
     <string name="refund_from_account">ပြန်အမ်းငွေထုတ်သည့်အကောင့်</string>
     <string name="refund_recorded">ပြန်အမ်းငွေ မှတ်တမ်းတင်ပြီး!</string>
+
+    <string name="credit_refund">ပြန်အမ်းငွေထုတ်ပေးမှု</string>
 </resources>

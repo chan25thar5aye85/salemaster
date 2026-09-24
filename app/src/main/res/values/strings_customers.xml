@@ -67,4 +67,6 @@
     <string name="refund_amount">Refund amount</string>
     <string name="refund_from_account">Refund from account</string>
     <string name="refund_recorded">Refund recorded!</string>
+
+    <string name="credit_refund">Refund issued</string>
 </resources>

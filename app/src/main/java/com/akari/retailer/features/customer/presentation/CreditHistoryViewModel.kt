@@ -75,8 +75,10 @@ class CreditHistoryViewModel(
                     val sortedDesc = txns.sortedByDescending { it.date }
                     val totalGiven = txns.filter { it.type == CreditTransactionType.SALE_ON_CREDIT }
                         .sumOf { it.amount }
-                    val totalPaid = txns.filter { it.type == CreditTransactionType.PAYMENT }
-                        .sumOf { -it.amount }  // negative amounts
+                    val totalPaid = txns.filter {
+                        it.type == CreditTransactionType.PAYMENT ||
+                        it.type == CreditTransactionType.REFUND
+                    }.sumOf { -it.amount }  // both are negative
 
                     _state.value = _state.value.copy(
                         allTransactions = sortedDesc,
@@ -103,7 +105,8 @@ class CreditHistoryViewModel(
                 it.type == CreditTransactionType.SALE_ON_CREDIT
             }
             CreditHistoryFilter.PAYMENTS -> _state.value.allTransactions.filter {
-                it.type == CreditTransactionType.PAYMENT
+                it.type == CreditTransactionType.PAYMENT ||
+                it.type == CreditTransactionType.REFUND
             }
         }
         _state.value = _state.value.copy(filteredTransactions = filtered)

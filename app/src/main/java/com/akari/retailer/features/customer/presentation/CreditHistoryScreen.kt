@@ -249,6 +249,15 @@ private fun CreditTxnRow(
     val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
     val isCredit = txn.type == CreditTransactionType.SALE_ON_CREDIT
 
+    val (icon, label) = when (txn.type) {
+        CreditTransactionType.SALE_ON_CREDIT ->
+            "🛒" to stringResource(R.string.credit_sale)
+        CreditTransactionType.PAYMENT ->
+            "💰" to stringResource(R.string.credit_payment)
+        CreditTransactionType.REFUND ->
+            "💸" to stringResource(R.string.credit_refund)
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -268,7 +277,7 @@ private fun CreditTxnRow(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (isCredit) "🛒 Sale on credit" else "💰 Payment received",
+                        text = "$icon $label",
                         style = AppTypography.body,
                         fontWeight = FontWeight.Medium
                     )
