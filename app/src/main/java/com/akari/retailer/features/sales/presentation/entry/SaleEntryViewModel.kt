@@ -324,10 +324,24 @@ class SaleEntryViewModel(
         }
 
         val totalPaid = allPaymentEntries.sumOf { it.amount }
-        if (totalPaid != total) {
+
+        // Underpayment still blocked
+        if (totalPaid < total) {
             _state.value = stateManager.setError(
                 currentState,
-                "Payments ($totalPaid) must equal total ($total)"
+                "Payments ($totalPaid) must equal or exceed total ($total)"
+            )
+            return
+        }
+
+        // Overpayment: require a customer to credit the excess
+        val overpaymentAmount = totalPaid - total
+        val overpaymentCustomer = currentState.creditCustomer
+
+        if (overpaymentAmount > 0 && overpaymentCustomer == null) {
+            _state.value = stateManager.setError(
+                currentState,
+                "Overpaid $overpaymentAmount — select a customer (via Credit toggle) to attribute the excess"
             )
             return
         }

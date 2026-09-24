@@ -285,12 +285,6 @@ class CustomerDetailViewModel(
             _state.value = _state.value.copy(paymentError = "Enter a valid amount")
             return
         }
-        if (amount > customer.creditBalance) {
-            _state.value = _state.value.copy(
-                paymentError = "Amount exceeds owed (${customer.creditBalance})"
-            )
-            return
-        }
         if (account == null) {
             _state.value = _state.value.copy(paymentError = "Select a money account")
             return

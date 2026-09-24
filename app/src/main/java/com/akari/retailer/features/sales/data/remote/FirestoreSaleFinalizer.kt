@@ -14,7 +14,10 @@ class FirestoreSaleFinalizer : SaleFinalizer {
     private val TAG = "SaleFinalizer"
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 
-    override suspend fun finalizeSale(sale: Sale): Result<String> {
+    override suspend fun finalizeSale(
+        sale: Sale,
+        overpaymentCredit: com.akari.retailer.features.money.domain.models.PaymentEntry?
+    ): Result<String> {
         return try {
             val salesCol = db.collection("sales")
             val accountsCol = db.collection("money_accounts")
@@ -109,6 +112,37 @@ class FirestoreSaleFinalizer : SaleFinalizer {
                         "creditBalance", FieldValue.increment(row.amount.toLong()),
                         "updatedAt", now
                     )
+                }
+
+                // ── 5. WRITE: overpayment credit (if any) ──
+                // If the customer paid more than the total, we now owe them the excess.
+                if (overpaymentCredit != null && overpaymentCredit.amount > 0) {
+                    val custRef = customersCol.document(overpaymentCredit.customerId)
+                    val custSnap = txn.get(custRef)
+                    if (!custSnap.exists()) {
+                        throw IllegalStateException(
+                            "Customer not found: ${overpaymentCredit.customerId}"
+                        )
+                    }
+
+                    // Customer credit balance goes DOWN (we owe them)
+                    txn.update(
+                        custRef,
+                        "creditBalance", FieldValue.increment(-overpaymentCredit.amount.toLong()),
+                        "updatedAt", now
+                    )
+
+                    // Log the overpayment credit as a REFUND transaction
+                    txn.set(creditTxnsCol.document(), mapOf(
+                        "customerId" to overpaymentCredit.customerId,
+                        "type" to "REFUND",
+                        "amount" to -overpaymentCredit.amount,
+                        "saleId" to saleId,
+                        "paymentAccountId" to "",
+                        "description" to "Sale overpayment credit",
+                        "date" to now,
+                        "createdAt" to now
+                    ))
                 }
             }.await()
 

@@ -112,14 +112,7 @@ class FirestoreSupplierCreditService {
                     throw IllegalStateException("Payment account not found")
                 }
 
-                val currentPayable = (supplierSnap.getLong("payableBalance") ?: 0L).toInt()
-                if (amount > currentPayable) {
-                    throw IllegalStateException(
-                        "Payment exceeds amount owed. Owed: $currentPayable, Tried: $amount"
-                    )
-                }
-
-                // Decrease payable balance
+                // Decrease payable balance (overpayment allowed — goes negative)
                 txn.update(supplierRef, "payableBalance", FieldValue.increment(-amount.toLong()))
 
                 // Decrease money account

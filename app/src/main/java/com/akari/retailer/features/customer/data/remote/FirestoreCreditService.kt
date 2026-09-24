@@ -114,14 +114,7 @@ class FirestoreCreditService {
                     throw IllegalStateException("Payment account not found")
                 }
 
-                val currentBalance = (customerSnap.getLong("creditBalance") ?: 0L).toInt()
-                if (amount > currentBalance) {
-                    throw IllegalStateException(
-                        "Payment exceeds balance. Owed: $currentBalance, Tried: $amount"
-                    )
-                }
-
-                // Decrease customer credit
+                // Decrease customer credit (overpayment allowed — goes negative)
                 txn.update(customerRef, "creditBalance", FieldValue.increment(-amount.toLong()))
 
                 // Increase money account

@@ -11,5 +11,16 @@ import com.akari.retailer.features.sales.domain.models.Sale
  * Either everything succeeds or nothing does.
  */
 interface SaleFinalizer {
-    suspend fun finalizeSale(sale: Sale): Result<String>
+    /**
+     * Atomically finalize a sale.
+     *
+     * @param sale the sale to record
+     * @param overpaymentCredit if not null, the sale was overpaid by this amount.
+     *         The chosen customer's creditBalance goes negative by [PaymentEntry.amount].
+     *         Their balance will reflect "we owe them".
+     */
+    suspend fun finalizeSale(
+        sale: Sale,
+        overpaymentCredit: com.akari.retailer.features.money.domain.models.PaymentEntry? = null
+    ): Result<String>
 }

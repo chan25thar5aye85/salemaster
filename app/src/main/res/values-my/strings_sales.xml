@@ -41,4 +41,9 @@
     <string name="items">ပစ္စည်းများ</string>
     <string name="offline_banner_sale">အင်တာနက်မရှိပါ။ သိမ်းရန် အင်တာနက်လိုအပ်ပါသည် — အွန်လိုင်းရသောအခါ ပြန်ကြိုးစားပါ။</string>
     <string name="sale_detail">အရောင်းအသေးစိတ်</string>
+
+    <string name="overpayment">ပိုလျှံငွေ</string>
+    <string name="overpaid_amount">%1$d ပိုလျှံသည် — ဖောက်သည်အား အကြွေးအဖြစ်ထည့်မည်</string>
+    <string name="will_credit_customer">ပိုလျှံငွေကို %1$s အား အကြွေးအဖြစ်ထည့်မည်</string>
+    <string name="select_customer_via_credit_toggle">ပိုလျှံငွေကို ဖောက်သည်တစ်ဦးထံ ထည့်ရန် Credit ကိုနှိပ်၍ ဖောက်သည်ရွေးပါ</string>
 </resources>

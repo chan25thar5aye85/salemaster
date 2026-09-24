@@ -365,6 +365,53 @@ fun SaleEntryScreen(
                                 viewModel.handleEvent(SaleEntryEvent.RemovePaymentRow(rowId))
                             }
                         )
+
+                        // Overpayment indicator (only when overpaid)
+                        val totalPaid = state.paymentRows.sumOf { it.amount.toIntOrNull() ?: 0 }
+                        val total = viewModel.getTotal()
+                        val excess = totalPaid - total
+                        if (excess > 0) {
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                                )
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(Spacing.medium)
+                                ) {
+                                    Text(
+                                        text = "💸 ${stringResource(R.string.overpayment)}",
+                                        style = AppTypography.title,
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = stringResource(R.string.overpaid_amount, excess),
+                                        style = AppTypography.body
+                                    )
+                                    if (state.creditCustomer != null) {
+                                        Text(
+                                            text = stringResource(
+                                                R.string.will_credit_customer,
+                                                state.creditCustomer!!.name
+                                            ),
+                                            style = AppTypography.small,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                        )
+                                    } else {
+                                        Text(
+                                            text = stringResource(R.string.select_customer_via_credit_toggle),
+                                            style = AppTypography.small,
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 

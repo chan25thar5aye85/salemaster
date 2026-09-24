@@ -41,4 +41,9 @@
     <string name="items">Items</string>
     <string name="offline_banner_sale">No internet. Saving requires connection — try again when online.</string>
     <string name="sale_detail">Sale Detail</string>
+
+    <string name="overpayment">Overpayment</string>
+    <string name="overpaid_amount">Overpaid by %1$d — will be credited to customer</string>
+    <string name="will_credit_customer">Excess will be credited to %1$s</string>
+    <string name="select_customer_via_credit_toggle">Select a customer via the Credit option to attribute the overpayment</string>
 </resources>

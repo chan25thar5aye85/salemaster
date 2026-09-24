@@ -139,9 +139,18 @@ class AgingReportViewModel(
             val credits = txns
                 .filter { it.type == SupplierTransactionType.PURCHASE_ON_CREDIT }
                 .map { CreditLine(it.id, it.amount, it.date) }
+            // PAYMENT and REFUND_RECEIVED both reduce what we owe the supplier.
+            // PAYMENT amounts are negative; REFUND_RECEIVED amounts are positive.
+            // We want a positive "applied to queue" value either way.
             val payments = txns
-                .filter { it.type == SupplierTransactionType.PAYMENT }
-                .map { PaymentLine(-it.amount, it.date) }
+                .filter {
+                    it.type == SupplierTransactionType.PAYMENT ||
+                    it.type == SupplierTransactionType.REFUND_RECEIVED
+                }
+                .map {
+                    val absAmount = if (it.amount < 0) -it.amount else it.amount
+                    PaymentLine(absAmount, it.date)
+                }
 
             AgingInput(
                 partyId = supplier.id,
