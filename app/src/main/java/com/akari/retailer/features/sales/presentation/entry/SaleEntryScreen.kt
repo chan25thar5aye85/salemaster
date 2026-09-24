@@ -345,9 +345,16 @@ fun SaleEntryScreen(
                         PaymentListComponent(
                             paymentRows = state.paymentRows,
                             accounts = state.accounts,
+                            customers = state.customers,
                             totalAmount = viewModel.getTotal(),
                             onAccountSelected = { rowId, account ->
                                 viewModel.handleEvent(SaleEntryEvent.PaymentAccountChanged(rowId, account))
+                            },
+                            onCreditSelected = { rowId ->
+                                viewModel.handleEvent(SaleEntryEvent.PaymentCreditSelected(rowId))
+                            },
+                            onCustomerSelected = { rowId, customer ->
+                                viewModel.handleEvent(SaleEntryEvent.PaymentCustomerSelected(rowId, customer))
                             },
                             onAmountChanged = { rowId, amount ->
                                 viewModel.handleEvent(SaleEntryEvent.PaymentAmountChanged(rowId, amount))

@@ -8,6 +8,7 @@ import com.akari.retailer.core.utils.PaymentPreferences
 import com.akari.retailer.data.repository.SaleRepository
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.MoneyAccount
+import com.akari.retailer.features.money.domain.models.CreditAccount
 import com.akari.retailer.features.money.domain.models.PaymentEntry
 import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransactionUseCase
 import com.akari.retailer.features.sales.domain.models.Sale
@@ -86,6 +87,8 @@ class SaleEntryViewModel(
             SaleEntryEvent.CloseCreditCustomerPicker -> closeCreditCustomerPicker()
             is SaleEntryEvent.CreditCustomerSelected -> selectCreditCustomer(event.customer)
             is SaleEntryEvent.CreditNotesChanged -> _state.value = _state.value.copy(creditNotes = event.value)
+            is SaleEntryEvent.PaymentCreditSelected -> selectPaymentCredit(event.rowId)
+            is SaleEntryEvent.PaymentCustomerSelected -> selectPaymentCustomer(event.rowId, event.customer)
         }
     }
 
@@ -233,6 +236,32 @@ class SaleEntryViewModel(
         _state.value = _state.value.copy(paymentRows = updated)
     }
 
+    /**
+     * User picked "Credit" for a payment row.
+     * Mark the row as a credit row (accountId = CreditAccount.ID).
+     */
+    private fun selectPaymentCredit(rowId: Long) {
+        val updated = _state.value.paymentRows.map { row ->
+            if (row.id == rowId) {
+                row.copy(
+                    accountId = CreditAccount.ID,
+                    customerId = row.customerId  // keep whatever was there
+                )
+            } else row
+        }
+        _state.value = _state.value.copy(paymentRows = updated)
+    }
+
+    /**
+     * User picked a customer for a credit payment row.
+     */
+    private fun selectPaymentCustomer(rowId: Long, customer: Customer) {
+        val updated = _state.value.paymentRows.map { row ->
+            if (row.id == rowId) row.copy(customerId = customer.id) else row
+        }
+        _state.value = _state.value.copy(paymentRows = updated)
+    }
+
     private fun addPaymentRow() {
         val total = getTotal()
         val totalPaid = _state.value.paymentRows.sumOf { it.amount.toIntOrNull() ?: 0 }
@@ -276,22 +305,44 @@ class SaleEntryViewModel(
             return
         }
 
-        // ── Normal payment path ──
-        val payments = currentState.paymentRows
+        // ── Normal payment path (money + possible credit rows) ──
+        val allPaymentEntries = currentState.paymentRows
             .filter { it.amount.toIntOrNull()?.let { it > 0 } == true }
-            .map { PaymentEntry(it.accountId, it.amount.toIntOrNull() ?: 0) }
+            .map {
+                PaymentEntry(
+                    accountId = it.accountId,
+                    amount = it.amount.toIntOrNull() ?: 0,
+                    customerId = it.customerId
+                )
+            }
 
-        if (payments.isEmpty()) {
+        if (allPaymentEntries.isEmpty()) {
             _state.value = stateManager.setError(currentState, "Add at least one payment")
             return
         }
 
-        if (payments.sumOf { it.amount } != total) {
+        val totalPaid = allPaymentEntries.sumOf { it.amount }
+        if (totalPaid != total) {
             _state.value = stateManager.setError(
                 currentState,
-                "Payments (${payments.sumOf { it.amount }}) must equal total ($total)"
+                "Payments ($totalPaid) must equal total ($total)"
             )
             return
+        }
+
+        // Split into money vs credit
+        val creditEntries = allPaymentEntries.filter { it.isCredit }
+        val moneyEntries = allPaymentEntries.filter { !it.isCredit }
+
+        // Validate credit rows
+        for (creditRow in creditEntries) {
+            if (creditRow.customerId.isEmpty()) {
+                _state.value = stateManager.setError(
+                    currentState,
+                    "Select a customer for the credit payment"
+                )
+                return
+            }
         }
 
         val currentRecentSales = currentState.recentSales
@@ -308,19 +359,34 @@ class SaleEntryViewModel(
                 val sale = Sale(
                     items = saleItems,
                     total = total,
-                    payments = payments,
+                    payments = allPaymentEntries,
                     cashierId = cashierId
                 )
 
                 val result = repository.saveSale(sale)
                 if (result.isSuccess) {
                     val saleId = result.getOrNull() ?: ""
-                    processMoneyTransactionUseCase.processSale(
-                        payments = payments,
-                        saleId = saleId,
-                        description = "Sale"
-                    )
-                    Log.d(TAG, "Sale saved")
+
+                    // Process money payments
+                    if (moneyEntries.isNotEmpty()) {
+                        processMoneyTransactionUseCase.processSale(
+                            payments = moneyEntries,
+                            saleId = saleId,
+                            description = "Sale"
+                        )
+                    }
+
+                    // Process credit rows — one extension per entry
+                    creditEntries.forEach { creditRow ->
+                        extendCreditUseCase.invoke(
+                            customerId = creditRow.customerId,
+                            amount = creditRow.amount,
+                            saleId = saleId,
+                            description = "Sale on credit (partial)"
+                        )
+                    }
+
+                    Log.d(TAG, "Sale saved (money: ${moneyEntries.size}, credit: ${creditEntries.size})")
 
                     _state.value = stateManager.resetState().copy(
                         isSaving = false,
