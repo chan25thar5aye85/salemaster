@@ -26,4 +26,5 @@
     <!-- Submenus -->
     <string name="fab_submenu_reports">အစီရင်ခံစာ</string>
     <string name="fab_submenu_money">ငွေ</string>
+    <string name="fab_aging_report">အကြွေးသက်တမ်း</string>
 </resources>

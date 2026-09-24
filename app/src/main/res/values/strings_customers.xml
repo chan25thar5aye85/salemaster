@@ -54,4 +54,5 @@
     <string name="bucket_90">90+ days</string>
     <string name="n_customers">%1$d customers</string>
     <string name="no_customers_in_bucket">No customers in this bucket</string>
+    <string name="aging_report_subtitle">30 / 60 / 90 day breakdown</string>
 </resources>

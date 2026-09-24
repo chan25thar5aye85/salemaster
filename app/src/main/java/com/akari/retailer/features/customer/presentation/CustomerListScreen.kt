@@ -153,6 +153,40 @@ fun CustomerListScreen(
                 }
             }
 
+            // ── Aging report shortcut ──
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Spacing.medium)
+                    .clickable {
+                        navController.navigate(com.akari.retailer.navigation.Routes.AGING_REPORT)
+                    },
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Spacing.medium),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "📊 ${stringResource(R.string.aging_report)}",
+                            style = AppTypography.title
+                        )
+                        Text(
+                            text = stringResource(R.string.aging_report_subtitle),
+                            style = AppTypography.small,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
+                    Text("→", style = AppTypography.header)
+                }
+            }
+
             if (state.isLoading && state.customers.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),

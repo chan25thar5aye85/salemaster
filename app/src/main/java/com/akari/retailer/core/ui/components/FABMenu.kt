@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -78,7 +79,8 @@ fun FABMenu(
         FABMenuItemData(Icons.Default.BarChart, stringResource(R.string.fab_sales_trends), "reports"),
         FABMenuItemData(Icons.Default.Insights, stringResource(R.string.fab_expense_analytics), "expense_analytics"),
         FABMenuItemData(Icons.Default.Insights, stringResource(R.string.fab_income_analytics), "income_analytics"),
-        FABMenuItemData(Icons.Default.PieChart, stringResource(R.string.fab_profit_loss), "profit_loss")
+        FABMenuItemData(Icons.Default.PieChart, stringResource(R.string.fab_profit_loss), "profit_loss"),
+        FABMenuItemData(Icons.Default.Schedule, stringResource(R.string.fab_aging_report), "aging_report")
     )
 
     // Money submenu

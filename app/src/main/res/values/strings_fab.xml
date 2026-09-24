@@ -26,4 +26,5 @@
     <!-- Submenus -->
     <string name="fab_submenu_reports">Reports</string>
     <string name="fab_submenu_money">Money</string>
+    <string name="fab_aging_report">Credit Aging</string>
 </resources>

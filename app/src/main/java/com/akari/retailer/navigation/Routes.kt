@@ -49,6 +49,7 @@ object Routes {
     const val CUSTOMER_EDIT = "customer_edit/{customerId}"
     const val CUSTOMER_DETAIL = "customer_detail/{customerId}"
     const val CREDIT_HISTORY = "credit_history/{customerId}"
+    const val AGING_REPORT = "aging_report"
     const val SUPPLIERS = "suppliers"
     const val SUPPLIER_ADD = "supplier_add"
     const val SUPPLIER_DETAIL = "supplier_detail/{supplierId}"
