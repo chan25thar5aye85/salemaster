@@ -26,7 +26,8 @@ import com.akari.retailer.R
 data class PaymentRow(
     val id: Long,
     val accountId: String = "default_cash",
-    val amount: String = ""
+    val amount: String = "",
+    val customerId: String = ""
 )
 
 /**
