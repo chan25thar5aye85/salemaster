@@ -45,6 +45,7 @@ import com.akari.retailer.features.supplier.data.repository.SupplierRepository
 import com.akari.retailer.features.customer.data.remote.FirestoreCreditService
 import com.akari.retailer.features.customer.data.repository.CreditRepository
 import com.akari.retailer.features.customer.data.repository.FirestoreCreditRepository
+import com.akari.retailer.features.customer.domain.usecases.CalculateAgingReportUseCase
 import com.akari.retailer.features.customer.domain.usecases.ExtendCreditUseCase
 import com.akari.retailer.features.customer.domain.usecases.GetCreditTransactionsUseCase
 import com.akari.retailer.features.customer.domain.usecases.RecordCreditPaymentUseCase
@@ -89,6 +90,7 @@ class AppContainer(private val appContext: android.content.Context) {
     val extendCreditUseCase by lazy { ExtendCreditUseCase(creditRepository) }
     val recordCreditPaymentUseCase by lazy { RecordCreditPaymentUseCase(creditRepository) }
     val getCreditTransactionsUseCase by lazy { GetCreditTransactionsUseCase(creditRepository) }
+    val calculateAgingReportUseCase by lazy { CalculateAgingReportUseCase() }
     
     // Expenses
     private val expenseFirestoreService by lazy { FirestoreExpenseService() }
