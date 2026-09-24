@@ -30,4 +30,7 @@
     <string name="payable_history">ပေးရန်မှတ်တမ်း</string>
     <string name="supplier_payment_recorded">ငွေပေးချေမှု မှတ်တမ်းတင်ပြီး!</string>
     <string name="amount_owed_to_supplier">ပေးရန်ပမာဏ: %1$d</string>
+
+    <string name="total_payable">စုစုပေါင်းပေးရန်</string>
+    <string name="n_suppliers_owed">ပေးရန်ရှိသည့် ပေးသွင်းသူ %1$d ဦး</string>
 </resources>

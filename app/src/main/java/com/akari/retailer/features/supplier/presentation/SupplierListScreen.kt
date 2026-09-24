@@ -24,6 +24,9 @@ import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.supplier.domain.models.Supplier
 import com.akari.retailer.navigation.Routes
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Surface
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,6 +102,48 @@ fun SupplierListScreen(
                     onSearch = {},
                     placeholder = stringResource(R.string.search_suppliers)
                 )
+            }
+
+            // ── Total payable summary card ──
+            if (state.allSuppliers.isNotEmpty()) {
+                val totalPayable = state.allSuppliers.sumOf { it.payableBalance }
+                val creditorCount = state.allSuppliers.count { it.owesPayable() }
+                if (totalPayable > 0) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = Spacing.medium),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Spacing.medium),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = "💸 ${stringResource(R.string.total_payable)}",
+                                    style = AppTypography.title
+                                )
+                                Text(
+                                    text = stringResource(R.string.n_suppliers_owed, creditorCount),
+                                    style = AppTypography.small,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
+                            }
+                            Text(
+                                text = "$totalPayable",
+                                style = AppTypography.header,
+                                color = MaterialTheme.colorScheme.error,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                            )
+                        }
+                    }
+                }
             }
 
             if (state.isLoading && state.suppliers.isEmpty()) {
@@ -290,6 +335,23 @@ fun SupplierCard(
                             text = "${supplier.products.size} ${stringResource(R.string.products)}",
                             style = AppTypography.small,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+
+                // ── Payable badge ──
+                if (supplier.owesPayable()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            text = "💸 ${supplier.payableBalance}",
+                            style = AppTypography.small,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                         )
                     }
                 }

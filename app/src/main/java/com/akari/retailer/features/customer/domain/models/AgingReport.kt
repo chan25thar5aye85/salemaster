@@ -1,7 +1,7 @@
 package com.akari.retailer.features.customer.domain.models
 
 /**
- * Aging bucket — how long an unpaid credit has been outstanding.
+ * Aging bucket — how long an unpaid balance has been outstanding.
  */
 enum class AgingBucket(
     val minDays: Int,
@@ -23,39 +23,45 @@ enum class AgingBucket(
 }
 
 /**
- * A single unpaid credit sale, aged by days outstanding.
+ * A single unpaid line item (credit sale or purchase on credit),
+ * aged by days outstanding.
+ *
+ * "Party" is either a customer (for receivables) or a supplier (for payables).
  */
-data class AgedCredit(
-    val customerId: String,
-    val customerName: String,
-    val creditTransactionId: String,
+data class AgedItem(
+    val partyId: String,
+    val partyName: String,
+    val transactionId: String,
     val amount: Int,
-    val originalCreditAmount: Int,      // amount of the original credit
-    val date: Long,                     // when the credit was extended
+    val originalAmount: Int,      // amount of the original credit
+    val date: Long,               // when the credit was extended
     val daysOutstanding: Int,
     val bucket: AgingBucket
 )
 
 /**
- * Per-customer aging summary.
+ * Per-party aging summary.
  */
-data class CustomerAging(
-    val customerId: String,
-    val customerName: String,
+data class PartyAging(
+    val partyId: String,
+    val partyName: String,
     val totalOwed: Int,
     val bucketTotals: Map<AgingBucket, Int>,   // amount per bucket
-    val oldestDays: Int,                        // oldest unpaid credit in days
-    val unpaidCredits: List<AgedCredit>
+    val oldestDays: Int,                        // oldest unpaid item in days
+    val unpaidItems: List<AgedItem>
 )
 
 /**
- * Full aging report across all customers.
+ * Full aging report across all parties.
+ *
+ * For receivables: parties are customers, "totalOwed" = what they owe you.
+ * For payables:    parties are suppliers, "totalOwed" = what you owe them.
  */
 data class AgingReport(
     val generatedAt: Long = System.currentTimeMillis(),
     val totalOwed: Int,
-    val totalCustomersOwing: Int,
-    val bucketTotals: Map<AgingBucket, Int>,   // amount per bucket across all
-    val bucketCustomerCounts: Map<AgingBucket, Int>,  // # of customers with $ in that bucket
-    val customers: List<CustomerAging>          // sorted by totalOwed desc
+    val totalPartiesOwing: Int,
+    val bucketTotals: Map<AgingBucket, Int>,
+    val bucketPartyCounts: Map<AgingBucket, Int>,
+    val parties: List<PartyAging>                // sorted by totalOwed desc
 )

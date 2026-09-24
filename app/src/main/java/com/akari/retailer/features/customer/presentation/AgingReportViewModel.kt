@@ -4,7 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.customer.data.repository.CreditRepository
 import com.akari.retailer.features.customer.data.repository.CustomerRepository
+import com.akari.retailer.features.customer.domain.models.AgingReport
+import com.akari.retailer.features.customer.domain.models.CreditTransaction
+import com.akari.retailer.features.customer.domain.models.CreditTransactionType
+import com.akari.retailer.features.customer.domain.usecases.AgingInput
 import com.akari.retailer.features.customer.domain.usecases.CalculateAgingReportUseCase
+import com.akari.retailer.features.customer.domain.usecases.CreditLine
+import com.akari.retailer.features.customer.domain.usecases.PaymentLine
+import com.akari.retailer.features.supplier.data.repository.SupplierCreditRepository
+import com.akari.retailer.features.supplier.data.repository.SupplierRepository
+import com.akari.retailer.features.supplier.domain.models.SupplierTransaction
+import com.akari.retailer.features.supplier.domain.models.SupplierTransactionType
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,9 +22,29 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
+enum class AgingMode {
+    RECEIVABLES,
+    PAYABLES
+}
+
+enum class AgingFilter {
+    ALL, CURRENT, DAYS_30, DAYS_60, DAYS_90;
+
+    fun toBucket(): com.akari.retailer.features.customer.domain.models.AgingBucket? =
+        when (this) {
+            ALL -> null
+            CURRENT -> com.akari.retailer.features.customer.domain.models.AgingBucket.CURRENT
+            DAYS_30 -> com.akari.retailer.features.customer.domain.models.AgingBucket.DAYS_30
+            DAYS_60 -> com.akari.retailer.features.customer.domain.models.AgingBucket.DAYS_60
+            DAYS_90 -> com.akari.retailer.features.customer.domain.models.AgingBucket.DAYS_90
+        }
+}
+
 class AgingReportViewModel(
     private val customerRepository: CustomerRepository,
     private val creditRepository: CreditRepository,
+    private val supplierRepository: SupplierRepository,
+    private val supplierCreditRepository: SupplierCreditRepository,
     private val calculateAgingReport: CalculateAgingReportUseCase
 ) : ViewModel() {
 
@@ -24,6 +54,11 @@ class AgingReportViewModel(
     private var loadJob: Job? = null
 
     init {
+        loadReport()
+    }
+
+    fun setMode(mode: AgingMode) {
+        _state.value = _state.value.copy(mode = mode)
         loadReport()
     }
 
@@ -41,19 +76,16 @@ class AgingReportViewModel(
         loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                combine(
-                    customerRepository.getCustomers(),
-                    creditRepository.getTransactions()
-                ) { customers, transactions ->
-                    calculateAgingReport.invoke(customers, transactions)
-                }.collect { report ->
-                    _state.value = _state.value.copy(
-                        report = report,
-                        isLoading = false,
-                        error = null
-                    )
-                    applyFilter()
+                val report = when (_state.value.mode) {
+                    AgingMode.RECEIVABLES -> loadReceivables()
+                    AgingMode.PAYABLES -> loadPayables()
                 }
+                _state.value = _state.value.copy(
+                    report = report,
+                    isLoading = false,
+                    error = null
+                )
+                applyFilter()
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     isLoading = false,
@@ -63,32 +95,108 @@ class AgingReportViewModel(
         }
     }
 
+    private suspend fun loadReceivables(): AgingReport {
+        var customers: List<com.akari.retailer.features.customer.domain.models.Customer> = emptyList()
+        var transactions: List<CreditTransaction> = emptyList()
+
+        combine(
+            customerRepository.getCustomers(),
+            creditRepository.getTransactions()
+        ) { c, t -> Pair(c, t) }.collect { (c, t) ->
+            customers = c
+            transactions = t
+            return@collect
+        }
+
+        val inputs = customers.mapNotNull { customer ->
+            val txns = transactions.filter { it.customerId == customer.id }
+            if (txns.isEmpty()) return@mapNotNull null
+
+            val credits = txns
+                .filter { it.type == CreditTransactionType.SALE_ON_CREDIT }
+                .map { CreditLine(it.id, it.amount, it.date) }
+            val payments = txns
+                .filter { it.type == CreditTransactionType.PAYMENT }
+                .map { PaymentLine(-it.amount, it.date) }
+
+            AgingInput(
+                partyId = customer.id,
+                partyName = customer.name,
+                credits = credits,
+                payments = payments
+            )
+        }
+        return calculateAgingReport.invoke(inputs)
+    }
+
+    private suspend fun loadPayables(): AgingReport {
+        var suppliers: List<com.akari.retailer.features.supplier.domain.models.Supplier> = emptyList()
+        var transactions: List<SupplierTransaction> = emptyList()
+
+        combine(
+            supplierRepository.getSuppliers(),
+            supplierCreditRepository.getTransactions()
+        ) { s, t -> Pair(s, t) }.collect { (s, t) ->
+            suppliers = s
+            transactions = t
+            return@collect
+        }
+
+        val inputs = suppliers.mapNotNull { supplier ->
+            val txns = transactions.filter { it.supplierId == supplier.id }
+            if (txns.isEmpty()) return@mapNotNull null
+
+            val credits = txns
+                .filter { it.type == SupplierTransactionType.PURCHASE_ON_CREDIT }
+                .map { CreditLine(it.id, it.amount, it.date) }
+            val payments = txns
+                .filter { it.type == SupplierTransactionType.PAYMENT }
+                .map { PaymentLine(-it.amount, it.date) }
+
+            AgingInput(
+                partyId = supplier.id,
+                partyName = supplier.name,
+                credits = credits,
+                payments = payments
+            )
+        }
+        return calculateAgingReport.invoke(inputs)
+    }
+
     private fun applyFilter() {
         val report = _state.value.report ?: return
         val filter = _state.value.filter
 
         val filtered = if (filter == AgingFilter.ALL) {
-            report.customers
+            report.parties
         } else {
             val bucket = filter.toBucket()
-            report.customers.filter { customer ->
-                (customer.bucketTotals[bucket] ?: 0) > 0
+            report.parties.filter { party ->
+                (party.bucketTotals[bucket] ?: 0) > 0
             }
         }
 
-        _state.value = _state.value.copy(filteredCustomers = filtered)
+        _state.value = _state.value.copy(filteredParties = filtered)
     }
 }
 
 class AgingReportViewModelFactory(
     private val customerRepository: CustomerRepository,
     private val creditRepository: CreditRepository,
+    private val supplierRepository: SupplierRepository,
+    private val supplierCreditRepository: SupplierCreditRepository,
     private val calculateAgingReport: CalculateAgingReportUseCase
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AgingReportViewModel::class.java)) {
-            return AgingReportViewModel(customerRepository, creditRepository, calculateAgingReport) as T
+            return AgingReportViewModel(
+                customerRepository,
+                creditRepository,
+                supplierRepository,
+                supplierCreditRepository,
+                calculateAgingReport
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

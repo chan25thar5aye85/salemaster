@@ -30,4 +30,7 @@
     <string name="payable_history">Payable History</string>
     <string name="supplier_payment_recorded">Payment recorded!</string>
     <string name="amount_owed_to_supplier">Amount owed: %1$d</string>
+
+    <string name="total_payable">Total Payable</string>
+    <string name="n_suppliers_owed">%1$d suppliers you owe</string>
 </resources>

@@ -55,4 +55,9 @@
     <string name="n_customers">ဖောက်သည် %1$d ဦး</string>
     <string name="no_customers_in_bucket">ဤအုပ်စုတွင် ဖောက်သည်မရှိပါ</string>
     <string name="aging_report_subtitle">၃၀ / ၆၀ / ၉၀ ရက် ခွဲခြမ်းစိတ်ဖြာချက်</string>
+
+    <string name="receivables">လက်ခံရန်</string>
+    <string name="payables">ပေးရန်</string>
+    <string name="n_parties_owe">%1$d ဦး</string>
+    <string name="n_parties">%1$d ဦး</string>
 </resources>

@@ -55,4 +55,9 @@
     <string name="n_customers">%1$d customers</string>
     <string name="no_customers_in_bucket">No customers in this bucket</string>
     <string name="aging_report_subtitle">30 / 60 / 90 day breakdown</string>
+
+    <string name="receivables">Receivables</string>
+    <string name="payables">Payables</string>
+    <string name="n_parties_owe">%1$d parties</string>
+    <string name="n_parties">%1$d parties</string>
 </resources>

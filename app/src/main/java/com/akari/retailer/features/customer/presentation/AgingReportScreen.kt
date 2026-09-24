@@ -20,13 +20,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
-import com.akari.retailer.core.ui.components.AppCard
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.core.utils.MoneyFormatter
 import com.akari.retailer.features.customer.domain.models.AgingBucket
-import com.akari.retailer.features.customer.domain.models.CustomerAging
+import com.akari.retailer.features.customer.domain.models.PartyAging
 import com.akari.retailer.navigation.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,13 +41,14 @@ fun AgingReportScreen(
         factory = AgingReportViewModelFactory(
             application.container.customerRepository,
             application.container.creditRepository,
+            application.container.supplierRepository,
+            application.container.supplierCreditRepository,
             application.container.calculateAgingReportUseCase
         )
     )
 
     val state by viewModel.state.collectAsState()
 
-    // Bucket colors
     val bucketColors = remember {
         mapOf(
             AgingBucket.CURRENT to Color(0xFF4CAF50),
@@ -64,6 +64,36 @@ fun AgingReportScreen(
         onBackClick = onBack
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
+
+            // ── Mode tabs ──
+            TabRow(
+                selectedTabIndex = state.mode.ordinal,
+                containerColor = Color.Transparent,
+                divider = {}
+            ) {
+                Tab(
+                    selected = state.mode == AgingMode.RECEIVABLES,
+                    onClick = { viewModel.setMode(AgingMode.RECEIVABLES) },
+                    text = {
+                        Text(
+                            text = "📥 ${stringResource(R.string.receivables)}",
+                            fontSize = 14.sp
+                        )
+                    }
+                )
+                Tab(
+                    selected = state.mode == AgingMode.PAYABLES,
+                    onClick = { viewModel.setMode(AgingMode.PAYABLES) },
+                    text = {
+                        Text(
+                            text = "📤 ${stringResource(R.string.payables)}",
+                            fontSize = 14.sp
+                        )
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.medium))
 
             if (state.isLoading && state.report == null) {
                 Box(
@@ -146,7 +176,7 @@ fun AgingReportScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = stringResource(R.string.n_customers_owe, report.totalCustomersOwing),
+                        text = stringResource(R.string.n_parties_owe, report.totalPartiesOwing),
                         style = AppTypography.small,
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                     )
@@ -155,7 +185,6 @@ fun AgingReportScreen(
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
-            // Bucket summary — 2x2 grid
             Text(
                 text = stringResource(R.string.by_age),
                 style = AppTypography.title,
@@ -170,14 +199,14 @@ fun AgingReportScreen(
                 BucketSummaryCard(
                     bucket = AgingBucket.CURRENT,
                     amount = report.bucketTotals[AgingBucket.CURRENT] ?: 0,
-                    customerCount = report.bucketCustomerCounts[AgingBucket.CURRENT] ?: 0,
+                    count = report.bucketPartyCounts[AgingBucket.CURRENT] ?: 0,
                     color = bucketColors[AgingBucket.CURRENT]!!,
                     modifier = Modifier.weight(1f)
                 )
                 BucketSummaryCard(
                     bucket = AgingBucket.DAYS_30,
                     amount = report.bucketTotals[AgingBucket.DAYS_30] ?: 0,
-                    customerCount = report.bucketCustomerCounts[AgingBucket.DAYS_30] ?: 0,
+                    count = report.bucketPartyCounts[AgingBucket.DAYS_30] ?: 0,
                     color = bucketColors[AgingBucket.DAYS_30]!!,
                     modifier = Modifier.weight(1f)
                 )
@@ -192,14 +221,14 @@ fun AgingReportScreen(
                 BucketSummaryCard(
                     bucket = AgingBucket.DAYS_60,
                     amount = report.bucketTotals[AgingBucket.DAYS_60] ?: 0,
-                    customerCount = report.bucketCustomerCounts[AgingBucket.DAYS_60] ?: 0,
+                    count = report.bucketPartyCounts[AgingBucket.DAYS_60] ?: 0,
                     color = bucketColors[AgingBucket.DAYS_60]!!,
                     modifier = Modifier.weight(1f)
                 )
                 BucketSummaryCard(
                     bucket = AgingBucket.DAYS_90,
                     amount = report.bucketTotals[AgingBucket.DAYS_90] ?: 0,
-                    customerCount = report.bucketCustomerCounts[AgingBucket.DAYS_90] ?: 0,
+                    count = report.bucketPartyCounts[AgingBucket.DAYS_90] ?: 0,
                     color = bucketColors[AgingBucket.DAYS_90]!!,
                     modifier = Modifier.weight(1f)
                 )
@@ -214,31 +243,25 @@ fun AgingReportScreen(
                 containerColor = Color.Transparent,
                 divider = {}
             ) {
-                AgingFilter.values().forEachIndexed { index, filter ->
+                AgingFilter.values().forEach { filter ->
                     Tab(
                         selected = state.filter == filter,
                         onClick = { viewModel.setFilter(filter) },
-                        text = {
-                            Text(
-                                text = filterLabel(filter),
-                                fontSize = 13.sp
-                            )
-                        }
+                        text = { Text(text = filterLabel(filter), fontSize = 13.sp) }
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(Spacing.small))
 
-            // Customer count
             Text(
-                text = stringResource(R.string.n_customers, state.filteredCustomers.size),
+                text = stringResource(R.string.n_parties, state.filteredParties.size),
                 style = AppTypography.small,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.padding(bottom = Spacing.small)
             )
 
-            if (state.filteredCustomers.isEmpty()) {
+            if (state.filteredParties.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -254,20 +277,22 @@ fun AgingReportScreen(
                 return@Column
             }
 
-            // Customer list
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(Spacing.small),
                 contentPadding = PaddingValues(bottom = Spacing.xxlarge)
             ) {
-                items(state.filteredCustomers, key = { it.customerId }) { customerAging ->
-                    CustomerAgingCard(
-                        customerAging = customerAging,
+                items(state.filteredParties, key = { it.partyId }) { partyAging ->
+                    PartyAgingCard(
+                        partyAging = partyAging,
                         bucketColors = bucketColors,
                         onClick = {
-                            navController.navigate(
-                                Routes.CUSTOMER_DETAIL.replace("{customerId}", customerAging.customerId)
-                            )
+                            val route = if (state.mode == AgingMode.RECEIVABLES) {
+                                Routes.CUSTOMER_DETAIL.replace("{customerId}", partyAging.partyId)
+                            } else {
+                                Routes.SUPPLIER_DETAIL.replace("{supplierId}", partyAging.partyId)
+                            }
+                            navController.navigate(route)
                         }
                     )
                 }
@@ -280,7 +305,7 @@ fun AgingReportScreen(
 private fun BucketSummaryCard(
     bucket: AgingBucket,
     amount: Int,
-    customerCount: Int,
+    count: Int,
     color: Color,
     modifier: Modifier = Modifier
 ) {
@@ -318,7 +343,7 @@ private fun BucketSummaryCard(
                 color = color
             )
             Text(
-                text = "$customerCount customers",
+                text = "$count parties",
                 style = AppTypography.small,
                 fontSize = 10.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -328,8 +353,8 @@ private fun BucketSummaryCard(
 }
 
 @Composable
-private fun CustomerAgingCard(
-    customerAging: CustomerAging,
+private fun PartyAgingCard(
+    partyAging: PartyAging,
     bucketColors: Map<AgingBucket, Color>,
     onClick: () -> Unit
 ) {
@@ -353,12 +378,12 @@ private fun CustomerAgingCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = customerAging.customerName,
+                    text = partyAging.partyName,
                     style = AppTypography.title,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = MoneyFormatter.formatTotal(customerAging.totalOwed),
+                    text = MoneyFormatter.formatTotal(partyAging.totalOwed),
                     style = AppTypography.title,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.error
@@ -368,14 +393,13 @@ private fun CustomerAgingCard(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "Oldest: ${customerAging.oldestDays} days",
+                text = "Oldest: ${partyAging.oldestDays} days",
                 style = AppTypography.small,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
 
             Spacer(modifier = Modifier.height(Spacing.small))
 
-            // Bucket breakdown bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -386,9 +410,9 @@ private fun CustomerAgingCard(
                     )
             ) {
                 AgingBucket.values().forEach { bucket ->
-                    val amount = customerAging.bucketTotals[bucket] ?: 0
+                    val amount = partyAging.bucketTotals[bucket] ?: 0
                     if (amount > 0) {
-                        val fraction = amount.toFloat() / customerAging.totalOwed.toFloat()
+                        val fraction = amount.toFloat() / partyAging.totalOwed.toFloat()
                         Box(
                             modifier = Modifier
                                 .weight(fraction)
@@ -401,12 +425,11 @@ private fun CustomerAgingCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Bucket chips
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                customerAging.bucketTotals.forEach { (bucket, amount) ->
+                partyAging.bucketTotals.forEach { (bucket, amount) ->
                     if (amount > 0) {
                         Surface(
                             color = (bucketColors[bucket] ?: Color.Gray).copy(alpha = 0.15f),
