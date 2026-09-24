@@ -401,61 +401,47 @@ class SaleEntryViewModel(
             SaleItem(productId = "", quantity = 1, price = amount, total = amount)
         }
 
+        // Represent the whole sale as a single credit payment — same data model
+        // as a mixed payment, so the atomic finalizer handles it identically.
+        val creditPayment = PaymentEntry(
+            accountId = CreditAccount.ID,
+            amount = total,
+            customerId = customer.id
+        )
+
         _state.value = currentState.copy(isSaving = true, error = null)
 
         viewModelScope.launch {
             try {
-                // 1. Save the sale (with no payments — it's credit)
                 val sale = Sale(
                     items = saleItems,
                     total = total,
-                    payments = emptyList(),  // credit — no money moved
+                    payments = listOf(creditPayment),
                     cashierId = cashierId
                 )
 
-                val saleResult = repository.saveSale(sale)
-                if (saleResult.isFailure) {
+                val result = saleFinalizer.finalizeSale(sale)
+                if (result.isSuccess) {
+                    Log.d(TAG, "Credit sale finalized atomically: customer=${customer.id}, amount=$total")
+
+                    _state.value = stateManager.resetState().copy(
+                        isSaving = false,
+                        saveSuccess = true,
+                        recentSales = currentRecentSales,
+                        accounts = currentState.accounts,
+                        customers = currentState.customers,
+                        isCreditSale = false,
+                        creditCustomer = null,
+                        creditNotes = "",
+                        paymentRows = listOf(PaymentRow(1L, "default_cash", ""))
+                    )
+                    userTouchedPaymentAmounts = false
+                } else {
                     _state.value = currentState.copy(
                         isSaving = false,
-                        error = saleResult.exceptionOrNull()?.message ?: "Failed to save sale"
+                        error = result.exceptionOrNull()?.message ?: "Failed to save credit sale"
                     )
-                    return@launch
                 }
-
-                val saleId = saleResult.getOrNull() ?: ""
-
-                // 2. Extend credit (atomic: bumps customer.creditBalance + writes CreditTransaction)
-                val creditResult = extendCreditUseCase.invoke(
-                    customerId = customer.id,
-                    amount = total,
-                    saleId = saleId,
-                    description = currentState.creditNotes.trim().ifEmpty { "Sale on credit" }
-                )
-
-                if (creditResult.isFailure) {
-                    // Sale was saved but credit failed — surface the error
-                    _state.value = currentState.copy(
-                        isSaving = false,
-                        error = "Sale saved but credit failed: ${creditResult.exceptionOrNull()?.message}"
-                    )
-                    return@launch
-                }
-
-                Log.d(TAG, "Credit sale saved: customer=${customer.id}, amount=$total")
-
-                // Success — reset the form
-                _state.value = stateManager.resetState().copy(
-                    isSaving = false,
-                    saveSuccess = true,
-                    recentSales = currentRecentSales,
-                    accounts = currentState.accounts,
-                    customers = currentState.customers,
-                    isCreditSale = false,
-                    creditCustomer = null,
-                    creditNotes = "",
-                    paymentRows = listOf(PaymentRow(1L, "default_cash", ""))
-                )
-                userTouchedPaymentAmounts = false
             } catch (e: Exception) {
                 _state.value = currentState.copy(
                     isSaving = false,
