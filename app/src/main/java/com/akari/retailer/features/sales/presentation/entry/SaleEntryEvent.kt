@@ -26,6 +26,12 @@ sealed class SaleEntryEvent {
     data class PaymentCreditSelected(val rowId: Long) : SaleEntryEvent()
     data class PaymentCustomerSelected(val rowId: Long, val customer: Customer) : SaleEntryEvent()
 
+    // Overpayment dialog events
+    data class OverpaymentModeChanged(val mode: OverpaymentMode) : SaleEntryEvent()
+    data class OverpaymentCustomerSelected(val customer: Customer) : SaleEntryEvent()
+    data object ConfirmOverpayment : SaleEntryEvent()
+    data object DismissOverpaymentDialog : SaleEntryEvent()
+
     data object SaveSale : SaleEntryEvent()
     data object ClearError : SaleEntryEvent()
     data object ResetSaveSuccess : SaleEntryEvent()

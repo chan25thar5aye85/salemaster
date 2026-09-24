@@ -23,8 +23,20 @@ data class SaleEntryState(
     val creditCustomer: Customer? = null,
     val creditNotes: String = "",
     val customers: List<Customer> = emptyList(),
-    val showCreditCustomerPicker: Boolean = false
+    val showCreditCustomerPicker: Boolean = false,
+
+    // Overpayment dialog
+    val showOverpaymentDialog: Boolean = false,
+    val pendingOverpaymentAmount: Int = 0,
+    val overpaymentMode: OverpaymentMode = OverpaymentMode.NONE,
+    val overpaymentCustomer: Customer? = null
 )
+
+enum class OverpaymentMode {
+    NONE,
+    CREDIT_TO_CUSTOMER,
+    KEEP_IN_ACCOUNT
+}
 
 data class SaleItemRow(
     val id: Long,

@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -110,6 +111,123 @@ fun SaleEntryScreen(
             onDismiss = { viewModel.handleEvent(SaleEntryEvent.CloseCreditCustomerPicker) }
         )
     }
+
+    // ── Overpayment attribution dialog ──
+    if (state.showOverpaymentDialog) {
+        var showOverpaymentCustomerPicker by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            onDismissRequest = {
+                viewModel.handleEvent(SaleEntryEvent.DismissOverpaymentDialog)
+            },
+            title = { Text(stringResource(R.string.overpayment)) },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = stringResource(R.string.overpaid_amount, state.pendingOverpaymentAmount),
+                        style = AppTypography.body
+                    )
+                    Spacer(modifier = Modifier.height(Spacing.medium))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                viewModel.handleEvent(
+                                    SaleEntryEvent.OverpaymentModeChanged(OverpaymentMode.CREDIT_TO_CUSTOMER)
+                                )
+                            }
+                    ) {
+                        RadioButton(
+                            selected = state.overpaymentMode == OverpaymentMode.CREDIT_TO_CUSTOMER,
+                            onClick = {
+                                viewModel.handleEvent(
+                                    SaleEntryEvent.OverpaymentModeChanged(OverpaymentMode.CREDIT_TO_CUSTOMER)
+                                )
+                            }
+                        )
+                        Text(stringResource(R.string.credit_to_customer))
+                    }
+
+                    if (state.overpaymentMode == OverpaymentMode.CREDIT_TO_CUSTOMER) {
+                        OutlinedButton(
+                            onClick = { showOverpaymentCustomerPicker = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 32.dp, top = 4.dp, bottom = 4.dp)
+                        ) {
+                            Text(
+                                text = state.overpaymentCustomer?.name
+                                    ?: stringResource(R.string.select_customer)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(Spacing.small))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                viewModel.handleEvent(
+                                    SaleEntryEvent.OverpaymentModeChanged(OverpaymentMode.KEEP_IN_ACCOUNT)
+                                )
+                            }
+                    ) {
+                        RadioButton(
+                            selected = state.overpaymentMode == OverpaymentMode.KEEP_IN_ACCOUNT,
+                            onClick = {
+                                viewModel.handleEvent(
+                                    SaleEntryEvent.OverpaymentModeChanged(OverpaymentMode.KEEP_IN_ACCOUNT)
+                                )
+                            }
+                        )
+                        Text(stringResource(R.string.keep_in_account))
+                    }
+
+                    state.error?.let { err ->
+                        Spacer(modifier = Modifier.height(Spacing.small))
+                        Text(
+                            text = err,
+                            color = MaterialTheme.colorScheme.error,
+                            style = AppTypography.small
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.handleEvent(SaleEntryEvent.ConfirmOverpayment) },
+                    enabled = state.overpaymentMode != OverpaymentMode.NONE &&
+                        (state.overpaymentMode != OverpaymentMode.CREDIT_TO_CUSTOMER ||
+                         state.overpaymentCustomer != null)
+                ) {
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { viewModel.handleEvent(SaleEntryEvent.DismissOverpaymentDialog) }
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+
+        if (showOverpaymentCustomerPicker) {
+            CreditCustomerPickerDialog(
+                customers = state.customers,
+                onCustomerSelected = { customer ->
+                    viewModel.handleEvent(SaleEntryEvent.OverpaymentCustomerSelected(customer))
+                    showOverpaymentCustomerPicker = false
+                },
+                onDismiss = { showOverpaymentCustomerPicker = false }
+            )
+        }
+    }
+
 
     AppScreen(
         title = stringResource(R.string.sale_entry),

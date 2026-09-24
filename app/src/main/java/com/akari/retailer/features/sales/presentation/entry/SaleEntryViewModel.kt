@@ -46,6 +46,7 @@ class SaleEntryViewModel(
 
     private var nextPaymentRowId = 2L
     private var userTouchedPaymentAmounts = false
+    private var pendingOverpayment: PaymentEntry? = null
 
     init {
         val lastAccountId = paymentPreferences.getLastUsedAccountId()
@@ -91,6 +92,10 @@ class SaleEntryViewModel(
             is SaleEntryEvent.CreditNotesChanged -> _state.value = _state.value.copy(creditNotes = event.value)
             is SaleEntryEvent.PaymentCreditSelected -> selectPaymentCredit(event.rowId)
             is SaleEntryEvent.PaymentCustomerSelected -> selectPaymentCustomer(event.rowId, event.customer)
+            is SaleEntryEvent.OverpaymentModeChanged -> _state.value = _state.value.copy(overpaymentMode = event.mode)
+            is SaleEntryEvent.OverpaymentCustomerSelected -> _state.value = _state.value.copy(overpaymentCustomer = event.customer)
+            SaleEntryEvent.ConfirmOverpayment -> confirmOverpayment()
+            SaleEntryEvent.DismissOverpaymentDialog -> dismissOverpaymentDialog()
         }
     }
 
@@ -307,7 +312,7 @@ class SaleEntryViewModel(
             return
         }
 
-        // ── Normal payment path (money + possible credit rows) ──
+        // ── Normal payment path ──
         val allPaymentEntries = currentState.paymentRows
             .filter { it.amount.toIntOrNull()?.let { it > 0 } == true }
             .map {
@@ -325,23 +330,11 @@ class SaleEntryViewModel(
 
         val totalPaid = allPaymentEntries.sumOf { it.amount }
 
-        // Underpayment still blocked
+        // Underpayment blocked
         if (totalPaid < total) {
             _state.value = stateManager.setError(
                 currentState,
                 "Payments ($totalPaid) must equal or exceed total ($total)"
-            )
-            return
-        }
-
-        // Overpayment: require a customer to credit the excess
-        val overpaymentAmount = totalPaid - total
-        val overpaymentCustomer = currentState.creditCustomer
-
-        if (overpaymentAmount > 0 && overpaymentCustomer == null) {
-            _state.value = stateManager.setError(
-                currentState,
-                "Overpaid $overpaymentAmount — select a customer (via Credit toggle) to attribute the excess"
             )
             return
         }
@@ -356,6 +349,38 @@ class SaleEntryViewModel(
                 return
             }
         }
+
+        // If overpaid — open the attribution dialog instead of saving
+        val overpaymentAmount = totalPaid - total
+        if (overpaymentAmount > 0) {
+            _state.value = _state.value.copy(
+                showOverpaymentDialog = true,
+                pendingOverpaymentAmount = overpaymentAmount,
+                overpaymentMode = OverpaymentMode.NONE,
+                overpaymentCustomer = null,
+                error = null
+            )
+            return
+        }
+
+        // No overpayment — proceed
+        executeSaleSave(cashierId)
+    }
+
+    private fun executeSaleSave(cashierId: String) {
+        val currentState = _state.value
+        val items = stateManager.getItems(currentState)
+        val total = items.sum()
+
+        val allPaymentEntries = currentState.paymentRows
+            .filter { it.amount.toIntOrNull()?.let { it > 0 } == true }
+            .map {
+                PaymentEntry(
+                    accountId = it.accountId,
+                    amount = it.amount.toIntOrNull() ?: 0,
+                    customerId = it.customerId
+                )
+            }
 
         val currentRecentSales = currentState.recentSales
         val lastAccountId = currentState.paymentRows.firstOrNull()?.accountId ?: "default_cash"
@@ -375,7 +400,9 @@ class SaleEntryViewModel(
                     cashierId = cashierId
                 )
 
-                val result = saleFinalizer.finalizeSale(sale)
+                val result = saleFinalizer.finalizeSale(sale, pendingOverpayment)
+                pendingOverpayment = null
+
                 if (result.isSuccess) {
                     Log.d(TAG, "Sale saved atomically (payments: ${allPaymentEntries.size})")
 
@@ -403,6 +430,61 @@ class SaleEntryViewModel(
         }
     }
 
+    private fun confirmOverpayment() {
+        val mode = _state.value.overpaymentMode
+        val amount = _state.value.pendingOverpaymentAmount
+        val customer = _state.value.overpaymentCustomer
+
+        when (mode) {
+            OverpaymentMode.NONE -> {
+                _state.value = _state.value.copy(error = "Choose where the excess goes")
+                return
+            }
+            OverpaymentMode.CREDIT_TO_CUSTOMER -> {
+                if (customer == null) {
+                    _state.value = _state.value.copy(error = "Select a customer for the excess")
+                    return
+                }
+                pendingOverpayment = PaymentEntry(
+                    accountId = CreditAccount.ID,
+                    amount = amount,
+                    customerId = customer.id
+                )
+            }
+            OverpaymentMode.KEEP_IN_ACCOUNT -> {
+                pendingOverpayment = null
+            }
+        }
+
+        // Close dialog and execute
+        _state.value = _state.value.copy(
+            showOverpaymentDialog = false,
+            pendingOverpaymentAmount = 0,
+            overpaymentMode = OverpaymentMode.NONE,
+            overpaymentCustomer = null,
+            error = null
+        )
+        executeSaleSave("default")
+    }
+
+    private fun dismissOverpaymentDialog() {
+        _state.value = _state.value.copy(
+            showOverpaymentDialog = false,
+            pendingOverpaymentAmount = 0,
+            overpaymentMode = OverpaymentMode.NONE,
+            overpaymentCustomer = null,
+            error = null
+        )
+    }
+
+    private fun clearError() {
+        _state.value = stateManager.setError(_state.value, null)
+    }
+
+    private fun resetSaveSuccess() {
+        _state.value = stateManager.setSaveSuccess(_state.value, false)
+    }
+
     private fun saveCreditSale(
         currentState: SaleEntryState,
         items: List<Int>,
@@ -410,44 +492,44 @@ class SaleEntryViewModel(
         customer: Customer,
         cashierId: String
     ) {
-        val currentRecentSales = currentState.recentSales
-        val saleItems = items.map { amount ->
-            SaleItem(productId = "", quantity = 1, price = amount, total = amount)
+        if (items.isEmpty()) {
+            _state.value = stateManager.setError(currentState, "Add at least one item")
+            return
         }
 
-        // Represent the whole sale as a single credit payment — same data model
-        // as a mixed payment, so the atomic finalizer handles it identically.
         val creditPayment = PaymentEntry(
             accountId = CreditAccount.ID,
             amount = total,
             customerId = customer.id
         )
 
+        val sale = Sale(
+            items = items.map { amount ->
+                SaleItem(productId = "", quantity = 1, price = amount, total = amount)
+            },
+            total = total,
+            payments = listOf(creditPayment),
+            cashierId = cashierId
+        )
+
+        val currentRecentSales = currentState.recentSales
+        val lastAccountId = currentState.paymentRows.firstOrNull()?.accountId ?: "default_cash"
+
         _state.value = currentState.copy(isSaving = true, error = null)
 
         viewModelScope.launch {
             try {
-                val sale = Sale(
-                    items = saleItems,
-                    total = total,
-                    payments = listOf(creditPayment),
-                    cashierId = cashierId
-                )
+                val result = saleFinalizer.finalizeSale(sale, overpaymentCredit = null)
 
-                val result = saleFinalizer.finalizeSale(sale)
                 if (result.isSuccess) {
-                    Log.d(TAG, "Credit sale finalized atomically: customer=${customer.id}, amount=$total")
-
+                    Log.d(TAG, "Credit sale saved atomically")
                     _state.value = stateManager.resetState().copy(
                         isSaving = false,
                         saveSuccess = true,
                         recentSales = currentRecentSales,
                         accounts = currentState.accounts,
                         customers = currentState.customers,
-                        isCreditSale = false,
-                        creditCustomer = null,
-                        creditNotes = "",
-                        paymentRows = listOf(PaymentRow(1L, "default_cash", ""))
+                        paymentRows = listOf(PaymentRow(1L, lastAccountId, ""))
                     )
                     userTouchedPaymentAmounts = false
                 } else {
@@ -465,13 +547,6 @@ class SaleEntryViewModel(
         }
     }
 
-    private fun clearError() {
-        _state.value = stateManager.setError(_state.value, null)
-    }
-
-    private fun resetSaveSuccess() {
-        _state.value = stateManager.setSaveSuccess(_state.value, false)
-    }
 }
 
 class SaleEntryViewModelFactory(

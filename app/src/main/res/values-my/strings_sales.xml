@@ -46,4 +46,6 @@
     <string name="overpaid_amount">%1$d ပိုလျှံသည် — ဖောက်သည်အား အကြွေးအဖြစ်ထည့်မည်</string>
     <string name="will_credit_customer">ပိုလျှံငွေကို %1$s အား အကြွေးအဖြစ်ထည့်မည်</string>
     <string name="select_customer_via_credit_toggle">ပိုလျှံငွေကို ဖောက်သည်တစ်ဦးထံ ထည့်ရန် Credit ကိုနှိပ်၍ ဖောက်သည်ရွေးပါ</string>
+    <string name="credit_to_customer">ဖောက်သည်ထံ အကြွေးအဖြစ်ထည့်မည်</string>
+    <string name="keep_in_account">ငွေအကောင့်ထဲ ထားရှိမည်</string>
 </resources>

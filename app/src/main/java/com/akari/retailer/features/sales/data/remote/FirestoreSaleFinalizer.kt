@@ -41,6 +41,15 @@ class FirestoreSaleFinalizer : SaleFinalizer {
                     }
                 }
 
+                // Read the overpayment customer up front (transaction rule:
+                // all reads must precede all writes).
+                if (overpaymentCredit != null && overpaymentCredit.amount > 0) {
+                    val opCustSnap = txn.get(customersCol.document(overpaymentCredit.customerId))
+                    if (!opCustSnap.exists()) {
+                        throw IllegalStateException("Customer not found: ${overpaymentCredit.customerId}")
+                    }
+                }
+
                 // ── 2. WRITE: sale document ──
                 txn.set(saleRef, mapOf(
                     "items" to sale.items.map { item ->
@@ -117,17 +126,10 @@ class FirestoreSaleFinalizer : SaleFinalizer {
                 // ── 5. WRITE: overpayment credit (if any) ──
                 // If the customer paid more than the total, we now owe them the excess.
                 if (overpaymentCredit != null && overpaymentCredit.amount > 0) {
-                    val custRef = customersCol.document(overpaymentCredit.customerId)
-                    val custSnap = txn.get(custRef)
-                    if (!custSnap.exists()) {
-                        throw IllegalStateException(
-                            "Customer not found: ${overpaymentCredit.customerId}"
-                        )
-                    }
-
-                    // Customer credit balance goes DOWN (we owe them)
+                    // Customer credit balance goes DOWN (we owe them).
+                    // The read already happened in step 1, so this is a pure write.
                     txn.update(
-                        custRef,
+                        customersCol.document(overpaymentCredit.customerId),
                         "creditBalance", FieldValue.increment(-overpaymentCredit.amount.toLong()),
                         "updatedAt", now
                     )
