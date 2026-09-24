@@ -114,6 +114,7 @@ fun IncomeEntryScreen(
                 paymentRows = state.paymentRows,
                 accounts = state.accounts,
                 totalAmount = state.getTotalAmount(),
+                showCreditOption = false,
                 onAccountSelected = { rowId, account ->
                     viewModel.handleEvent(IncomeEntryEvent.PaymentAccountChanged(rowId, account))
                 },

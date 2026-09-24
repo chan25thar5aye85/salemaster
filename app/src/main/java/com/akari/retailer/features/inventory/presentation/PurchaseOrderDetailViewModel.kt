@@ -250,15 +250,16 @@ class PurchaseOrderDetailViewModel(
 
             val payments = _state.value.getPayments()
             val totalCost = currentOrder.receivedItems.sumOf { it.total }
+            val totalPaid = payments.sumOf { it.amount }
 
-            if (payments.isEmpty()) {
-                return Result.failure(Exception("Add at least one payment"))
-            }
-            if (payments.sumOf { it.amount } != totalCost) {
+            if (totalPaid > totalCost) {
                 return Result.failure(Exception(
-                    "Payments (${payments.sumOf { it.amount }}) must equal total ($totalCost)"
+                    "Payments ($totalPaid) cannot exceed total ($totalCost)"
                 ))
             }
+
+            // Remainder goes on supplier credit (payable)
+            val creditAmount = totalCost - totalPaid
 
             val receiptNumber = generateReceiptNumber()
             val now = System.currentTimeMillis()
@@ -302,6 +303,8 @@ class PurchaseOrderDetailViewModel(
                         )
                     },
                     "totalCost" to totalCost,
+                    "paidAmount" to totalPaid,
+                    "creditAmount" to creditAmount,
                     "payments" to payments.map { p ->
                         mapOf("accountId" to p.accountId, "amount" to p.amount)
                     },
@@ -373,14 +376,36 @@ class PurchaseOrderDetailViewModel(
                     ))
                 }
 
-                // WRITE supplier increment
+                // WRITE supplier increment + payable if partial/credit
                 if (currentOrder.supplierId.isNotEmpty()) {
-                    txn.update(
-                        suppliersCol.document(currentOrder.supplierId),
-                        "totalPurchased", com.google.firebase.firestore.FieldValue.increment(totalCost.toLong()),
-                        "lastOrderDate", now,
-                        "updatedAt", now
+                    val supplierUpdates = mutableMapOf<String, Any>(
+                        "totalPurchased" to com.google.firebase.firestore.FieldValue.increment(totalCost.toLong()),
+                        "lastOrderDate" to now,
+                        "updatedAt" to now
                     )
+
+                    if (creditAmount > 0) {
+                        // Increase payable balance (you owe them more)
+                        supplierUpdates["payableBalance"] =
+                            com.google.firebase.firestore.FieldValue.increment(creditAmount.toLong())
+                    }
+
+                    txn.update(suppliersCol.document(currentOrder.supplierId), supplierUpdates)
+
+                    // Log supplier transaction for the credit portion
+                    if (creditAmount > 0) {
+                        val supplierTxnsCol = db.collection("supplier_transactions")
+                        txn.set(supplierTxnsCol.document(), mapOf(
+                            "supplierId" to currentOrder.supplierId,
+                            "type" to "PURCHASE_ON_CREDIT",
+                            "amount" to creditAmount,
+                            "purchaseId" to orderId,
+                            "paymentAccountId" to "",
+                            "description" to "Purchase: ${currentOrder.orderName}",
+                            "date" to now,
+                            "createdAt" to now
+                        ))
+                    }
                 }
 
                 // WRITE order status = COMPLETED

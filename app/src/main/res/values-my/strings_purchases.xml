@@ -27,4 +27,9 @@
     <string name="finalize_purchase">ဝယ်ယူမှုအပြီးသတ်ရန်</string>
     <string name="purchase_already_created">ဤအော်ဒါအတွက် ဝယ်ယူမှုရှိပြီးသားဖြစ်သည်</string>
     <string name="no_items_to_purchase">ဝယ်ယူရန် ပစ္စည်းမရှိပါ</string>
+
+    <string name="will_be_on_credit">အကြွေးဖြင့်</string>
+    <string name="paid_now_x_credit_y">ယခုပေးချေ: %1$d · အကြွေး: %2$d</string>
+    <string name="owed_to_supplier">ပေးသွင်းသူအား အကြွေး %1$d ဖြစ်လာမည်</string>
+    <string name="all_on_credit">အားလုံး အကြွေး</string>
 </resources>

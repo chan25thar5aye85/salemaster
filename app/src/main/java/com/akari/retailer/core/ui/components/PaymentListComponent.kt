@@ -41,6 +41,8 @@ fun PaymentListComponent(
     customers: List<Customer> = emptyList(),
     totalAmount: Int = 0,
     showSummary: Boolean = true,
+    /** When false, the "Credit" option is hidden from the account dropdown. */
+    showCreditOption: Boolean = true,
     onAccountSelected: (rowId: Long, account: MoneyAccount) -> Unit,
     onCreditSelected: (rowId: Long) -> Unit = {},
     onCustomerSelected: (rowId: Long, customer: Customer) -> Unit = { _, _ -> },
@@ -65,6 +67,7 @@ fun PaymentListComponent(
                 accounts = accounts,
                 customers = customers,
                 isOnlyRow = paymentRows.size == 1,
+                showCreditOption = showCreditOption,
                 onAccountSelected = { account -> onAccountSelected(row.id, account) },
                 onCreditSelected = { onCreditSelected(row.id) },
                 onCustomerSelected = { customer -> onCustomerSelected(row.id, customer) },
@@ -145,6 +148,7 @@ private fun SinglePaymentRow(
     accounts: List<MoneyAccount>,
     customers: List<Customer>,
     isOnlyRow: Boolean,
+    showCreditOption: Boolean,
     onAccountSelected: (MoneyAccount) -> Unit,
     onCreditSelected: () -> Unit,
     onCustomerSelected: (Customer) -> Unit,
@@ -195,7 +199,8 @@ private fun SinglePaymentRow(
                     expanded = accountExpanded,
                     onDismissRequest = { accountExpanded = false }
                 ) {
-                    // Credit option at the top
+                    // Credit option at the top (only if allowed)
+                    if (showCreditOption) {
                     DropdownMenuItem(
                         text = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -222,6 +227,7 @@ private fun SinglePaymentRow(
                     )
 
                     HorizontalDivider()
+                    }
 
                     // Money accounts
                     accounts.forEach { account ->
@@ -282,8 +288,8 @@ private fun SinglePaymentRow(
             }
         }
 
-        // Customer picker — only when this row is a credit row
-        if (isCredit) {
+        // Customer picker — only when this row is a credit row AND credit is allowed
+        if (isCredit && showCreditOption) {
             Spacer(modifier = Modifier.height(Spacing.small))
             ExposedDropdownMenuBox(
                 expanded = customerExpanded,

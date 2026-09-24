@@ -117,6 +117,7 @@ fun ExpenseAddScreen(
                 paymentRows = state.paymentRows,
                 accounts = state.accounts,
                 totalAmount = state.getTotalAmount(),
+                showCreditOption = false,
                 onAccountSelected = { rowId, account ->
                     viewModel.handleEvent(ExpenseAddEvent.PaymentAccountChanged(rowId, account))
                 },

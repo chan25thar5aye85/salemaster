@@ -27,4 +27,9 @@
     <string name="finalize_purchase">Finalize Purchase</string>
     <string name="purchase_already_created">Purchase already created for this order</string>
     <string name="no_items_to_purchase">No items to purchase</string>
+
+    <string name="will_be_on_credit">On Credit</string>
+    <string name="paid_now_x_credit_y">Paid now: %1$d · On credit: %2$d</string>
+    <string name="owed_to_supplier">You will owe supplier %1$d</string>
+    <string name="all_on_credit">All on credit</string>
 </resources>

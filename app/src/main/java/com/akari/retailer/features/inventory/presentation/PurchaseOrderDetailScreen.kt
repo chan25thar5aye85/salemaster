@@ -215,6 +215,7 @@ fun PurchaseOrderDetailScreen(
                             paymentRows = state.paymentRows,
                             accounts = state.accounts,
                             totalAmount = state.getTotalCost(),
+                            showCreditOption = false,
                             onAccountSelected = { rowId, account ->
                                 viewModel.updatePaymentAccount(rowId, account)
                             },
@@ -224,6 +225,43 @@ fun PurchaseOrderDetailScreen(
                             onAddRow = { viewModel.addPaymentRow() },
                             onRemoveRow = { rowId -> viewModel.removePaymentRow(rowId) }
                         )
+
+                        // Show what happens to the remaining balance
+                        val totalCost = state.getTotalCost()
+                        val totalPaid = state.getTotalPaid()
+                        val creditAmount = totalCost - totalPaid
+
+                        if (creditAmount > 0) {
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                                )
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(Spacing.medium)
+                                ) {
+                                    Text(
+                                        text = "💳 ${stringResource(R.string.will_be_on_credit)}",
+                                        style = AppTypography.title,
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = stringResource(R.string.paid_now_x_credit_y, totalPaid, creditAmount),
+                                        style = AppTypography.body
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.owed_to_supplier, creditAmount),
+                                        style = AppTypography.small,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                    )
+                                }
+                            }
+                        }
                         
                         Spacer(modifier = Modifier.height(Spacing.medium))
                         
@@ -233,7 +271,7 @@ fun PurchaseOrderDetailScreen(
                                 showCreatePurchaseDialog = true
                             },
                             isLoading = isCreatingPurchase,
-                            enabled = !isCreatingPurchase && state.isFullyPaid(),
+                            enabled = !isCreatingPurchase,  // partial or zero payments allowed (rest goes on supplier credit)
                             modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(modifier = Modifier.height(Spacing.medium))
@@ -589,6 +627,21 @@ fun PurchaseOrderDetailScreen(
                     Text(stringResource(R.string.purchase_create_expense), style = AppTypography.small)
                     Text(stringResource(R.string.purchase_update_supplier), style = AppTypography.small)
                     Text(stringResource(R.string.purchase_generate_receipt), style = AppTypography.small)
+
+                    // Breakdown of paid vs credit
+                    val totalCostDlg = state.getTotalCost()
+                    val totalPaidDlg = state.getTotalPaid()
+                    val creditDlg = totalCostDlg - totalPaidDlg
+                    if (creditDlg > 0) {
+                        Spacer(modifier = Modifier.height(Spacing.small))
+                        Divider()
+                        Spacer(modifier = Modifier.height(Spacing.small))
+                        Text(
+                            text = stringResource(R.string.paid_now_x_credit_y, totalPaidDlg, creditDlg),
+                            style = AppTypography.body,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                        )
+                    }
                     Spacer(modifier = Modifier.height(Spacing.small))
                     Text(
                         stringResource(R.string.purchase_cannot_undo),
