@@ -39,6 +39,6 @@
     <string name="owes_label">Owes</string>
 
     <string name="items">Items</string>
-    <string name="offline_banner_sale">No internet. Sales will sync when online.</string>
+    <string name="offline_banner_sale">No internet. Saving requires connection — try again when online.</string>
     <string name="sale_detail">Sale Detail</string>
 </resources>

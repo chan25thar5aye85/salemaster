@@ -39,6 +39,6 @@
     <string name="owes_label">အကြွေးကျန်</string>
 
     <string name="items">ပစ္စည်းများ</string>
-    <string name="offline_banner_sale">အင်တာနက်မရှိပါ။ အွန်လိုင်းရသောအခါ အရောင်းများ စင့်ခ်လုပ်ပါမည်။</string>
+    <string name="offline_banner_sale">အင်တာနက်မရှိပါ။ သိမ်းရန် အင်တာနက်လိုအပ်ပါသည် — အွန်လိုင်းရသောအခါ ပြန်ကြိုးစားပါ။</string>
     <string name="sale_detail">အရောင်းအသေးစိတ်</string>
 </resources>
