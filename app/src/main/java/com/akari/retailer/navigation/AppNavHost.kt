@@ -46,6 +46,7 @@ import com.akari.retailer.features.sales.presentation.income.IncomeEntryScreen
 import com.akari.retailer.features.sales.presentation.income.IncomeListScreen
 import com.akari.retailer.features.sales.presentation.stream.IncomeStreamManagementScreen
 import com.akari.retailer.features.sales.presentation.entry.SaleEntryScreen
+import com.akari.retailer.features.sales.presentation.history.SaleDetailScreen
 import com.akari.retailer.features.sales.presentation.history.SaleHistoryScreen
 import com.akari.retailer.features.settings.presentation.SettingsScreen
 import com.akari.retailer.features.supplier.presentation.SupplierAddScreen
@@ -83,7 +84,22 @@ fun AppNavHost() {
                 }
                 
                 composable(Routes.HISTORY) {
-                    SaleHistoryScreen(onBack = { navController.popBackStack() })
+                    SaleHistoryScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable(
+                    route = Routes.SALE_DETAIL,
+                    arguments = listOf(navArgument("saleId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val saleId = backStackEntry.arguments?.getString("saleId") ?: ""
+                    SaleDetailScreen(
+                        navController = navController,
+                        saleId = saleId,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
                 
                 // INCOME MODULE

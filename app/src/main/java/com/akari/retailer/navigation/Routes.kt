@@ -4,6 +4,7 @@ object Routes {
     const val SALE_ENTRY = "sale_entry"
     const val SETTINGS = "settings"
     const val HISTORY = "history"
+    const val SALE_DETAIL = "sale_detail/{saleId}"
     const val REPORTS = "reports"
     const val TRENDS = "trends"
     const val EXPENSES = "expenses"

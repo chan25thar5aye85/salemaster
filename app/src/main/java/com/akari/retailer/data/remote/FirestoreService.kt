@@ -101,6 +101,22 @@ class FirestoreService {
         awaitClose { listener.remove() }
     }
     
+    fun getSaleById(saleId: String): Flow<Sale?> = callbackFlow {
+        val collection = getCollection()
+        if (collection == null) { trySend(null); close(); return@callbackFlow }
+        
+        val listener = collection.document(saleId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) { close(error); return@addSnapshotListener }
+                if (snapshot == null || !snapshot.exists()) {
+                    trySend(null)
+                    return@addSnapshotListener
+                }
+                trySend(mapDocToSale(snapshot.id, snapshot.data ?: emptyMap()))
+            }
+        awaitClose { listener.remove() }
+    }
+
     private fun mapDocToSale(id: String, data: Map<String, Any>): Sale? {
         return try {
             val items = (data["items"] as? List<*>)?.mapNotNull { itemData ->

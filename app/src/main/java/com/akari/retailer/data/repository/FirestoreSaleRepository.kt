@@ -21,6 +21,10 @@ class FirestoreSaleRepository(
         return firestoreService.getTodaySales()
     }
     
+    override fun getSaleById(saleId: String): Flow<Sale?> {
+        return firestoreService.getSaleById(saleId)
+    }
+    
     override suspend fun deleteSale(saleId: String): Result<Unit> {
         return firestoreService.deleteSale(saleId)
     }

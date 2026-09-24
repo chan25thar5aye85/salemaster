@@ -40,4 +40,5 @@
 
     <string name="items">ပစ္စည်းများ</string>
     <string name="offline_banner_sale">အင်တာနက်မရှိပါ။ အွန်လိုင်းရသောအခါ အရောင်းများ စင့်ခ်လုပ်ပါမည်။</string>
+    <string name="sale_detail">အရောင်းအသေးစိတ်</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.akari.retailer.core.ui.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,13 +33,19 @@ import java.util.*
 fun SaleCard(
     sale: Sale,
     onDelete: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
     val dateFormat = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
     val dateString = dateFormat.format(Date(sale.timestamp))
-    
+
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (onClick != null) Modifier.clickable { onClick() }
+                else Modifier
+            ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -55,19 +62,15 @@ fun SaleCard(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                // Date and time
                 Text(
                     text = "🕐 $dateString",
                     style = AppTypography.small,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
-                
+
                 Spacer(modifier = Modifier.height(4.dp))
-                
-                // Items count and total
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "${sale.items.size} ${stringResource(R.string.item).lowercase()}",
                         style = AppTypography.body,
@@ -86,8 +89,7 @@ fun SaleCard(
                     )
                 }
             }
-            
-            // Delete button
+
             IconButton(
                 onClick = onDelete,
                 modifier = Modifier.width(40.dp)

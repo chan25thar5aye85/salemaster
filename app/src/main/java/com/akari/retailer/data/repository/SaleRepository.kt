@@ -7,5 +7,6 @@ interface SaleRepository {
     suspend fun saveSale(sale: Sale): Result<String>
     fun getSales(): Flow<List<Sale>>
     fun getTodaySales(): Flow<List<Sale>>
+    fun getSaleById(saleId: String): Flow<Sale?>
     suspend fun deleteSale(saleId: String): Result<Unit>
 }

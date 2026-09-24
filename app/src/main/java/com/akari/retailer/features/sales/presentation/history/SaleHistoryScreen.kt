@@ -20,9 +20,11 @@ import com.akari.retailer.core.ui.components.DatePickerDialog
 import com.akari.retailer.core.ui.components.SaleCard
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
+import com.akari.retailer.navigation.Routes
 
 @Composable
 fun SaleHistoryScreen(
+    navController: androidx.navigation.NavController,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -209,6 +211,11 @@ fun SaleHistoryScreen(
                             onDelete = {
                                 pendingDeleteId = sale.id
                                 showDeleteDialog = true
+                            },
+                            onClick = {
+                                navController.navigate(
+                                    Routes.SALE_DETAIL.replace("{saleId}", sale.id)
+                                )
                             }
                         )
                     }
