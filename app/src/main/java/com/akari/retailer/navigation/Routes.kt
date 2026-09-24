@@ -54,4 +54,5 @@ object Routes {
     const val SUPPLIER_ADD = "supplier_add"
     const val SUPPLIER_DETAIL = "supplier_detail/{supplierId}"
     const val SUPPLIER_EDIT = "supplier_edit/{supplierId}"
+    const val SUPPLIER_PAYABLE_HISTORY = "supplier_payable_history/{supplierId}"
 }

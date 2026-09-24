@@ -19,8 +19,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.firstOrNull
 
 enum class AgingMode {
     RECEIVABLES,
@@ -96,17 +96,9 @@ class AgingReportViewModel(
     }
 
     private suspend fun loadReceivables(): AgingReport {
-        var customers: List<com.akari.retailer.features.customer.domain.models.Customer> = emptyList()
-        var transactions: List<CreditTransaction> = emptyList()
-
-        combine(
-            customerRepository.getCustomers(),
-            creditRepository.getTransactions()
-        ) { c, t -> Pair(c, t) }.collect { (c, t) ->
-            customers = c
-            transactions = t
-            return@collect
-        }
+        // one-shot reads — do NOT use collect() on a hot flow, it never completes
+        val customers = customerRepository.getCustomers().firstOrNull() ?: emptyList()
+        val transactions = creditRepository.getTransactions().firstOrNull() ?: emptyList()
 
         val inputs = customers.mapNotNull { customer ->
             val txns = transactions.filter { it.customerId == customer.id }
@@ -130,17 +122,9 @@ class AgingReportViewModel(
     }
 
     private suspend fun loadPayables(): AgingReport {
-        var suppliers: List<com.akari.retailer.features.supplier.domain.models.Supplier> = emptyList()
-        var transactions: List<SupplierTransaction> = emptyList()
-
-        combine(
-            supplierRepository.getSuppliers(),
-            supplierCreditRepository.getTransactions()
-        ) { s, t -> Pair(s, t) }.collect { (s, t) ->
-            suppliers = s
-            transactions = t
-            return@collect
-        }
+        // one-shot reads — do NOT use collect() on a hot flow, it never completes
+        val suppliers = supplierRepository.getSuppliers().firstOrNull() ?: emptyList()
+        val transactions = supplierCreditRepository.getTransactions().firstOrNull() ?: emptyList()
 
         val inputs = suppliers.mapNotNull { supplier ->
             val txns = transactions.filter { it.supplierId == supplier.id }

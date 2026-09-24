@@ -33,4 +33,6 @@
 
     <string name="total_payable">Total Payable</string>
     <string name="n_suppliers_owed">%1$d suppliers you owe</string>
+
+    <string name="total_bought_on_credit">Bought on credit</string>
 </resources>

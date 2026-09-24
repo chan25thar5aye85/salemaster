@@ -35,6 +35,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SupplierDetailScreen(
+    navController: androidx.navigation.NavController,
     supplierId: String,
     onBack: () -> Unit,
     onEdit: (Supplier) -> Unit
@@ -322,7 +323,7 @@ fun SupplierDetailScreen(
                     Spacer(modifier = Modifier.height(Spacing.medium))
                 }
 
-                // ── Payable history ──
+                // ── Payable history (preview) ──
                 if (state.payableTransactions.isNotEmpty()) {
                     AppCard {
                         Column(modifier = Modifier.fillMaxWidth()) {
@@ -331,8 +332,20 @@ fun SupplierDetailScreen(
                                 style = AppTypography.title,
                                 modifier = Modifier.padding(bottom = Spacing.small)
                             )
-                            state.payableTransactions.take(5).forEach { txn ->
+                            state.payableTransactions.take(3).forEach { txn ->
                                 SupplierPayableRow(transaction = txn)
+                            }
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            OutlinedButton(
+                                onClick = {
+                                    navController.navigate(
+                                        com.akari.retailer.navigation.Routes.SUPPLIER_PAYABLE_HISTORY
+                                            .replace("{supplierId}", supplierId)
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(stringResource(R.string.view_full_history))
                             }
                         }
                     }

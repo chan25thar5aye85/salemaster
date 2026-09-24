@@ -53,6 +53,7 @@ import com.akari.retailer.features.settings.presentation.SettingsScreen
 import com.akari.retailer.features.supplier.presentation.SupplierAddScreen
 import com.akari.retailer.features.supplier.presentation.SupplierDetailScreen
 import com.akari.retailer.features.supplier.presentation.SupplierEditScreen
+import com.akari.retailer.features.supplier.presentation.SupplierPayableHistoryScreen
 import com.akari.retailer.features.supplier.presentation.SupplierListScreen
 import kotlinx.coroutines.launch
 
@@ -217,6 +218,7 @@ fun AppNavHost() {
                 ) { backStackEntry ->
                     val supplierId = backStackEntry.arguments?.getString("supplierId") ?: ""
                     SupplierDetailScreen(
+                        navController = navController,
                         supplierId = supplierId,
                         onBack = { navController.popBackStack() },
                         onEdit = { supplier ->
@@ -238,6 +240,17 @@ fun AppNavHost() {
                 }
                 
                 // EXPENSE MODULE
+                composable(
+                    route = Routes.SUPPLIER_PAYABLE_HISTORY,
+                    arguments = listOf(navArgument("supplierId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val supplierId = backStackEntry.arguments?.getString("supplierId") ?: ""
+                    SupplierPayableHistoryScreen(
+                        supplierId = supplierId,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
                 composable(Routes.EXPENSES) {
                     ExpenseListScreen(navController = navController, onBack = { navController.popBackStack() })
                 }

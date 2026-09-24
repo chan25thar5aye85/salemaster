@@ -33,4 +33,6 @@
 
     <string name="total_payable">စုစုပေါင်းပေးရန်</string>
     <string name="n_suppliers_owed">ပေးရန်ရှိသည့် ပေးသွင်းသူ %1$d ဦး</string>
+
+    <string name="total_bought_on_credit">အကြွေးဖြင့်ဝယ်ယူခဲ့သည်</string>
 </resources>
