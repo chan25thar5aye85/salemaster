@@ -164,6 +164,88 @@ class FirestoreSupplierCreditService {
     }
 
     /**
+     * Supplier refunded us — they owe us less (or we're now owed).
+     * Atomically:
+     *   - increments supplier.payableBalance by [amount] (toward zero, or positive)
+     *   - increments the money account
+     *   - writes a REFUND_RECEIVED supplier transaction
+     *   - writes a money_transactions doc (inflow)
+     */
+    suspend fun recordRefundReceived(
+        supplierId: String,
+        amount: Int,
+        paymentAccountId: String,
+        description: String = ""
+    ): Result<String> {
+        return try {
+            if (amount <= 0) return Result.failure(Exception("Amount must be > 0"))
+            if (supplierId.isEmpty()) return Result.failure(Exception("Supplier is required"))
+            if (paymentAccountId.isEmpty()) return Result.failure(Exception("Account is required"))
+
+            val now = System.currentTimeMillis()
+            val txnRef = txnsCollection.document()
+            val accountsCollection = db.collection("money_accounts")
+            val moneyTxnsCollection = db.collection("money_transactions")
+
+            db.runTransaction { txn ->
+                val supplierRef = suppliersCollection.document(supplierId)
+                val accountRef = accountsCollection.document(paymentAccountId)
+
+                val supplierSnap = txn.get(supplierRef)
+                val accountSnap = txn.get(accountRef)
+
+                if (!supplierSnap.exists()) {
+                    throw IllegalStateException("Supplier not found")
+                }
+                if (!accountSnap.exists()) {
+                    throw IllegalStateException("Account not found")
+                }
+
+                // Supplier balance goes UP (toward zero from negative, or positive)
+                txn.update(supplierRef, "payableBalance", FieldValue.increment(amount.toLong()))
+
+                // Money account goes UP (money comes back to us)
+                txn.update(accountRef, "currentBalance", FieldValue.increment(amount.toLong()))
+
+                // Log supplier-side transaction
+                txn.set(txnRef, mapOf(
+                    "supplierId" to supplierId,
+                    "type" to SupplierTransactionType.REFUND_RECEIVED.name,
+                    "amount" to amount,
+                    "purchaseId" to "",
+                    "paymentAccountId" to paymentAccountId,
+                    "description" to description,
+                    "date" to now,
+                    "createdAt" to now
+                ))
+
+                // Log money-side transaction (inflow)
+                txn.set(moneyTxnsCollection.document(), mapOf(
+                    "type" to "INCOME_IN",
+                    "fromAccountId" to "",
+                    "toAccountId" to paymentAccountId,
+                    "amount" to amount,
+                    "fee" to 0,
+                    "feeType" to "NONE",
+                    "netAmount" to amount,
+                    "description" to "Supplier refund",
+                    "referenceId" to supplierId,
+                    "referenceType" to "SUPPLIER_REFUND",
+                    "externalAccountName" to "",
+                    "externalAccountNumber" to "",
+                    "date" to now,
+                    "createdAt" to now
+                ))
+            }.await()
+
+            Result.success(txnRef.id)
+        } catch (e: Exception) {
+            Log.e(TAG, "recordRefundReceived failed: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
      * All supplier transactions, newest first.
      */
     fun getTransactions(): Flow<List<SupplierTransaction>> = callbackFlow {

@@ -57,6 +57,7 @@ import com.akari.retailer.features.supplier.data.repository.SupplierCreditReposi
 import com.akari.retailer.features.supplier.data.repository.FirestoreSupplierCreditRepository
 import com.akari.retailer.features.supplier.domain.usecases.GetSupplierTransactionsUseCase
 import com.akari.retailer.features.supplier.domain.usecases.RecordSupplierPaymentUseCase
+import com.akari.retailer.features.supplier.domain.usecases.RecordSupplierRefundReceivedUseCase
 
 class AppContainer(private val appContext: android.content.Context) {
 
@@ -124,6 +125,9 @@ class AppContainer(private val appContext: android.content.Context) {
     }
     val recordSupplierPaymentUseCase by lazy {
         RecordSupplierPaymentUseCase(supplierCreditRepository)
+    }
+    val recordSupplierRefundReceivedUseCase by lazy {
+        RecordSupplierRefundReceivedUseCase(supplierCreditRepository)
     }
     val getSupplierTransactionsUseCase by lazy {
         GetSupplierTransactionsUseCase(supplierCreditRepository)

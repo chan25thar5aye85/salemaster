@@ -35,4 +35,10 @@
     <string name="n_suppliers_owed">%1$d suppliers you owe</string>
 
     <string name="total_bought_on_credit">Bought on credit</string>
+
+    <string name="supplier_owes_you">Supplier owes you %1$d</string>
+    <string name="record_refund_received">Record Refund Received</string>
+    <string name="refund_received_recorded">Refund received!</string>
+    <string name="refund_received_label">Refund received</string>
+    <string name="refund_to_account">Deposit to account</string>
 </resources>

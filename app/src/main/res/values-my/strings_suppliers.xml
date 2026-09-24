@@ -35,4 +35,10 @@
     <string name="n_suppliers_owed">ပေးရန်ရှိသည့် ပေးသွင်းသူ %1$d ဦး</string>
 
     <string name="total_bought_on_credit">အကြွေးဖြင့်ဝယ်ယူခဲ့သည်</string>
+
+    <string name="supplier_owes_you">ပေးသွင်းသူက သင်အား %1$d ပေးရန်ရှိသည်</string>
+    <string name="record_refund_received">ပြန်အမ်းငွေလက်ခံမှုမှတ်တမ်းတင်ရန်</string>
+    <string name="refund_received_recorded">ပြန်အမ်းငွေလက်ခံပြီး!</string>
+    <string name="refund_received_label">ပြန်အမ်းငွေလက်ခံမှု</string>
+    <string name="refund_to_account">လက်ခံသည့်အကောင့်</string>
 </resources>

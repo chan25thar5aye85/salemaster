@@ -24,5 +24,8 @@ enum class SupplierTransactionType {
     PURCHASE_ON_CREDIT,
 
     /** You paid the supplier — you owe less */
-    PAYMENT
+    PAYMENT,
+
+    /** Supplier refunded you — they owe you (amount is positive) */
+    REFUND_RECEIVED
 }

@@ -22,6 +22,13 @@ class FirestoreSupplierCreditRepository(
         description: String
     ): Result<String> = service.recordPayment(supplierId, amount, paymentAccountId, description)
 
+    override suspend fun recordRefundReceived(
+        supplierId: String,
+        amount: Int,
+        paymentAccountId: String,
+        description: String
+    ): Result<String> = service.recordRefundReceived(supplierId, amount, paymentAccountId, description)
+
     override fun getTransactions(): Flow<List<SupplierTransaction>> = service.getTransactions()
 
     override fun getTransactionsForSupplier(supplierId: String): Flow<List<SupplierTransaction>> =

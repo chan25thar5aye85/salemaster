@@ -49,6 +49,7 @@ fun SupplierDetailScreen(
             application.container.supplierRepository,
             application.container.moneyAccountRepository,
             application.container.recordSupplierPaymentUseCase,
+            application.container.recordSupplierRefundReceivedUseCase,
             application.container.getSupplierTransactionsUseCase,
             application.container.paymentPreferences,
             supplierId
@@ -374,6 +375,27 @@ fun SupplierDetailScreen(
                     Spacer(modifier = Modifier.height(Spacing.medium))
                 }
 
+                if (state.refundSuccess) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    ) {
+                        Text(
+                            text = "✅ ${stringResource(R.string.refund_received_recorded)}",
+                            style = AppTypography.body,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(Spacing.medium)
+                        )
+                    }
+                    LaunchedEffect(Unit) {
+                        kotlinx.coroutines.delay(2000)
+                        viewModel.handleEvent(SupplierDetailEvent.ClearRefundSuccess)
+                    }
+                    Spacer(modifier = Modifier.height(Spacing.medium))
+                }
+
                 AppPrimaryButton(
                     text = stringResource(R.string.edit_supplier),
                     onClick = {
@@ -405,6 +427,29 @@ fun SupplierDetailScreen(
                     )
                 }
 
+                // ── Refund received dialog ──
+                if (state.showRefundDialog && state.supplier != null) {
+                    RecordSupplierRefundReceivedDialog(
+                        amount = state.refundAmount,
+                        notes = state.refundNotes,
+                        accounts = state.accounts,
+                        selectedAccount = state.selectedRefundAccount,
+                        error = state.refundError,
+                        isProcessing = state.isRecordingRefund,
+                        onAmountChange = {
+                            viewModel.handleEvent(SupplierDetailEvent.RefundAmountChanged(it))
+                        },
+                        onNotesChange = {
+                            viewModel.handleEvent(SupplierDetailEvent.RefundNotesChanged(it))
+                        },
+                        onAccountSelected = {
+                            viewModel.handleEvent(SupplierDetailEvent.RefundAccountSelected(it))
+                        },
+                        onSubmit = { viewModel.handleEvent(SupplierDetailEvent.SubmitRefund) },
+                        onDismiss = { viewModel.handleEvent(SupplierDetailEvent.CloseRefundDialog) }
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(Spacing.xxlarge))
             }
         }
@@ -415,6 +460,16 @@ fun SupplierDetailScreen(
 private fun SupplierPayableRow(transaction: SupplierTransaction) {
     val dateFormat = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
     val isPurchase = transaction.type == SupplierTransactionType.PURCHASE_ON_CREDIT
+    val isRefund = transaction.type == SupplierTransactionType.REFUND_RECEIVED
+
+    val (icon, label) = when (transaction.type) {
+        SupplierTransactionType.PURCHASE_ON_CREDIT ->
+            "🛒" to stringResource(R.string.purchase_on_credit_label)
+        SupplierTransactionType.PAYMENT ->
+            "💰" to stringResource(R.string.payment_to_supplier_label)
+        SupplierTransactionType.REFUND_RECEIVED ->
+            "💸" to stringResource(R.string.refund_received_label)
+    }
 
     Row(
         modifier = Modifier
@@ -425,10 +480,7 @@ private fun SupplierPayableRow(transaction: SupplierTransaction) {
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = if (isPurchase)
-                    "🛒 ${stringResource(R.string.purchase_on_credit_label)}"
-                else
-                    "💰 ${stringResource(R.string.payment_to_supplier_label)}",
+                text = "$icon $label",
                 style = AppTypography.body
             )
             Text(
@@ -545,6 +597,120 @@ private fun RecordSupplierPaymentDialog(
                                         )
                                     }
                                 },
+                                onClick = {
+                                    onAccountSelected(acc)
+                                    accountExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                if (error != null) {
+                    Spacer(modifier = Modifier.height(Spacing.small))
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = AppTypography.small
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onSubmit,
+                enabled = !isProcessing
+            ) {
+                if (isProcessing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(stringResource(R.string.confirm))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isProcessing
+            ) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun RecordSupplierRefundReceivedDialog(
+    amount: String,
+    notes: String,
+    accounts: List<MoneyAccount>,
+    selectedAccount: MoneyAccount?,
+    error: String?,
+    isProcessing: Boolean,
+    onAmountChange: (String) -> Unit,
+    onNotesChange: (String) -> Unit,
+    onAccountSelected: (MoneyAccount) -> Unit,
+    onSubmit: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var accountExpanded by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = { if (!isProcessing) onDismiss() },
+        title = { Text(stringResource(R.string.record_refund_received)) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = onAmountChange,
+                    label = { Text(stringResource(R.string.refund_amount)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    enabled = !isProcessing,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.small))
+
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = onNotesChange,
+                    label = { Text(stringResource(R.string.notes_optional)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isProcessing,
+                    maxLines = 2
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.small))
+
+                ExposedDropdownMenuBox(
+                    expanded = accountExpanded,
+                    onExpandedChange = { if (!isProcessing) accountExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = selectedAccount?.getDisplayName() ?: stringResource(R.string.select_account),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.refund_to_account)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        enabled = !isProcessing,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) }
+                    )
+                    ExposedDropdownMenu(
+                        expanded = accountExpanded,
+                        onDismissRequest = { accountExpanded = false }
+                    ) {
+                        accounts.forEach { acc ->
+                            DropdownMenuItem(
+                                text = { Text(acc.getDisplayName(), fontSize = 13.sp) },
                                 onClick = {
                                     onAccountSelected(acc)
                                     accountExpanded = false

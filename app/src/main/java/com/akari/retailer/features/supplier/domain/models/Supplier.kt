@@ -15,6 +15,15 @@ data class Supplier(
     val updatedAt: Long = System.currentTimeMillis(),
     val notes: String = ""
 ) {
+    /** We owe the supplier (positive balance) */
     fun owesPayable(): Boolean = payableBalance > 0
+
+    /** Supplier owes us (negative balance) — overpayment, return, etc. */
+    fun supplierOwesUs(): Boolean = payableBalance < 0
+
+    /** Nothing outstanding either way */
     fun isSettled(): Boolean = payableBalance == 0
+
+    /** Absolute value of balance */
+    fun getBalanceAbsolute(): Int = kotlin.math.abs(payableBalance)
 }
