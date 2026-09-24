@@ -22,6 +22,13 @@ class FirestoreCreditRepository(
         description: String
     ): Result<String> = service.recordPayment(customerId, amount, paymentAccountId, description)
 
+    override suspend fun recordRefund(
+        customerId: String,
+        amount: Int,
+        paymentAccountId: String,
+        description: String
+    ): Result<String> = service.recordRefund(customerId, amount, paymentAccountId, description)
+
     override fun getTransactions(): Flow<List<CreditTransaction>> = service.getTransactions()
 
     override fun getTransactionsForCustomer(customerId: String): Flow<List<CreditTransaction>> =

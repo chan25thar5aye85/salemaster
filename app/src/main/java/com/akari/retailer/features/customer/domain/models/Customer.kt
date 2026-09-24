@@ -20,7 +20,25 @@ data class Customer(
     
     fun getTotalSpentFormatted(): String = totalSpent.toString()
 
+    /**
+     * Customer owes us money (positive balance).
+     */
     fun owesCredit(): Boolean = creditBalance > 0
+
+    /**
+     * We owe the customer money (negative balance) — refund, overpayment, etc.
+     */
+    fun weOweCustomer(): Boolean = creditBalance < 0
+
+    /**
+     * Nothing outstanding in either direction.
+     */
+    fun isSettled(): Boolean = creditBalance == 0
+
+    /**
+     * Absolute value — for display when we don't care about direction.
+     */
+    fun getBalanceAbsolute(): Int = kotlin.math.abs(creditBalance)
 
     fun getCreditBalanceFormatted(): String = creditBalance.toString()
 }

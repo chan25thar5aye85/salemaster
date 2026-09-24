@@ -19,6 +19,12 @@ data class CreditTransaction(
 )
 
 enum class CreditTransactionType {
+    /** You sold on credit — customer owes you more (amount is positive) */
     SALE_ON_CREDIT,
-    PAYMENT
+
+    /** Customer paid you back — they owe you less (amount is negative) */
+    PAYMENT,
+
+    /** You refunded the customer — you owe them (amount is negative) */
+    REFUND
 }

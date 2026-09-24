@@ -18,6 +18,13 @@ interface CreditRepository {
         description: String = ""
     ): Result<String>
 
+    suspend fun recordRefund(
+        customerId: String,
+        amount: Int,
+        paymentAccountId: String,
+        description: String = ""
+    ): Result<String>
+
     fun getTransactions(): Flow<List<CreditTransaction>>
     fun getTransactionsForCustomer(customerId: String): Flow<List<CreditTransaction>>
 }

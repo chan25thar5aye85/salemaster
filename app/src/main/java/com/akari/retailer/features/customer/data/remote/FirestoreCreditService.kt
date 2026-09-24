@@ -166,6 +166,96 @@ class FirestoreCreditService {
     }
 
     /**
+     * Refund the customer — we owe them money.
+     * Atomically:
+     *   - decrements customer.creditBalance by [amount] (goes negative)
+     *   - debits the chosen money account (money leaves our account)
+     *   - writes a REFUND transaction (negative amount)
+     *   - writes a money_transactions doc
+     * Returns the new credit transaction ID.
+     */
+    suspend fun recordRefund(
+        customerId: String,
+        amount: Int,
+        paymentAccountId: String,
+        description: String = ""
+    ): Result<String> {
+        return try {
+            if (amount <= 0) return Result.failure(Exception("Amount must be > 0"))
+            if (customerId.isEmpty()) return Result.failure(Exception("Customer is required"))
+            if (paymentAccountId.isEmpty()) return Result.failure(Exception("Refund account is required"))
+
+            val now = System.currentTimeMillis()
+            val txnRef = txnsCollection.document()
+            val accountsCollection = db.collection("money_accounts")
+            val moneyTxnsCollection = db.collection("money_transactions")
+
+            db.runTransaction { txn ->
+                val customerRef = customersCollection.document(customerId)
+                val accountRef = accountsCollection.document(paymentAccountId)
+
+                val customerSnap = txn.get(customerRef)
+                val accountSnap = txn.get(accountRef)
+
+                if (!customerSnap.exists()) {
+                    throw IllegalStateException("Customer not found")
+                }
+                if (!accountSnap.exists()) {
+                    throw IllegalStateException("Refund account not found")
+                }
+
+                val accountBalance = (accountSnap.getLong("currentBalance") ?: 0L).toInt()
+                if (accountBalance < amount) {
+                    throw IllegalStateException(
+                        "Insufficient balance to refund. Available: $accountBalance, Needed: $amount"
+                    )
+                }
+
+                // Customer balance goes DOWN (they now have credit with us)
+                txn.update(customerRef, "creditBalance", FieldValue.increment(-amount.toLong()))
+
+                // Money account goes DOWN (we paid them back)
+                txn.update(accountRef, "currentBalance", FieldValue.increment(-amount.toLong()))
+
+                // Log credit-side transaction (negative amount)
+                txn.set(txnRef, mapOf(
+                    "customerId" to customerId,
+                    "type" to CreditTransactionType.REFUND.name,
+                    "amount" to -amount,
+                    "saleId" to "",
+                    "paymentAccountId" to paymentAccountId,
+                    "description" to description,
+                    "date" to now,
+                    "createdAt" to now
+                ))
+
+                // Log money-side transaction (outflow)
+                txn.set(moneyTxnsCollection.document(), mapOf(
+                    "type" to "EXPENSE_OUT",
+                    "fromAccountId" to paymentAccountId,
+                    "toAccountId" to "",
+                    "amount" to amount,
+                    "fee" to 0,
+                    "feeType" to "NONE",
+                    "netAmount" to amount,
+                    "description" to "Customer refund",
+                    "referenceId" to customerId,
+                    "referenceType" to "CUSTOMER_REFUND",
+                    "externalAccountName" to "",
+                    "externalAccountNumber" to "",
+                    "date" to now,
+                    "createdAt" to now
+                ))
+            }.await()
+
+            Result.success(txnRef.id)
+        } catch (e: Exception) {
+            Log.e(TAG, "recordRefund failed: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
      * All credit transactions, sorted newest-first.
      */
     fun getTransactions(): Flow<List<CreditTransaction>> = callbackFlow {

@@ -107,8 +107,14 @@ class AgingReportViewModel(
             val credits = txns
                 .filter { it.type == CreditTransactionType.SALE_ON_CREDIT }
                 .map { CreditLine(it.id, it.amount, it.date) }
+            // Both PAYMENT and REFUND reduce the customer's debt (FIFO).
+            // Payments have negative amount in Firestore; refunds are also
+            // stored as negative. So both map to a positive PaymentLine.
             val payments = txns
-                .filter { it.type == CreditTransactionType.PAYMENT }
+                .filter {
+                    it.type == CreditTransactionType.PAYMENT ||
+                    it.type == CreditTransactionType.REFUND
+                }
                 .map { PaymentLine(-it.amount, it.date) }
 
             AgingInput(
