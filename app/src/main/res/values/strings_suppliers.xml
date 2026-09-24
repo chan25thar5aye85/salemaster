@@ -20,4 +20,14 @@
     <string name="failed_to_update_supplier">Failed to update supplier</string>
     <string name="total_purchased">Total Purchased</string>
     <string name="company">Company</string>
+
+    <string name="payable_balance">Payable Balance</string>
+    <string name="you_owe_supplier">You owe %1$d</string>
+    <string name="record_supplier_payment">Record Payment</string>
+    <string name="supplier_payment">Payment to Supplier</string>
+    <string name="purchase_on_credit_label">Purchase on credit</string>
+    <string name="payment_to_supplier_label">Payment made</string>
+    <string name="payable_history">Payable History</string>
+    <string name="supplier_payment_recorded">Payment recorded!</string>
+    <string name="amount_owed_to_supplier">Amount owed: %1$d</string>
 </resources>

@@ -20,4 +20,14 @@
     <string name="failed_to_update_supplier">ပေးသွင်းသူပြင်ရန် မအောင်မြင်ပါ</string>
     <string name="total_purchased">စုစုပေါင်းဝယ်ယူမှု</string>
     <string name="company">ကုမ္ပဏီ</string>
+
+    <string name="payable_balance">ပေးရန်လက်ကျန်</string>
+    <string name="you_owe_supplier">သင်ပေးရန် %1$d</string>
+    <string name="record_supplier_payment">ငွေပေးချေမှုမှတ်တမ်းတင်ရန်</string>
+    <string name="supplier_payment">ပေးသွင်းသူထံ ငွေပေးချေမှု</string>
+    <string name="purchase_on_credit_label">အကြွေးဖြင့်ဝယ်ယူမှု</string>
+    <string name="payment_to_supplier_label">ငွေပေးချေပြီး</string>
+    <string name="payable_history">ပေးရန်မှတ်တမ်း</string>
+    <string name="supplier_payment_recorded">ငွေပေးချေမှု မှတ်တမ်းတင်ပြီး!</string>
+    <string name="amount_owed_to_supplier">ပေးရန်ပမာဏ: %1$d</string>
 </resources>
