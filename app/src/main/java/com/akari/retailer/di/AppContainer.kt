@@ -51,6 +51,11 @@ import com.akari.retailer.features.customer.domain.usecases.GetCreditTransaction
 import com.akari.retailer.features.customer.domain.usecases.RecordCreditPaymentUseCase
 import com.akari.retailer.features.sales.data.remote.FirestoreSaleFinalizer
 import com.akari.retailer.features.sales.data.repository.SaleFinalizer
+import com.akari.retailer.features.supplier.data.remote.FirestoreSupplierCreditService
+import com.akari.retailer.features.supplier.data.repository.SupplierCreditRepository
+import com.akari.retailer.features.supplier.data.repository.FirestoreSupplierCreditRepository
+import com.akari.retailer.features.supplier.domain.usecases.GetSupplierTransactionsUseCase
+import com.akari.retailer.features.supplier.domain.usecases.RecordSupplierPaymentUseCase
 
 class AppContainer(private val appContext: android.content.Context) {
 
@@ -108,6 +113,18 @@ class AppContainer(private val appContext: android.content.Context) {
     private val supplierFirestoreService by lazy { FirestoreSupplierService() }
     val supplierRepository: SupplierRepository by lazy {
         FirestoreSupplierRepository(supplierFirestoreService)
+    }
+
+    // Supplier Payables (you owe them)
+    private val supplierCreditService by lazy { FirestoreSupplierCreditService() }
+    val supplierCreditRepository: SupplierCreditRepository by lazy {
+        FirestoreSupplierCreditRepository(supplierCreditService)
+    }
+    val recordSupplierPaymentUseCase by lazy {
+        RecordSupplierPaymentUseCase(supplierCreditRepository)
+    }
+    val getSupplierTransactionsUseCase by lazy {
+        GetSupplierTransactionsUseCase(supplierCreditRepository)
     }
     
     // Inventory

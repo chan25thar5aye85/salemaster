@@ -9,8 +9,12 @@ data class Supplier(
     val address: String = "",
     val products: List<String> = emptyList(),
     val totalPurchased: Int = 0,
+    val payableBalance: Int = 0,
     val lastOrderDate: Long = System.currentTimeMillis(),
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val notes: String = ""
-)
+) {
+    fun owesPayable(): Boolean = payableBalance > 0
+    fun isSettled(): Boolean = payableBalance == 0
+}
