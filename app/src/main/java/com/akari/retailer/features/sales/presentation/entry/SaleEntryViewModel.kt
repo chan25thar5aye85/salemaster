@@ -85,11 +85,6 @@ class SaleEntryViewModel(
             SaleEntryEvent.SaveSale -> saveSale()
             SaleEntryEvent.ClearError -> clearError()
             SaleEntryEvent.ResetSaveSuccess -> resetSaveSuccess()
-            SaleEntryEvent.ToggleCreditSale -> toggleCreditSale()
-            SaleEntryEvent.OpenCreditCustomerPicker -> openCreditCustomerPicker()
-            SaleEntryEvent.CloseCreditCustomerPicker -> closeCreditCustomerPicker()
-            is SaleEntryEvent.CreditCustomerSelected -> selectCreditCustomer(event.customer)
-            is SaleEntryEvent.CreditNotesChanged -> _state.value = _state.value.copy(creditNotes = event.value)
             is SaleEntryEvent.PaymentCreditSelected -> selectPaymentCredit(event.rowId)
             is SaleEntryEvent.PaymentCustomerSelected -> selectPaymentCustomer(event.rowId, event.customer)
             is SaleEntryEvent.OverpaymentModeChanged -> _state.value = _state.value.copy(overpaymentMode = event.mode)
@@ -178,40 +173,9 @@ class SaleEntryViewModel(
         }
     }
 
-    // ── Credit sale helpers ──
 
-    private fun toggleCreditSale() {
-        val goingCredit = !_state.value.isCreditSale
-        if (goingCredit) {
-            _state.value = _state.value.copy(
-                isCreditSale = true,
-                error = null
-            )
-        } else {
-            // Back to normal payment mode
-            _state.value = _state.value.copy(
-                isCreditSale = false,
-                creditCustomer = null,
-                error = null
-            )
-        }
-    }
 
-    private fun openCreditCustomerPicker() {
-        _state.value = _state.value.copy(showCreditCustomerPicker = true)
-    }
 
-    private fun closeCreditCustomerPicker() {
-        _state.value = _state.value.copy(showCreditCustomerPicker = false)
-    }
-
-    private fun selectCreditCustomer(customer: Customer) {
-        _state.value = _state.value.copy(
-            creditCustomer = customer,
-            showCreditCustomerPicker = false,
-            error = null
-        )
-    }
 
     private fun updateAmount(rowId: Long, value: String) {
         _state.value = stateManager.updateAmount(_state.value, rowId, value)
@@ -301,18 +265,7 @@ class SaleEntryViewModel(
 
         val total = items.sum()
 
-        // ── Credit sale path ──
-        if (currentState.isCreditSale) {
-            val customer = currentState.creditCustomer
-            if (customer == null) {
-                _state.value = stateManager.setError(currentState, "Select a customer for credit sale")
-                return
-            }
-            saveCreditSale(currentState, items, total, customer, cashierId)
-            return
-        }
-
-        // ── Normal payment path ──
+        // ── Payment path ──
         val allPaymentEntries = currentState.paymentRows
             .filter { it.amount.toIntOrNull()?.let { it > 0 } == true }
             .map {
@@ -485,67 +438,6 @@ class SaleEntryViewModel(
         _state.value = stateManager.setSaveSuccess(_state.value, false)
     }
 
-    private fun saveCreditSale(
-        currentState: SaleEntryState,
-        items: List<Int>,
-        total: Int,
-        customer: Customer,
-        cashierId: String
-    ) {
-        if (items.isEmpty()) {
-            _state.value = stateManager.setError(currentState, "Add at least one item")
-            return
-        }
-
-        val creditPayment = PaymentEntry(
-            accountId = CreditAccount.ID,
-            amount = total,
-            customerId = customer.id
-        )
-
-        val sale = Sale(
-            items = items.map { amount ->
-                SaleItem(productId = "", quantity = 1, price = amount, total = amount)
-            },
-            total = total,
-            payments = listOf(creditPayment),
-            cashierId = cashierId
-        )
-
-        val currentRecentSales = currentState.recentSales
-        val lastAccountId = currentState.paymentRows.firstOrNull()?.accountId ?: "default_cash"
-
-        _state.value = currentState.copy(isSaving = true, error = null)
-
-        viewModelScope.launch {
-            try {
-                val result = saleFinalizer.finalizeSale(sale, overpaymentCredit = null)
-
-                if (result.isSuccess) {
-                    Log.d(TAG, "Credit sale saved atomically")
-                    _state.value = stateManager.resetState().copy(
-                        isSaving = false,
-                        saveSuccess = true,
-                        recentSales = currentRecentSales,
-                        accounts = currentState.accounts,
-                        customers = currentState.customers,
-                        paymentRows = listOf(PaymentRow(1L, lastAccountId, ""))
-                    )
-                    userTouchedPaymentAmounts = false
-                } else {
-                    _state.value = currentState.copy(
-                        isSaving = false,
-                        error = result.exceptionOrNull()?.message ?: "Failed to save credit sale"
-                    )
-                }
-            } catch (e: Exception) {
-                _state.value = currentState.copy(
-                    isSaving = false,
-                    error = e.message ?: "Failed to save credit sale"
-                )
-            }
-        }
-    }
 
 }
 

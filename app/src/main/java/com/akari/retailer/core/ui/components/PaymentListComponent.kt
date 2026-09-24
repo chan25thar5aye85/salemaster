@@ -49,7 +49,8 @@ fun PaymentListComponent(
     onAmountChanged: (rowId: Long, amount: String) -> Unit,
     onAddRow: () -> Unit,
     onRemoveRow: (rowId: Long) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showAddButton: Boolean = true
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         // Header
@@ -78,13 +79,15 @@ fun PaymentListComponent(
         }
 
         // Add Payment button
-        OutlinedButton(
-            onClick = onAddRow,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(4.dp))
-            Text("Add Another Payment")
+        if (showAddButton) {
+            OutlinedButton(
+                onClick = onAddRow,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Add Another Payment")
+            }
         }
 
         // Summary card

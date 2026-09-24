@@ -15,13 +15,6 @@ sealed class SaleEntryEvent {
     data object AddPaymentRow : SaleEntryEvent()
     data class RemovePaymentRow(val rowId: Long) : SaleEntryEvent()
 
-    // Credit sale events (whole-sale mode)
-    data object ToggleCreditSale : SaleEntryEvent()
-    data object OpenCreditCustomerPicker : SaleEntryEvent()
-    data object CloseCreditCustomerPicker : SaleEntryEvent()
-    data class CreditCustomerSelected(val customer: Customer) : SaleEntryEvent()
-    data class CreditNotesChanged(val value: String) : SaleEntryEvent()
-
     // Credit-as-payment events (per-row credit)
     data class PaymentCreditSelected(val rowId: Long) : SaleEntryEvent()
     data class PaymentCustomerSelected(val rowId: Long, val customer: Customer) : SaleEntryEvent()

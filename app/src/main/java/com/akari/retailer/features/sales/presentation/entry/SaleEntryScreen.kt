@@ -5,6 +5,8 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -13,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Warning
@@ -100,16 +103,6 @@ fun SaleEntryScreen(
             delay(2000)
             viewModel.handleEvent(SaleEntryEvent.ResetSaveSuccess)
         }
-    }
-
-    if (state.showCreditCustomerPicker) {
-        CreditCustomerPickerDialog(
-            customers = state.customers,
-            onCustomerSelected = { customer ->
-                viewModel.handleEvent(SaleEntryEvent.CreditCustomerSelected(customer))
-            },
-            onDismiss = { viewModel.handleEvent(SaleEntryEvent.CloseCreditCustomerPicker) }
-        )
     }
 
     // ── Overpayment attribution dialog ──
@@ -234,41 +227,48 @@ fun SaleEntryScreen(
         showBackButton = false,
         showTopBar = true,
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = {
-                    focusManager.clearFocus()
-                    viewModel.handleEvent(SaleEntryEvent.SaveSale)
-                },
-                icon = {
-                    if (state.isSaving) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary
+            AnimatedVisibility(
+                visible = state.canSave || state.isSaving,
+                enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
+                exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
+            ) {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        focusManager.clearFocus()
+                        viewModel.handleEvent(SaleEntryEvent.SaveSale)
+                    },
+                    icon = {
+                        if (state.isSaving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    text = {
+                        Text(
+                            text = if (state.saveSuccess)
+                                stringResource(R.string.saved)
+                            else
+                                stringResource(R.string.save_sale),
+                            fontWeight = FontWeight.Bold
                         )
-                    } else {
-                        Icon(
-                            Icons.Default.Check,
-                            contentDescription = null
-                        )
-                    }
-                },
-                text = {
-                    Text(
-                        text = if (state.saveSuccess)
-                            stringResource(R.string.saved)
-                        else
-                            stringResource(R.string.save_sale),
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                expanded = true,
-                modifier = Modifier
-                    .imePadding()
-                    .navigationBarsPadding()
-            )
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    expanded = true,
+                    modifier = Modifier
+                        .imePadding()
+                        .navigationBarsPadding()
+                )
+        
+            }
         }
     ) {
             Column(
@@ -381,91 +381,27 @@ fun SaleEntryScreen(
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
                 SectionCard(
-                    title = "💳 ${stringResource(R.string.payment)}"
-                ) {
-                    SingleChoiceSegmentedButtonRow(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        SegmentedButton(
-                            selected = !state.isCreditSale,
-                            onClick = {
-                                if (state.isCreditSale) {
-                                    viewModel.handleEvent(SaleEntryEvent.ToggleCreditSale)
-                                }
-                            },
-                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                            label = { Text(stringResource(R.string.normal_payment), fontSize = 13.sp) }
-                        )
-                        SegmentedButton(
-                            selected = state.isCreditSale,
-                            onClick = {
-                                if (!state.isCreditSale) {
-                                    viewModel.handleEvent(SaleEntryEvent.ToggleCreditSale)
-                                }
-                            },
-                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                            label = { Text("💳 ${stringResource(R.string.credit)}", fontSize = 13.sp) }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(Spacing.medium))
-
-                    if (state.isCreditSale) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.tertiaryContainer,
-                            shape = RoundedCornerShape(8.dp)
+                    title = "💳 ${stringResource(R.string.payment)}",
+                    trailing = {
+                        TextButton(
+                            onClick = { viewModel.handleEvent(SaleEntryEvent.AddPaymentRow) }
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(Spacing.medium)
-                            ) {
-                                Text(
-                                    text = "💳 ${stringResource(R.string.sell_on_credit)}",
-                                    style = AppTypography.title
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = state.creditCustomer?.let {
-                                        "${stringResource(R.string.customer)}: ${it.name}" +
-                                        if (it.owesCredit()) " (owes ${it.creditBalance})" else ""
-                                    } ?: stringResource(R.string.no_customer_selected),
-                                    style = AppTypography.body
-                                )
-                                Spacer(modifier = Modifier.height(Spacing.small))
-                                OutlinedButton(
-                                    onClick = { viewModel.handleEvent(SaleEntryEvent.OpenCreditCustomerPicker) },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        if (state.creditCustomer == null)
-                                            stringResource(R.string.select_customer)
-                                        else
-                                            stringResource(R.string.change_customer)
-                                    )
-                                }
-
-                                if (state.creditCustomer != null) {
-                                    Spacer(modifier = Modifier.height(Spacing.small))
-                                    OutlinedTextField(
-                                        value = state.creditNotes,
-                                        onValueChange = {
-                                            viewModel.handleEvent(SaleEntryEvent.CreditNotesChanged(it))
-                                        },
-                                        label = { Text(stringResource(R.string.notes_optional)) },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        maxLines = 2
-                                    )
-                                }
-                            }
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Add", fontSize = 13.sp)
                         }
-                    } else {
-                        PaymentListComponent(
+                    }
+                ) {
+                    PaymentListComponent(
                             paymentRows = state.paymentRows,
                             accounts = state.accounts,
                             customers = state.customers,
                             totalAmount = viewModel.getTotal(),
+                            showAddButton = false,
                             onAccountSelected = { rowId, account ->
                                 viewModel.handleEvent(SaleEntryEvent.PaymentAccountChanged(rowId, account))
                             },
@@ -484,7 +420,7 @@ fun SaleEntryScreen(
                             }
                         )
 
-                        // Overpayment indicator (only when overpaid)
+                    // Overpayment indicator (only when overpaid)
                         val totalPaid = state.paymentRows.sumOf { it.amount.toIntOrNull() ?: 0 }
                         val total = viewModel.getTotal()
                         val excess = totalPaid - total
@@ -511,26 +447,14 @@ fun SaleEntryScreen(
                                         text = stringResource(R.string.overpaid_amount, excess),
                                         style = AppTypography.body
                                     )
-                                    if (state.creditCustomer != null) {
-                                        Text(
-                                            text = stringResource(
-                                                R.string.will_credit_customer,
-                                                state.creditCustomer!!.name
-                                            ),
-                                            style = AppTypography.small,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                                        )
-                                    } else {
-                                        Text(
-                                            text = stringResource(R.string.select_customer_via_credit_toggle),
-                                            style = AppTypography.small,
-                                            color = MaterialTheme.colorScheme.error
-                                        )
-                                    }
+                                    Text(
+                                        text = stringResource(R.string.select_customer_via_credit_toggle),
+                                        style = AppTypography.small,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                    )
                                 }
                             }
                         }
-                    }
                 }
 
                 state.error?.let { error ->
