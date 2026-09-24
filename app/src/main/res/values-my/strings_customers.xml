@@ -41,4 +41,17 @@
     <string name="total_paid">ပေးချေပြီး</string>
     <string name="no_transactions_for_filter">ဤစစ်ထုတ်မှုအတွက် ငွေလွှဲမှုမရှိပါ</string>
     <string name="view_full_history">မှတ်တမ်းအပြည့်အစုံကြည့်ရန်</string>
+
+    <string name="aging_report">အကြွေးသက်တမ်း</string>
+    <string name="total_outstanding">စုစုပေါင်းအကြွေး</string>
+    <string name="n_customers_owe">ဖောက်သည် %1$d ဦး အကြွေးကျန်ရှိသည်</string>
+    <string name="by_age">သက်တမ်းအလိုက်</string>
+    <string name="no_outstanding_credit">အကြွေးကျန်မရှိပါ</string>
+    <string name="everyone_paid_up">အားလုံးပေးချေပြီးပါပြီ — ကောင်းပါသည်!</string>
+    <string name="bucket_current">၀-၃၀ ရက်</string>
+    <string name="bucket_30">၃၁-၆၀ ရက်</string>
+    <string name="bucket_60">၆၁-၉၀ ရက်</string>
+    <string name="bucket_90">၉၀ ရက်အထက်</string>
+    <string name="n_customers">ဖောက်သည် %1$d ဦး</string>
+    <string name="no_customers_in_bucket">ဤအုပ်စုတွင် ဖောက်သည်မရှိပါ</string>
 </resources>

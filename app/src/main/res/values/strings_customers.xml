@@ -41,4 +41,17 @@
     <string name="total_paid">Paid</string>
     <string name="no_transactions_for_filter">No transactions for this filter</string>
     <string name="view_full_history">View Full History</string>
+
+    <string name="aging_report">Credit Aging</string>
+    <string name="total_outstanding">Total Outstanding</string>
+    <string name="n_customers_owe">%1$d customers owe you money</string>
+    <string name="by_age">By Age</string>
+    <string name="no_outstanding_credit">No Outstanding Credit</string>
+    <string name="everyone_paid_up">Everyone is paid up — nice!</string>
+    <string name="bucket_current">0-30 days</string>
+    <string name="bucket_30">31-60 days</string>
+    <string name="bucket_60">61-90 days</string>
+    <string name="bucket_90">90+ days</string>
+    <string name="n_customers">%1$d customers</string>
+    <string name="no_customers_in_bucket">No customers in this bucket</string>
 </resources>
