@@ -6,10 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,8 +19,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
-import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.core.ui.components.AppScreen
+import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.core.ui.components.TimeFilterPreset
+import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.github.mikephil.charting.charts.PieChart
@@ -36,8 +34,7 @@ import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.PercentFormatter
-import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,26 +43,49 @@ fun IncomeAnalyticsScreen(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val application = context.applicationContext as RetailApplication
-    
-    
-    val viewModel: IncomeAnalyticsViewModel = viewModel(
-        factory = IncomeAnalyticsViewModelFactory(application.container.incomeEntryRepository, application.container.incomeStreamRepository)
-    )
-    
-    val state by viewModel.state.collectAsState()
-    
 
-    
+    val viewModel: IncomeAnalyticsViewModel = viewModel(
+        factory = IncomeAnalyticsViewModelFactory(
+            application.container.incomeEntryRepository,
+            application.container.incomeStreamRepository
+        )
+    )
+
+    val state by viewModel.state.collectAsState()
+
+    var showTimeFilterDialog by remember { mutableStateOf(false) }
+
     val chartColors = listOf(
         "#4CAF50", "#FF5722", "#2196F3", "#FFC107", "#9C27B0",
         "#00BCD4", "#FF9800", "#795548", "#607D8B", "#E91E63",
         "#8BC34A", "#3F51B5", "#FF6F00", "#00E676", "#D500F9"
     ).map { Color.parseColor(it) }
 
+    // Time filter dialog
+    if (showTimeFilterDialog) {
+        AlertDialog(
+            onDismissRequest = { showTimeFilterDialog = false },
+            title = { Text(stringResource(R.string.date_range)) },
+            text = {
+                TimeFilterSelector(
+                    filter = state.timeFilter,
+                    onFilterChange = { viewModel.setTimeFilter(it) }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showTimeFilterDialog = false }) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
     AppScreen(
         title = "📊 Income Analytics",
         showBackButton = true,
-        onBackClick = onBack
+        onBackClick = onBack,
+        showFilterButton = true,
+        onFilterClick = { showTimeFilterDialog = true }
     ) {
         Column(
             modifier = Modifier
@@ -94,9 +114,7 @@ fun IncomeAnalyticsScreen(
                             style = AppTypography.body,
                             color = MaterialTheme.colorScheme.error
                         )
-                        TextButton(
-                            onClick = { viewModel.loadAnalytics() }
-                        ) {
+                        TextButton(onClick = { viewModel.loadAnalytics() }) {
                             Text(stringResource(R.string.retry))
                         }
                     }
@@ -104,35 +122,37 @@ fun IncomeAnalyticsScreen(
                 return@Column
             }
 
-            // ✅ Unified time filter
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Row(
+            // Active time filter indicator
+            if (state.timeFilter.preset != TimeFilterPreset.THIS_WEEK) {
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(Spacing.medium),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(bottom = Spacing.medium),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
                 ) {
-                    Text(
-                        text = "📊 Income Analytics",
-                        style = AppTypography.body,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
-                    )
-                    TimeFilterSelector(
-                        filter = state.timeFilter,
-                        onFilterChange = { viewModel.setTimeFilter(it) }
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${stringResource(R.string.time_range)}: ${state.timeFilter.label}",
+                            style = AppTypography.body
+                        )
+                        TextButton(
+                            onClick = { viewModel.setTimeFilter(TimeFilter()) }
+                        ) {
+                            Text(stringResource(R.string.clear))
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.medium))
-
-            // ✅ Income Type Filter Buttons
+            // Type filter
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -149,7 +169,7 @@ fun IncomeAnalyticsScreen(
                         style = AppTypography.label,
                         modifier = Modifier.padding(bottom = Spacing.small)
                     )
-                    
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -181,7 +201,7 @@ fun IncomeAnalyticsScreen(
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
-            // Summary Cards
+            // Summary
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
@@ -232,21 +252,19 @@ fun IncomeAnalyticsScreen(
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
-            // Pie Chart - Income by Stream
+            // Pie chart
             if (state.streamSpending.isNotEmpty()) {
                 AppCard {
-                    Column(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
                             text = "📊 Income by Source",
                             style = AppTypography.title,
                             modifier = Modifier.padding(bottom = Spacing.small)
                         )
-                        
+
                         AndroidView(
-                            factory = { context ->
-                                PieChart(context).apply {
+                            factory = { ctx ->
+                                PieChart(ctx).apply {
                                     description.isEnabled = false
                                     setTouchEnabled(true)
                                     setUsePercentValues(true)
@@ -267,7 +285,6 @@ fun IncomeAnalyticsScreen(
                                         spending.stream.getDisplayName()
                                     )
                                 }
-                                
                                 val dataSet = PieDataSet(entries, "Income Sources").apply {
                                     colors = chartColors
                                     valueTextColor = Color.BLACK
@@ -275,7 +292,6 @@ fun IncomeAnalyticsScreen(
                                     setDrawValues(true)
                                     valueFormatter = PercentFormatter()
                                 }
-                                
                                 pieChart.data = PieData(dataSet)
                                 pieChart.invalidate()
                             },
@@ -288,12 +304,9 @@ fun IncomeAnalyticsScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
-                // Top Income Source
                 state.topStream?.let { top ->
                     AppCard {
-                        Column(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
                                 text = "🏆 Top Income Source",
                                 style = AppTypography.title,
@@ -303,18 +316,15 @@ fun IncomeAnalyticsScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
+                                Text(top.stream.getDisplayName(), style = AppTypography.body)
                                 Text(
-                                    text = "${top.stream.getDisplayName()}",
-                                    style = AppTypography.body
-                                )
-                                Text(
-                                    text = "${top.totalIncome} (${String.format("%.1f", top.percentage)}%)",
+                                    text = "${top.totalIncome} (${String.format(Locale.US, "%.1f", top.percentage)}%)",
                                     style = AppTypography.body,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
                             LinearProgressIndicator(
-                                progress = (top.percentage / 100).toFloat(),
+                                progress = { (top.percentage / 100).toFloat() },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(top = Spacing.small)
@@ -325,42 +335,35 @@ fun IncomeAnalyticsScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
-                // Bar Chart
                 AppCard {
-                    Column(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
                             text = "📊 Income Comparison",
                             style = AppTypography.title,
                             modifier = Modifier.padding(bottom = Spacing.small)
                         )
-                        
+
                         AndroidView(
-                            factory = { context ->
-                                BarChart(context).apply {
+                            factory = { ctx ->
+                                BarChart(ctx).apply {
                                     description.isEnabled = false
                                     setTouchEnabled(true)
                                     setDragEnabled(true)
                                     setScaleEnabled(true)
                                     setPinchZoom(true)
-                                    
                                     legend.isEnabled = true
                                     legend.textColor = Color.DKGRAY
                                     legend.textSize = 10f
-                                    
                                     xAxis.position = com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM
                                     xAxis.setDrawGridLines(false)
                                     xAxis.textColor = Color.DKGRAY
                                     xAxis.textSize = 10f
                                     xAxis.granularity = 1f
-                                    
                                     axisLeft.textColor = Color.DKGRAY
                                     axisLeft.textSize = 10f
                                     axisLeft.setDrawGridLines(true)
                                     axisLeft.gridColor = Color.LTGRAY
                                     axisLeft.axisMinimum = 0f
-                                    
                                     axisRight.isEnabled = false
                                     animateY(1000)
                                 }
@@ -369,24 +372,17 @@ fun IncomeAnalyticsScreen(
                                 val entries = state.streamSpending.mapIndexed { index, spending ->
                                     BarEntry(index.toFloat(), spending.totalIncome.toFloat())
                                 }
-                                
                                 val dataSet = BarDataSet(entries, "Income").apply {
                                     colors = chartColors
                                     valueTextColor = Color.DKGRAY
                                     valueTextSize = 10f
                                     setDrawValues(true)
                                 }
-                                
-                                val barData = BarData(dataSet).apply {
-                                    barWidth = 0.6f
-                                }
-                                
+                                val barData = BarData(dataSet).apply { barWidth = 0.6f }
                                 barChart.data = barData
-                                
                                 val labels = state.streamSpending.map { it.stream.getDisplayName() }
-                                barChart.xAxis.valueFormatter = 
+                                barChart.xAxis.valueFormatter =
                                     com.github.mikephil.charting.formatter.IndexAxisValueFormatter(labels)
-                                
                                 barChart.invalidate()
                             },
                             modifier = Modifier
@@ -399,7 +395,6 @@ fun IncomeAnalyticsScreen(
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
-            // Income Breakdown List
             Text(
                 text = "📋 Income Details",
                 style = AppTypography.title,
@@ -414,10 +409,7 @@ fun IncomeAnalyticsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "📭",
-                            fontSize = 48.sp
-                        )
+                        Text("📭", fontSize = 48.sp)
                         Text(
                             text = "No income for this period",
                             style = AppTypography.body,
@@ -462,13 +454,13 @@ fun IncomeTypeFilterButton(
         onClick = onClick,
         modifier = modifier,
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) 
-                MaterialTheme.colorScheme.primary 
-            else 
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primary
+            else
                 MaterialTheme.colorScheme.surface,
-            contentColor = if (isSelected) 
-                MaterialTheme.colorScheme.onPrimary 
-            else 
+            contentColor = if (isSelected)
+                MaterialTheme.colorScheme.onPrimary
+            else
                 MaterialTheme.colorScheme.onSurface
         ),
         shape = MaterialTheme.shapes.small
@@ -480,15 +472,13 @@ fun IncomeTypeFilterButton(
 @Composable
 fun IncomeStreamSpendingItem(spending: IncomeStreamSpending) {
     AppCard {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "${spending.stream.getDisplayName()}",
+                    text = spending.stream.getDisplayName(),
                     style = AppTypography.body
                 )
                 Text(
@@ -507,13 +497,13 @@ fun IncomeStreamSpendingItem(spending: IncomeStreamSpending) {
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
                 Text(
-                    text = "${String.format("%.1f", spending.percentage)}%",
+                    text = "${String.format(Locale.US, "%.1f", spending.percentage)}%",
                     style = AppTypography.small,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
             LinearProgressIndicator(
-                progress = (spending.percentage / 100).toFloat(),
+                progress = { (spending.percentage / 100).toFloat() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = Spacing.small),

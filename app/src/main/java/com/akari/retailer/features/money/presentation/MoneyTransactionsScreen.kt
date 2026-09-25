@@ -1,12 +1,11 @@
 package com.akari.retailer.features.money.presentation
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,10 +19,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
-import com.akari.retailer.core.ui.components.TimeFilter
-import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.components.SearchBox
+import com.akari.retailer.core.ui.components.TimeFilterPreset
+import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.money.domain.models.FeeType
@@ -32,43 +31,139 @@ import com.akari.retailer.features.money.domain.models.MoneyTransactionType
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MoneyTransactionsScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
-    
+
     val transactionRepository = remember { application.container.moneyTransactionRepository }
     val accountRepository = remember { application.container.moneyAccountRepository }
-    
+
     val viewModel: MoneyTransactionsViewModel = viewModel(
         factory = MoneyTransactionsViewModelFactory(transactionRepository, accountRepository)
     )
-    
+
     val state by viewModel.state.collectAsState()
     var showSearch by remember { mutableStateOf(false) }
-    var showFilterSheet by remember { mutableStateOf(false) }
+    var showFilterDialog by remember { mutableStateOf(false) }
 
-    if (showFilterSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showFilterSheet = false }
-        ) {
-            FilterSheet(
-                state = state,
-                onAccountSelect = { 
-                    viewModel.handleEvent(MoneyTransactionsEvent.AccountFilterChanged(it))
-                },
-                onTypeSelect = { 
-                    viewModel.handleEvent(MoneyTransactionsEvent.TypeFilterChanged(it))
-                },
-
-                onClearFilters = { 
-                    viewModel.handleEvent(MoneyTransactionsEvent.ClearFilters)
+    // Unified filter dialog: Time + Account + Type
+    if (showFilterDialog) {
+        AlertDialog(
+            onDismissRequest = { showFilterDialog = false },
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(stringResource(R.string.filters))
+                    TextButton(onClick = {
+                        viewModel.handleEvent(MoneyTransactionsEvent.ClearFilters)
+                    }) {
+                        Text(stringResource(R.string.clear_all))
+                    }
                 }
-            )
-        }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 500.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    // Time filter
+                    Text(
+                        text = stringResource(R.string.time_range),
+                        style = AppTypography.label,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    TimeFilterSelector(
+                        filter = state.timeFilter,
+                        onFilterChange = {
+                            viewModel.handleEvent(MoneyTransactionsEvent.TimeFilterChanged(it))
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(Spacing.medium))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(Spacing.medium))
+
+                    // Account filter
+                    Text(
+                        text = stringResource(R.string.money_account),
+                        style = AppTypography.label,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        FilterChip(
+                            selected = state.selectedAccountId.isEmpty(),
+                            onClick = {
+                                viewModel.handleEvent(MoneyTransactionsEvent.AccountFilterChanged(""))
+                            },
+                            label = { Text(stringResource(R.string.all_accounts)) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        state.accounts.forEach { account ->
+                            FilterChip(
+                                selected = state.selectedAccountId == account.id,
+                                onClick = {
+                                    viewModel.handleEvent(MoneyTransactionsEvent.AccountFilterChanged(account.id))
+                                },
+                                label = { Text(account.getDisplayName()) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(Spacing.medium))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(Spacing.medium))
+
+                    // Type filter
+                    Text(
+                        text = stringResource(R.string.transaction_type),
+                        style = AppTypography.label,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        FilterChip(
+                            selected = state.selectedType == null,
+                            onClick = {
+                                viewModel.handleEvent(MoneyTransactionsEvent.TypeFilterChanged(null))
+                            },
+                            label = { Text(stringResource(R.string.all_types), fontSize = 11.sp) }
+                        )
+                        MoneyTransactionType.values().forEach { type ->
+                            FilterChip(
+                                selected = state.selectedType == type,
+                                onClick = {
+                                    viewModel.handleEvent(MoneyTransactionsEvent.TypeFilterChanged(type))
+                                },
+                                label = { Text(type.name.replace("_", " "), fontSize = 10.sp) }
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showFilterDialog = false }) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
     }
 
     AppScreen(
@@ -78,12 +173,12 @@ fun MoneyTransactionsScreen(
         showSearchButton = true,
         onSearchClick = { showSearch = !showSearch },
         showFilterButton = true,
-        onFilterClick = { showFilterSheet = true }
+        onFilterClick = { showFilterDialog = true }
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Summary Cards
+            // Summary cards
             if (state.filteredTransactions.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -91,11 +186,7 @@ fun MoneyTransactionsScreen(
                 ) {
                     AppCard(modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "↑",
-                                style = AppTypography.label,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                            Text("↑", style = AppTypography.label, color = MaterialTheme.colorScheme.primary)
                             Text(
                                 text = "${state.totalIn}",
                                 style = AppTypography.body,
@@ -113,11 +204,7 @@ fun MoneyTransactionsScreen(
                     }
                     AppCard(modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "↓",
-                                style = AppTypography.label,
-                                color = MaterialTheme.colorScheme.error
-                            )
+                            Text("↓", style = AppTypography.label, color = MaterialTheme.colorScheme.error)
                             Text(
                                 text = "${state.totalOut}",
                                 style = AppTypography.body,
@@ -135,10 +222,7 @@ fun MoneyTransactionsScreen(
                     }
                     AppCard(modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "💸",
-                                style = AppTypography.label
-                            )
+                            Text("💸", style = AppTypography.label)
                             Text(
                                 text = "${state.totalFeePaid}",
                                 style = AppTypography.body,
@@ -156,10 +240,7 @@ fun MoneyTransactionsScreen(
                     }
                     AppCard(modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "💵",
-                                style = AppTypography.label
-                            )
+                            Text("💵", style = AppTypography.label)
                             Text(
                                 text = "${state.totalFeeEarned}",
                                 style = AppTypography.body,
@@ -180,7 +261,12 @@ fun MoneyTransactionsScreen(
             }
 
             // Active filters display
-            if (state.selectedAccountId.isNotEmpty() || state.selectedType != null || state.timeFilter.preset != com.akari.retailer.core.ui.components.TimeFilterPreset.THIS_WEEK) {
+            val hasActiveFilters =
+                state.selectedAccountId.isNotEmpty() ||
+                state.selectedType != null ||
+                state.timeFilter.preset != TimeFilterPreset.THIS_WEEK
+
+            if (hasActiveFilters) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -213,7 +299,7 @@ fun MoneyTransactionsScreen(
             if (showSearch) {
                 SearchBox(
                     query = state.searchQuery,
-                    onQueryChange = { 
+                    onQueryChange = {
                         viewModel.handleEvent(MoneyTransactionsEvent.SearchQueryChanged(it))
                     },
                     onSearch = {},
@@ -222,7 +308,6 @@ fun MoneyTransactionsScreen(
                 Spacer(modifier = Modifier.height(Spacing.small))
             }
 
-            // Loading
             if (state.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -233,7 +318,6 @@ fun MoneyTransactionsScreen(
                 return@Column
             }
 
-            // Error
             if (state.error != null) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -257,7 +341,6 @@ fun MoneyTransactionsScreen(
                 return@Column
             }
 
-            // Empty
             if (state.filteredTransactions.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -280,7 +363,6 @@ fun MoneyTransactionsScreen(
                 return@Column
             }
 
-            // Count
             Text(
                 text = "${state.filteredTransactions.size} ${stringResource(R.string.transactions)}",
                 style = AppTypography.label,
@@ -288,7 +370,6 @@ fun MoneyTransactionsScreen(
                 modifier = Modifier.padding(bottom = Spacing.small)
             )
 
-            // Transaction List
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(Spacing.small),
@@ -316,7 +397,7 @@ fun TransactionCard(
     val dateFormat = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
     val fromAccount = accounts.find { it.id == transaction.fromAccountId }
     val toAccount = accounts.find { it.id == transaction.toAccountId }
-    
+
     val isIncoming = transaction.type in listOf(
         MoneyTransactionType.SALE_IN,
         MoneyTransactionType.INCOME_IN,
@@ -324,14 +405,12 @@ fun TransactionCard(
         MoneyTransactionType.EXTERNAL_IN,
         MoneyTransactionType.FEE_IN
     )
-    
+
     val color = if (isIncoming) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -340,7 +419,6 @@ fun TransactionCard(
                 .padding(Spacing.medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon
             Surface(
                 modifier = Modifier.size(40.dp),
                 shape = MaterialTheme.shapes.small,
@@ -355,18 +433,16 @@ fun TransactionCard(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.width(Spacing.medium))
-            
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = transaction.getDisplayType(),
                     style = AppTypography.body,
                     fontWeight = FontWeight.Medium
                 )
-                
+
                 if (transaction.description.isNotEmpty()) {
                     Text(
                         text = transaction.description,
@@ -375,10 +451,9 @@ fun TransactionCard(
                         maxLines = 1
                     )
                 }
-                
-                // Account info
+
                 val accountInfo = when {
-                    transaction.type == MoneyTransactionType.TRANSFER_OUT || 
+                    transaction.type == MoneyTransactionType.TRANSFER_OUT ||
                     transaction.type == MoneyTransactionType.TRANSFER_IN -> {
                         "${fromAccount?.name ?: "?"} → ${toAccount?.name ?: "?"}"
                     }
@@ -391,7 +466,7 @@ fun TransactionCard(
                     isIncoming -> toAccount?.name ?: ""
                     else -> fromAccount?.name ?: ""
                 }
-                
+
                 if (accountInfo.isNotEmpty()) {
                     Text(
                         text = accountInfo,
@@ -400,34 +475,32 @@ fun TransactionCard(
                         fontSize = 10.sp
                     )
                 }
-                
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         text = dateFormat.format(Date(transaction.date)),
                         style = AppTypography.small,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                         fontSize = 10.sp
                     )
-                    
+
                     if (transaction.fee > 0) {
                         Text(
-                            text = if (transaction.feeType == FeeType.FEE_PAID) 
-                                "Fee: -${transaction.fee}" 
-                            else 
+                            text = if (transaction.feeType == FeeType.FEE_PAID)
+                                "Fee: -${transaction.fee}"
+                            else
                                 "Fee: +${transaction.fee}",
                             style = AppTypography.small,
-                            color = if (transaction.feeType == FeeType.FEE_PAID) 
-                                MaterialTheme.colorScheme.error 
-                            else 
+                            color = if (transaction.feeType == FeeType.FEE_PAID)
+                                MaterialTheme.colorScheme.error
+                            else
                                 MaterialTheme.colorScheme.primary,
                             fontSize = 10.sp
                         )
                     }
                 }
             }
-            
+
             Text(
                 text = (if (isIncoming) "+" else "-") + "${transaction.amount}",
                 style = AppTypography.title,
@@ -438,94 +511,6 @@ fun TransactionCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@Composable
-fun FilterSheet(
-    state: MoneyTransactionsState,
-    onAccountSelect: (String) -> Unit,
-    onTypeSelect: (MoneyTransactionType?) -> Unit,
-    onClearFilters: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(Spacing.medium)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(R.string.filters),
-                style = AppTypography.title
-            )
-            TextButton(onClick = onClearFilters) {
-                Text(stringResource(R.string.clear_all))
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(Spacing.medium))
-        
-        Spacer(modifier = Modifier.height(Spacing.medium))
-        
-        // Account Filter
-        Text(
-            text = stringResource(R.string.money_account),
-            style = AppTypography.label,
-            fontWeight = FontWeight.Medium
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Column(
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            FilterChip(
-                selected = state.selectedAccountId.isEmpty(),
-                onClick = { onAccountSelect("") },
-                label = { Text(stringResource(R.string.all_accounts)) },
-                modifier = Modifier.fillMaxWidth()
-            )
-            state.accounts.forEach { account ->
-                FilterChip(
-                    selected = state.selectedAccountId == account.id,
-                    onClick = { onAccountSelect(account.id) },
-                    label = { Text(account.getDisplayName()) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(Spacing.medium))
-        
-        // Type Filter
-        Text(
-            text = stringResource(R.string.transaction_type),
-            style = AppTypography.label,
-            fontWeight = FontWeight.Medium
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            FilterChip(
-                selected = state.selectedType == null,
-                onClick = { onTypeSelect(null) },
-                label = { Text(stringResource(R.string.all_types), fontSize = 11.sp) }
-            )
-            MoneyTransactionType.values().forEach { type ->
-                FilterChip(
-                    selected = state.selectedType == type,
-                    onClick = { onTypeSelect(type) },
-                    label = { Text(type.name.replace("_", " "), fontSize = 10.sp) }
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(Spacing.xxlarge))
-    }
-}
-
 private fun buildFilterLabel(state: MoneyTransactionsState): String {
     val parts = mutableListOf<String>()
     if (state.selectedAccountId.isNotEmpty()) {
@@ -533,6 +518,9 @@ private fun buildFilterLabel(state: MoneyTransactionsState): String {
     }
     if (state.selectedType != null) {
         parts.add("Type: ${state.selectedType.name}")
+    }
+    if (state.timeFilter.preset != TimeFilterPreset.THIS_WEEK) {
+        parts.add(state.timeFilter.label.ifEmpty { "Range" })
     }
     return parts.joinToString(" • ")
 }

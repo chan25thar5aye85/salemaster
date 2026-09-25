@@ -4,10 +4,6 @@ import android.graphics.Color
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,8 +18,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
-import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.core.ui.components.AppScreen
+import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.core.ui.components.TimeFilterPreset
+import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.github.mikephil.charting.charts.BarChart
@@ -33,7 +31,7 @@ import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,25 +40,41 @@ fun TrendsScreen(
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
-    
+
     val viewModel: TrendsViewModel = viewModel(
         factory = TrendsViewModelFactory(application.container.saleRepository)
     )
-    
+
     val state by viewModel.state.collectAsState()
     val salesLabel = stringResource(R.string.sales)
-    val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
-    
-    var showRangeMenu by remember { mutableStateOf(false) }
 
-    val currentCalendar = Calendar.getInstance()
-    val currentMonth = currentCalendar.get(Calendar.MONTH)
-    val currentYear = currentCalendar.get(Calendar.YEAR)
+    var showTimeFilterDialog by remember { mutableStateOf(false) }
+
+    // Time filter dialog
+    if (showTimeFilterDialog) {
+        AlertDialog(
+            onDismissRequest = { showTimeFilterDialog = false },
+            title = { Text(stringResource(R.string.date_range)) },
+            text = {
+                TimeFilterSelector(
+                    filter = state.timeFilter,
+                    onFilterChange = { viewModel.setTimeFilter(it) }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showTimeFilterDialog = false }) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
 
     AppScreen(
         title = stringResource(R.string.monthly_sales_trend),
         showBackButton = true,
-        onBackClick = onBack
+        onBackClick = onBack,
+        showFilterButton = true,
+        onFilterClick = { showTimeFilterDialog = true }
     ) {
         Column(
             modifier = Modifier
@@ -102,33 +116,37 @@ fun TrendsScreen(
                 return@Column
             }
 
-            // ✅ Unified date range selector
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Row(
+            // Active time filter indicator
+            if (state.timeFilter.preset != TimeFilterPreset.THIS_WEEK) {
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(Spacing.medium),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(bottom = Spacing.medium),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
                 ) {
-                    Text(
-                        text = "📊 " + stringResource(R.string.monthly_sales_trend),
-                        style = AppTypography.body,
-                        fontWeight = FontWeight.Medium
-                    )
-                    TimeFilterSelector(
-                        filter = state.timeFilter,
-                        onFilterChange = { viewModel.setTimeFilter(it) }
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${stringResource(R.string.time_range)}: ${state.timeFilter.label}",
+                            style = AppTypography.body
+                        )
+                        TextButton(
+                            onClick = {
+                                viewModel.setTimeFilter(TimeFilter())
+                            }
+                        ) {
+                            Text(stringResource(R.string.clear))
+                        }
+                    }
                 }
             }
-
-            Spacer(modifier = Modifier.height(Spacing.medium))
 
             // Summary Cards
             AppCard {
@@ -190,19 +208,19 @@ fun TrendsScreen(
                             style = AppTypography.title,
                             modifier = Modifier.padding(bottom = Spacing.small)
                         )
-                        
+
                         AndroidView(
-                            factory = { context ->
-                                BarChart(context).apply {
+                            factory = { ctx ->
+                                BarChart(ctx).apply {
                                     description.isEnabled = false
                                     setTouchEnabled(true)
                                     setDragEnabled(true)
                                     setScaleEnabled(true)
-                                    
+
                                     legend.isEnabled = true
                                     legend.textColor = Color.DKGRAY
                                     legend.textSize = 10f
-                                    
+
                                     xAxis.position = XAxis.XAxisPosition.BOTTOM
                                     xAxis.setDrawGridLines(false)
                                     xAxis.textColor = Color.DKGRAY
@@ -210,13 +228,13 @@ fun TrendsScreen(
                                     xAxis.granularity = 1f
                                     xAxis.labelCount = 5
                                     xAxis.labelRotationAngle = 0f
-                                    
+
                                     axisLeft.textColor = Color.DKGRAY
                                     axisLeft.textSize = 10f
                                     axisLeft.setDrawGridLines(true)
                                     axisLeft.gridColor = Color.LTGRAY
                                     axisLeft.axisMinimum = 0f
-                                    
+
                                     axisRight.isEnabled = false
                                 }
                             },
@@ -224,20 +242,20 @@ fun TrendsScreen(
                                 val entries = state.dailyTotals.mapIndexed { index, value ->
                                     BarEntry(index.toFloat(), value.toFloat())
                                 }
-                                
+
                                 val dataSet = BarDataSet(entries, salesLabel).apply {
                                     color = Color.parseColor("#1976D2")
                                     valueTextColor = Color.DKGRAY
                                     valueTextSize = 10f
                                     setDrawValues(true)
                                 }
-                                
+
                                 val barData = BarData(dataSet).apply {
                                     barWidth = 0.6f
                                 }
-                                
+
                                 barChart.data = barData
-                                
+
                                 val dayLabels = state.dates.map { dateStr ->
                                     try {
                                         val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateStr)
@@ -247,7 +265,7 @@ fun TrendsScreen(
                                     }
                                 }
                                 barChart.xAxis.valueFormatter = IndexAxisValueFormatter(dayLabels)
-                                
+
                                 barChart.invalidate()
                             },
                             modifier = Modifier
