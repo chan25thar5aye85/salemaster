@@ -16,8 +16,8 @@ import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
-import com.akari.retailer.core.ui.components.DatePickerDialog
 import com.akari.retailer.core.ui.components.SaleCard
+import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.navigation.Routes
@@ -39,7 +39,7 @@ fun SaleHistoryScreen(
     
     var showDeleteDialog by remember { mutableStateOf(false) }
     var pendingDeleteId by remember { mutableStateOf<String?>(null) }
-    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimeFilterDialog by remember { mutableStateOf(false) }
 
     if (showDeleteDialog && pendingDeleteId != null) {
         AlertDialog(
@@ -84,15 +84,23 @@ fun SaleHistoryScreen(
         )
     }
 
-    // Date Picker Dialog
-    if (showDatePicker) {
-        DatePickerDialog(
-            onDateSelected = { timestamp ->
-                viewModel.handleEvent(SaleHistoryEvent.FilterByDate(timestamp))
-                showDatePicker = false
+    // Time filter dialog
+    if (showTimeFilterDialog) {
+        AlertDialog(
+            onDismissRequest = { showTimeFilterDialog = false },
+            title = { Text(stringResource(R.string.date_range)) },
+            text = {
+                TimeFilterSelector(
+                    filter = state.timeFilter,
+                    onFilterChange = {
+                        viewModel.handleEvent(SaleHistoryEvent.TimeFilterChanged(it))
+                    }
+                )
             },
-            onDismiss = {
-                showDatePicker = false
+            confirmButton = {
+                TextButton(onClick = { showTimeFilterDialog = false }) {
+                    Text(stringResource(R.string.ok))
+                }
             }
         )
     }
@@ -101,16 +109,16 @@ fun SaleHistoryScreen(
         title = stringResource(R.string.history),
         showBackButton = true,
         onBackClick = onBack,
-        showSearchButton = false,  // ✅ Removed
-        showDateFilter = true,
-        onDateFilterClick = { showDatePicker = true },
+        showSearchButton = false,
+        showFilterButton = true,
+        onFilterClick = { showTimeFilterDialog = true },
         showHistoryButton = false
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Filter indicator
-            if (state.filterDate != null) {
+            // Filter indicator (only when non-default)
+            if (state.timeFilter.preset != com.akari.retailer.core.ui.components.TimeFilterPreset.THIS_WEEK) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -127,12 +135,16 @@ fun SaleHistoryScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "📅 Filtered by: ${state.filterDateLabel}",
+                            text = "📅 ${state.timeFilter.label.ifEmpty { "Filter active" }}",
                             style = AppTypography.body
                         )
                         TextButton(
                             onClick = {
-                                viewModel.handleEvent(SaleHistoryEvent.ClearDateFilter)
+                                viewModel.handleEvent(
+                                    SaleHistoryEvent.TimeFilterChanged(
+                                        com.akari.retailer.core.ui.components.TimeFilter()
+                                    )
+                                )
                             }
                         ) {
                             Text(stringResource(R.string.clear))
@@ -186,12 +198,12 @@ fun SaleHistoryScreen(
                         fontSize = 48.sp
                     )
                     Text(
-                        text = if (state.filterDate != null) "No sales for selected date" else "No sales yet",
+                        text = "No sales yet",
                         style = AppTypography.header,
                         modifier = Modifier.padding(vertical = Spacing.medium)
                     )
                     Text(
-                        text = if (state.filterDate != null) "Try selecting a different date" else "Add your first sale from the home screen",
+                        text = "Add your first sale from the home screen",
                         style = AppTypography.body,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )

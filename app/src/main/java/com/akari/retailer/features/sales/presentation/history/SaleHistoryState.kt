@@ -1,5 +1,6 @@
 package com.akari.retailer.features.sales.presentation.history
 
+import com.akari.retailer.core.ui.components.TimeFilter
 import com.akari.retailer.features.sales.domain.models.Sale
 
 data class SaleHistoryState(
@@ -7,6 +8,5 @@ data class SaleHistoryState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val isRefreshing: Boolean = false,
-    val filterDate: Long? = null,
-    val filterDateLabel: String = ""
+    val timeFilter: TimeFilter = TimeFilter()
 )

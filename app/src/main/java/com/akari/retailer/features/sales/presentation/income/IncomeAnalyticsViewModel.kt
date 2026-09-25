@@ -3,6 +3,7 @@ package com.akari.retailer.features.sales.presentation.income
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.sales.data.repository.IncomeEntryRepository
+import com.akari.retailer.core.ui.components.TimeFilter
 import com.akari.retailer.features.sales.data.repository.IncomeStreamRepository
 import com.akari.retailer.features.sales.domain.models.IncomeEntry
 import com.akari.retailer.features.sales.domain.models.IncomeEntryType
@@ -37,11 +38,6 @@ class IncomeAnalyticsViewModel(
         loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                val calendar = Calendar.getInstance()
-                _state.value = _state.value.copy(
-                    selectedMonth = calendar.get(Calendar.MONTH),
-                    selectedYear = calendar.get(Calendar.YEAR)
-                )
                 combine(
                     entryRepository.getIncomeEntries(),
                     streamRepository.getIncomeStreams()
@@ -71,30 +67,10 @@ class IncomeAnalyticsViewModel(
         entries: List<IncomeEntry>,
         streams: List<IncomeStream>
     ): IncomeAnalyticsState {
-        val timeRange = _state.value.timeRange
         val typeFilter = _state.value.typeFilter
-        val now = System.currentTimeMillis()
-        val calendar = Calendar.getInstance()
-
-        val (startDate, endDate, label) = when (timeRange) {
-            IncomeTimeRange.TODAY -> Triple(getDayStart(now), getDayEnd(now), "Today")
-            IncomeTimeRange.THIS_WEEK -> Triple(getWeekStart(now), getWeekEnd(now), "This Week")
-            IncomeTimeRange.THIS_MONTH -> Triple(getMonthStart(now), getMonthEnd(now), "This Month")
-            IncomeTimeRange.LAST_MONTH -> {
-                calendar.add(Calendar.MONTH, -1)
-                val start = getMonthStart(calendar.timeInMillis)
-                val end = getMonthEnd(calendar.timeInMillis)
-                calendar.add(Calendar.MONTH, 1)
-                val monthName = SimpleDateFormat("MMMM", Locale.getDefault()).format(Date(start))
-                Triple(start, end, "Last Month ($monthName)")
-            }
-            IncomeTimeRange.CUSTOM -> {
-                calendar.set(_state.value.selectedYear, _state.value.selectedMonth, 1)
-                val start = getMonthStart(calendar.timeInMillis)
-                val end = getMonthEnd(calendar.timeInMillis)
-                Triple(start, end, "${dateFormat.format(Date(start))} - ${dateFormat.format(Date(end))}")
-            }
-        }
+        val range = _state.value.timeFilter.resolveRange()
+        val startDate = range.first
+        val endDate = range.last
 
         val filteredEntries = entries.filter { entry ->
             val dateMatch = entry.date in startDate..endDate
@@ -134,82 +110,30 @@ class IncomeAnalyticsViewModel(
             personalIncome = personal,
             streamSpending = streamSpending,
             topStream = streamSpending.firstOrNull(),
-            selectedMonth = _state.value.selectedMonth,
-            selectedYear = _state.value.selectedYear,
-            timeRange = timeRange,
-            typeFilter = typeFilter,
-            rangeLabel = label
+            timeFilter = _state.value.timeFilter,
+            typeFilter = typeFilter
         )
     }
 
-    private fun getDayStart(t: Long): Long = Calendar.getInstance().apply {
-        timeInMillis = t; set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
 
-    private fun getDayEnd(t: Long): Long = Calendar.getInstance().apply {
-        timeInMillis = t; set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59)
-        set(Calendar.SECOND, 59); set(Calendar.MILLISECOND, 999)
-    }.timeInMillis
 
-    private fun getWeekStart(t: Long): Long = Calendar.getInstance().apply {
-        timeInMillis = t; set(Calendar.DAY_OF_WEEK, firstDayOfWeek); set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
 
-    private fun getWeekEnd(t: Long): Long = Calendar.getInstance().apply {
-        timeInMillis = t; set(Calendar.DAY_OF_WEEK, firstDayOfWeek)
-        add(Calendar.DAY_OF_WEEK, 6); set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59)
-        set(Calendar.SECOND, 59); set(Calendar.MILLISECOND, 999)
-    }.timeInMillis
 
-    private fun getMonthStart(t: Long): Long = Calendar.getInstance().apply {
-        timeInMillis = t; set(Calendar.DAY_OF_MONTH, 1); set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
 
-    private fun getMonthEnd(t: Long): Long = Calendar.getInstance().apply {
-        timeInMillis = t; set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
-        set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59)
-        set(Calendar.SECOND, 59); set(Calendar.MILLISECOND, 999)
-    }.timeInMillis
 
-    fun setTimeRange(range: IncomeTimeRange) {
-        _state.value = _state.value.copy(timeRange = range)
-        loadAnalytics()
-    }
 
     fun setTypeFilter(filter: IncomeTypeFilter) {
         _state.value = _state.value.copy(typeFilter = filter)
         loadAnalytics()
     }
 
-    fun changeMonth(month: Int, year: Int) {
-        _state.value = _state.value.copy(
-            selectedMonth = month,
-            selectedYear = year,
-            timeRange = IncomeTimeRange.CUSTOM
-        )
+    fun setTimeFilter(filter: TimeFilter) {
+        _state.value = _state.value.copy(timeFilter = filter)
         loadAnalytics()
     }
 
-    fun previousMonth() {
-        val calendar = Calendar.getInstance()
-        calendar.set(_state.value.selectedYear, _state.value.selectedMonth, 1)
-        calendar.add(Calendar.MONTH, -1)
-        changeMonth(calendar.get(Calendar.MONTH), calendar.get(Calendar.YEAR))
-    }
 
-    fun nextMonth() {
-        val calendar = Calendar.getInstance()
-        calendar.set(_state.value.selectedYear, _state.value.selectedMonth, 1)
-        calendar.add(Calendar.MONTH, 1)
-        val now = Calendar.getInstance()
-        if (calendar.get(Calendar.YEAR) > now.get(Calendar.YEAR) ||
-            (calendar.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
-             calendar.get(Calendar.MONTH) > now.get(Calendar.MONTH))) return
-        changeMonth(calendar.get(Calendar.MONTH), calendar.get(Calendar.YEAR))
-    }
+
 }
 
 class IncomeAnalyticsViewModelFactory(

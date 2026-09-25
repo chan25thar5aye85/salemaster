@@ -1,14 +1,7 @@
 package com.akari.retailer.features.money.presentation
 
+import com.akari.retailer.core.ui.components.TimeFilter
 import com.akari.retailer.features.money.domain.models.MoneyAccount
-
-enum class MoneyAnalyticsTimeRange {
-    TODAY,
-    THIS_WEEK,
-    THIS_MONTH,
-    LAST_MONTH,
-    ALL
-}
 
 data class AccountBalance(
     val account: MoneyAccount,
@@ -36,8 +29,7 @@ data class MoneyAnalyticsState(
     val totalBalance: Int = 0,
     val feeSummary: FeeSummary = FeeSummary(),
     val moneyFlow: MoneyFlow = MoneyFlow(),
-    val timeRange: MoneyAnalyticsTimeRange = MoneyAnalyticsTimeRange.THIS_MONTH,
+    val timeFilter: TimeFilter = TimeFilter(),
     val isLoading: Boolean = true,
-    val error: String? = null,
-    val rangeLabel: String = "This Month"
+    val error: String? = null
 )

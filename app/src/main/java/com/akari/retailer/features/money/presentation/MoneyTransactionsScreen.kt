@@ -20,6 +20,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
+import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.components.SearchBox
 import com.akari.retailer.core.ui.theme.AppTypography
@@ -61,9 +63,7 @@ fun MoneyTransactionsScreen(
                 onTypeSelect = { 
                     viewModel.handleEvent(MoneyTransactionsEvent.TypeFilterChanged(it))
                 },
-                onTimeRangeSelect = { 
-                    viewModel.handleEvent(MoneyTransactionsEvent.TimeRangeChanged(it))
-                },
+
                 onClearFilters = { 
                     viewModel.handleEvent(MoneyTransactionsEvent.ClearFilters)
                 }
@@ -180,7 +180,7 @@ fun MoneyTransactionsScreen(
             }
 
             // Active filters display
-            if (state.selectedAccountId.isNotEmpty() || state.selectedType != null || state.timeRange != TransactionTimeRange.ALL) {
+            if (state.selectedAccountId.isNotEmpty() || state.selectedType != null || state.timeFilter.preset != com.akari.retailer.core.ui.components.TimeFilterPreset.THIS_WEEK) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -444,7 +444,6 @@ fun FilterSheet(
     state: MoneyTransactionsState,
     onAccountSelect: (String) -> Unit,
     onTypeSelect: (MoneyTransactionType?) -> Unit,
-    onTimeRangeSelect: (TransactionTimeRange) -> Unit,
     onClearFilters: () -> Unit
 ) {
     Column(
@@ -467,37 +466,6 @@ fun FilterSheet(
         }
         
         Spacer(modifier = Modifier.height(Spacing.medium))
-        
-        // Time Range
-        Text(
-            text = stringResource(R.string.time_range),
-            style = AppTypography.label,
-            fontWeight = FontWeight.Medium
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            TransactionTimeRange.values().forEach { range ->
-                FilterChip(
-                    selected = state.timeRange == range,
-                    onClick = { onTimeRangeSelect(range) },
-                    label = { 
-                        Text(
-                            text = when (range) {
-                                TransactionTimeRange.TODAY -> stringResource(R.string.today_range)
-                                TransactionTimeRange.THIS_WEEK -> stringResource(R.string.this_week)
-                                TransactionTimeRange.THIS_MONTH -> stringResource(R.string.this_month)
-                                TransactionTimeRange.ALL -> stringResource(R.string.all_types)
-                            },
-                            fontSize = 11.sp
-                        )
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
         
         Spacer(modifier = Modifier.height(Spacing.medium))
         
@@ -565,9 +533,6 @@ private fun buildFilterLabel(state: MoneyTransactionsState): String {
     }
     if (state.selectedType != null) {
         parts.add("Type: ${state.selectedType.name}")
-    }
-    if (state.timeRange != TransactionTimeRange.ALL) {
-        parts.add(state.timeRange.name.replace("_", " "))
     }
     return parts.joinToString(" • ")
 }

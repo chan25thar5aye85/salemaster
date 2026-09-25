@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.data.repository.MoneyTransactionRepository
 import com.akari.retailer.features.money.domain.models.FeeType
+import com.akari.retailer.core.ui.components.TimeFilter
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.features.money.domain.models.MoneyTransaction
 import com.akari.retailer.features.money.domain.models.MoneyTransactionType
@@ -34,8 +35,8 @@ class MoneyAnalyticsViewModel(
         when (event) {
             is MoneyAnalyticsEvent.LoadAnalytics -> loadAnalytics()
             is MoneyAnalyticsEvent.RefreshAnalytics -> loadAnalytics()
-            is MoneyAnalyticsEvent.TimeRangeChanged -> {
-                _state.value = _state.value.copy(timeRange = event.range)
+            is MoneyAnalyticsEvent.TimeFilterChanged -> {
+                _state.value = _state.value.copy(timeFilter = event.filter)
                 loadAnalytics()
             }
             is MoneyAnalyticsEvent.ClearError -> _state.value = _state.value.copy(error = null)
@@ -68,7 +69,9 @@ class MoneyAnalyticsViewModel(
         accounts: List<MoneyAccount>,
         transactions: List<MoneyTransaction>
     ) {
-        val (startDate, endDate, rangeLabel) = getDateRange()
+        val range = _state.value.timeFilter.resolveRange()
+        val startDate = range.first
+        val endDate = range.last
         val filteredTransactions = transactions.filter { it.date in startDate..endDate }
 
         val activeAccounts = accounts.filter { it.isActive }
@@ -135,57 +138,11 @@ class MoneyAnalyticsViewModel(
             totalBalance = totalBalance,
             feeSummary = feeSummary,
             moneyFlow = moneyFlow,
-            rangeLabel = rangeLabel,
             isLoading = false,
             error = null
         )
     }
 
-    private fun getDateRange(): Triple<Long, Long, String> {
-        val now = System.currentTimeMillis()
-        val calendar = Calendar.getInstance()
-        return when (_state.value.timeRange) {
-            MoneyAnalyticsTimeRange.TODAY -> {
-                calendar.set(Calendar.HOUR_OF_DAY, 0)
-                calendar.set(Calendar.MINUTE, 0)
-                calendar.set(Calendar.SECOND, 0)
-                calendar.set(Calendar.MILLISECOND, 0)
-                Triple(calendar.timeInMillis, now, "Today")
-            }
-            MoneyAnalyticsTimeRange.THIS_WEEK -> {
-                calendar.set(Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
-                calendar.set(Calendar.HOUR_OF_DAY, 0)
-                calendar.set(Calendar.MINUTE, 0)
-                calendar.set(Calendar.SECOND, 0)
-                calendar.set(Calendar.MILLISECOND, 0)
-                Triple(calendar.timeInMillis, now, "This Week")
-            }
-            MoneyAnalyticsTimeRange.THIS_MONTH -> {
-                calendar.set(Calendar.DAY_OF_MONTH, 1)
-                calendar.set(Calendar.HOUR_OF_DAY, 0)
-                calendar.set(Calendar.MINUTE, 0)
-                calendar.set(Calendar.SECOND, 0)
-                calendar.set(Calendar.MILLISECOND, 0)
-                Triple(calendar.timeInMillis, now, "This Month")
-            }
-            MoneyAnalyticsTimeRange.LAST_MONTH -> {
-                calendar.add(Calendar.MONTH, -1)
-                calendar.set(Calendar.DAY_OF_MONTH, 1)
-                calendar.set(Calendar.HOUR_OF_DAY, 0)
-                calendar.set(Calendar.MINUTE, 0)
-                calendar.set(Calendar.SECOND, 0)
-                calendar.set(Calendar.MILLISECOND, 0)
-                val start = calendar.timeInMillis
-                calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH))
-                calendar.set(Calendar.HOUR_OF_DAY, 23)
-                calendar.set(Calendar.MINUTE, 59)
-                calendar.set(Calendar.SECOND, 59)
-                calendar.set(Calendar.MILLISECOND, 999)
-                Triple(start, calendar.timeInMillis, "Last Month")
-            }
-            MoneyAnalyticsTimeRange.ALL -> Triple(0L, now, "All Time")
-        }
-    }
 }
 
 class MoneyAnalyticsViewModelFactory(

@@ -1,14 +1,7 @@
 package com.akari.retailer.features.sales.presentation.income
 
+import com.akari.retailer.core.ui.components.TimeFilter
 import com.akari.retailer.features.sales.domain.models.IncomeStream
-
-enum class IncomeTimeRange {
-    TODAY,
-    THIS_WEEK,
-    THIS_MONTH,
-    LAST_MONTH,
-    CUSTOM
-}
 
 enum class IncomeTypeFilter {
     ALL,
@@ -31,9 +24,6 @@ data class IncomeAnalyticsState(
     val topStream: IncomeStreamSpending? = null,
     val isLoading: Boolean = true,
     val error: String? = null,
-    val selectedMonth: Int = 0,
-    val selectedYear: Int = 0,
-    val timeRange: IncomeTimeRange = IncomeTimeRange.TODAY,
-    val typeFilter: IncomeTypeFilter = IncomeTypeFilter.ALL,
-    val rangeLabel: String = "Today"
+    val timeFilter: TimeFilter = TimeFilter(),
+    val typeFilter: IncomeTypeFilter = IncomeTypeFilter.ALL
 )

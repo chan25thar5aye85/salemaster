@@ -17,6 +17,7 @@ data class IncomeListState(
     val allEntries: List<com.akari.retailer.features.sales.domain.models.IncomeEntry> = emptyList(),
     val streams: List<com.akari.retailer.features.sales.domain.models.IncomeStream> = emptyList(),
     val selectedStreamIds: Set<String> = emptySet(),
+    val timeFilter: com.akari.retailer.core.ui.components.TimeFilter = com.akari.retailer.core.ui.components.TimeFilter(),
     val isLoading: Boolean = true,
     val error: String? = null,
     val searchQuery: String = "",
@@ -34,6 +35,7 @@ sealed class IncomeListEvent {
     data object ClearSearch : IncomeListEvent()
     data class ToggleStreamFilter(val streamId: String) : IncomeListEvent()
     data object ClearStreamFilters : IncomeListEvent()
+    data class TimeFilterChanged(val filter: com.akari.retailer.core.ui.components.TimeFilter) : IncomeListEvent()
 }
 
 class IncomeListViewModel(
@@ -63,6 +65,7 @@ class IncomeListViewModel(
             is IncomeListEvent.ClearSearch -> clearSearch()
             is IncomeListEvent.ToggleStreamFilter -> toggleStreamFilter(event.streamId)
             is IncomeListEvent.ClearStreamFilters -> clearStreamFilters()
+            is IncomeListEvent.TimeFilterChanged -> setTimeFilter(event.filter)
         }
     }
 
@@ -149,13 +152,19 @@ class IncomeListViewModel(
         applyFilters()
     }
 
+    private fun setTimeFilter(filter: com.akari.retailer.core.ui.components.TimeFilter) {
+        _state.value = _state.value.copy(timeFilter = filter)
+        applyFilters()
+    }
+
     private fun applyFilters() {
         val query = _state.value.searchQuery.lowercase().trim()
         val allEntries = _state.value.allEntries
         val streams = _state.value.streams
         val selectedStreamIds = _state.value.selectedStreamIds
+        val range = _state.value.timeFilter.resolveRange()
 
-        var filtered = allEntries
+        var filtered = allEntries.filter { it.date in range.first..range.last }
         if (selectedStreamIds.isNotEmpty()) {
             filtered = filtered.filter { selectedStreamIds.contains(it.incomeStreamId) }
         }

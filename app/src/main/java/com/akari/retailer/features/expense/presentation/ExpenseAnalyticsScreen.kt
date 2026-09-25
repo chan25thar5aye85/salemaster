@@ -23,6 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
+import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
@@ -52,14 +53,9 @@ fun ExpenseAnalyticsScreen(
     )
     
     val state by viewModel.state.collectAsState()
-    val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
     
-    var showRangeMenu by remember { mutableStateOf(false) }
 
     // Current month/year for comparison
-    val currentCalendar = Calendar.getInstance()
-    val currentMonth = currentCalendar.get(Calendar.MONTH)
-    val currentYear = currentCalendar.get(Calendar.YEAR)
     
     // Chart colors
     val chartColors = listOf(
@@ -111,127 +107,28 @@ fun ExpenseAnalyticsScreen(
                 return@Column
             }
 
-            // ✅ Time Range Selector - Default to Today
+            // ✅ Unified time filter
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
-                Column(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(Spacing.medium)
+                        .padding(Spacing.medium),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Range selector row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Left: Month navigation arrows
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(
-                                onClick = { viewModel.previousMonth() },
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "Previous", modifier = Modifier.size(20.dp))
-                            }
-                            
-                            Text(
-                                text = monthFormat.format(
-                                    Calendar.getInstance()
-                                        .apply { set(state.selectedYear, state.selectedMonth, 1) }
-                                        .time
-                                ),
-                                style = AppTypography.title,
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-                            
-                            val isFutureMonth = state.selectedYear > currentYear || 
-                                (state.selectedYear == currentYear && state.selectedMonth > currentMonth)
-                            
-                            IconButton(
-                                onClick = { viewModel.nextMonth() },
-                                enabled = !isFutureMonth,
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.ArrowForward, 
-                                    contentDescription = "Next",
-                                    modifier = Modifier.size(20.dp),
-                                    tint = if (isFutureMonth) 
-                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) 
-                                    else 
-                                        MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
-                        
-                        // Right: Time range dropdown - Default to Today
-                        ExposedDropdownMenuBox(
-                            expanded = showRangeMenu,
-                            onExpandedChange = { showRangeMenu = it }
-                        ) {
-                            OutlinedButton(
-                                onClick = { showRangeMenu = true },
-                                modifier = Modifier.menuAnchor()
-                            ) {
-                                Text(
-                                    text = state.rangeLabel,
-                                    style = AppTypography.small
-                                )
-                                Icon(
-                                    Icons.Default.ArrowDropDown,
-                                    contentDescription = "Select range",
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                            
-                            ExposedDropdownMenu(
-                                expanded = showRangeMenu,
-                                onDismissRequest = { showRangeMenu = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("📅 Today") },
-                                    onClick = {
-                                        viewModel.setTimeRange(AnalyticsTimeRange.TODAY)
-                                        showRangeMenu = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("📅 This Week") },
-                                    onClick = {
-                                        viewModel.setTimeRange(AnalyticsTimeRange.THIS_WEEK)
-                                        showRangeMenu = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("📅 This Month") },
-                                    onClick = {
-                                        viewModel.setTimeRange(AnalyticsTimeRange.THIS_MONTH)
-                                        showRangeMenu = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("📅 Last Month") },
-                                    onClick = {
-                                        viewModel.setTimeRange(AnalyticsTimeRange.LAST_MONTH)
-                                        showRangeMenu = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                    
-                    // Current range label
                     Text(
-                        text = "Showing: ${state.rangeLabel}",
-                        style = AppTypography.small,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        modifier = Modifier.padding(top = 4.dp)
+                        text = "📊 Expense Analytics",
+                        style = AppTypography.body,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                    )
+                    TimeFilterSelector(
+                        filter = state.timeFilter,
+                        onFilterChange = { viewModel.setTimeFilter(it) }
                     )
                 }
             }

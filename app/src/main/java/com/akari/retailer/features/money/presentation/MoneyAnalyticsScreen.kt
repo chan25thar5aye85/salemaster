@@ -21,6 +21,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
+import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
@@ -51,7 +52,6 @@ fun MoneyAnalyticsScreen(
     
     val state by viewModel.state.collectAsState()
     
-    var showRangeMenu by remember { mutableStateOf(false) }
     
     val chartColors = listOf(
         "#4CAF50", "#2196F3", "#FF9800", "#9C27B0", "#F44336",
@@ -100,7 +100,7 @@ fun MoneyAnalyticsScreen(
                 return@Column
             }
 
-            // Time Range Selector
+            // ✅ Unified time filter
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -115,50 +115,14 @@ fun MoneyAnalyticsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.showing) + ": ${state.rangeLabel}",
+                        text = "📊 Money Analytics",
                         style = AppTypography.body,
                         fontWeight = FontWeight.Medium
                     )
-                    
-                    ExposedDropdownMenuBox(
-                        expanded = showRangeMenu,
-                        onExpandedChange = { showRangeMenu = it }
-                    ) {
-                        OutlinedButton(
-                            onClick = { showRangeMenu = true },
-                            modifier = Modifier.menuAnchor()
-                        ) {
-                            Text(
-                                text = state.rangeLabel,
-                                style = AppTypography.small
-                            )
-                        }
-                        
-                        ExposedDropdownMenu(
-                            expanded = showRangeMenu,
-                            onDismissRequest = { showRangeMenu = false }
-                        ) {
-                            MoneyAnalyticsTimeRange.values().forEach { range ->
-                                DropdownMenuItem(
-                                    text = { 
-                                        Text(
-                                            text = when (range) {
-                                                MoneyAnalyticsTimeRange.TODAY -> stringResource(R.string.today_range)
-                                                MoneyAnalyticsTimeRange.THIS_WEEK -> stringResource(R.string.this_week)
-                                                MoneyAnalyticsTimeRange.THIS_MONTH -> stringResource(R.string.this_month)
-                                                MoneyAnalyticsTimeRange.LAST_MONTH -> stringResource(R.string.last_month)
-                                                MoneyAnalyticsTimeRange.ALL -> stringResource(R.string.all_types)
-                                            }
-                                        )
-                                    },
-                                    onClick = {
-                                        viewModel.handleEvent(MoneyAnalyticsEvent.TimeRangeChanged(range))
-                                        showRangeMenu = false
-                                    }
-                                )
-                            }
-                        }
-                    }
+                    TimeFilterSelector(
+                        filter = state.timeFilter,
+                        onFilterChange = { viewModel.handleEvent(MoneyAnalyticsEvent.TimeFilterChanged(it)) }
+                    )
                 }
             }
 

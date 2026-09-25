@@ -127,6 +127,42 @@ fun ExpenseListScreen(
                 }
             }
 
+            // Time filter indicator
+            if (state.timeFilter.preset != com.akari.retailer.core.ui.components.TimeFilterPreset.THIS_WEEK) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Spacing.medium),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "📅 ${state.timeFilter.label.ifEmpty { "Filter active" }}",
+                            style = AppTypography.body
+                        )
+                        TextButton(
+                            onClick = {
+                                viewModel.handleEvent(
+                                    ExpenseListEvent.TimeFilterChanged(
+                                        com.akari.retailer.core.ui.components.TimeFilter()
+                                    )
+                                )
+                            }
+                        ) {
+                            Text(stringResource(R.string.clear))
+                        }
+                    }
+                }
+            }
+
             // Filter status bar
             if (state.selectedCategoryIds.isNotEmpty()) {
                 Card(
@@ -328,6 +364,10 @@ fun ExpenseListScreen(
         ExpenseFilterDialog(
             categories = state.categories,
             selectedCategories = state.selectedCategoryIds,
+            timeFilter = state.timeFilter,
+            onTimeFilterChange = {
+                viewModel.handleEvent(ExpenseListEvent.TimeFilterChanged(it))
+            },
             onCategoryToggle = { categoryId ->
                 viewModel.handleEvent(ExpenseListEvent.ToggleCategoryFilter(categoryId))
             },

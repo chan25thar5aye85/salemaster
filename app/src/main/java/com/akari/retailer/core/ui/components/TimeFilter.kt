@@ -23,7 +23,7 @@ enum class TimeFilterPreset {
  * Immutable time-range selection. Universal across all screens.
  */
 data class TimeFilter(
-    val preset: TimeFilterPreset = TimeFilterPreset.THIS_MONTH,
+    val preset: TimeFilterPreset = TimeFilterPreset.THIS_WEEK,
     val specificDayMillis: Long? = null,
     val customStartMillis: Long? = null,
     val customEndMillis: Long? = null,

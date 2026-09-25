@@ -3,6 +3,7 @@ package com.akari.retailer.features.sales.presentation.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.data.repository.SaleRepository
+import com.akari.retailer.core.ui.components.TimeFilter
 import com.akari.retailer.features.sales.data.repository.SaleFinalizer
 import com.akari.retailer.features.sales.domain.models.Sale
 import kotlinx.coroutines.Job
@@ -10,9 +11,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
 class SaleHistoryViewModel(
@@ -26,7 +24,6 @@ class SaleHistoryViewModel(
     private var loadJob: Job? = null
 
     private var allSales: List<Sale> = emptyList()
-    private val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
     init {
         loadSales()
@@ -39,8 +36,7 @@ class SaleHistoryViewModel(
             is SaleHistoryEvent.DeleteSale -> deleteSale(event.saleId)
             is SaleHistoryEvent.ClearError -> clearError()
             is SaleHistoryEvent.ResetDeleteSuccess -> { }
-            is SaleHistoryEvent.FilterByDate -> filterByDate(event.timestamp)
-            is SaleHistoryEvent.ClearDateFilter -> clearDateFilter()
+            is SaleHistoryEvent.TimeFilterChanged -> setTimeFilter(event.filter)
         }
     }
 
@@ -83,35 +79,15 @@ class SaleHistoryViewModel(
         }
     }
 
-    private fun filterByDate(timestamp: Long) {
-        val dateLabel = dateFormat.format(Date(timestamp))
-        _state.value = _state.value.copy(
-            filterDate = timestamp,
-            filterDateLabel = dateLabel
-        )
-        applyFilters()
-    }
-
-    private fun clearDateFilter() {
-        _state.value = _state.value.copy(
-            filterDate = null,
-            filterDateLabel = ""
-        )
+    private fun setTimeFilter(filter: TimeFilter) {
+        _state.value = _state.value.copy(timeFilter = filter)
         applyFilters()
     }
 
     private fun applyFilters() {
+        val range = _state.value.timeFilter.resolveRange()
         val filtered = allSales.filter { sale ->
-            var matches = true
-            _state.value.filterDate?.let { filterDate ->
-                val saleCalendar = Calendar.getInstance().apply { time = Date(sale.timestamp) }
-                val filterCalendar = Calendar.getInstance().apply { time = Date(filterDate) }
-                matches = matches && (
-                    saleCalendar.get(Calendar.YEAR) == filterCalendar.get(Calendar.YEAR) &&
-                    saleCalendar.get(Calendar.DAY_OF_YEAR) == filterCalendar.get(Calendar.DAY_OF_YEAR)
-                )
-            }
-            matches
+            sale.timestamp in range.first..range.last
         }
         _state.value = _state.value.copy(
             sales = filtered,

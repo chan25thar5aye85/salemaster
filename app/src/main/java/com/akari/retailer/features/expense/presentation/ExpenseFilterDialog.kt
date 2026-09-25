@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.akari.retailer.core.ui.theme.Spacing
+import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 import androidx.compose.ui.res.stringResource
 import com.akari.retailer.R
@@ -22,6 +24,8 @@ import com.akari.retailer.R
 fun ExpenseFilterDialog(
     categories: List<ExpenseCategory>,
     selectedCategories: Set<String>,
+    timeFilter: TimeFilter,
+    onTimeFilterChange: (TimeFilter) -> Unit,
     onCategoryToggle: (String) -> Unit,
     onClearAll: () -> Unit,
     onApply: () -> Unit,
@@ -61,8 +65,23 @@ fun ExpenseFilterDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(400.dp)
+                    .height(500.dp)
             ) {
+                // Time filter
+                Text(
+                    text = stringResource(R.string.time_range),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                TimeFilterSelector(
+                    filter = timeFilter,
+                    onFilterChange = onTimeFilterChange
+                )
+                Spacer(modifier = Modifier.height(Spacing.medium))
+                Divider()
+                Spacer(modifier = Modifier.height(Spacing.medium))
+
                 // Search Box
                 OutlinedTextField(
                     value = searchQuery,

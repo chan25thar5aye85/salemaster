@@ -23,6 +23,8 @@ import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.components.SearchBox
+import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.core.ui.components.TimeFilterPreset
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.sales.domain.models.IncomeEntry
@@ -38,14 +40,17 @@ fun IncomeListScreen(
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
-    
-    
+
     val viewModel: IncomeListViewModel = viewModel(
-        factory = IncomeListViewModelFactory(application.container.incomeEntryRepository, application.container.incomeStreamRepository, application.container.incomeFinalizer)
+        factory = IncomeListViewModelFactory(
+            application.container.incomeEntryRepository,
+            application.container.incomeStreamRepository,
+            application.container.incomeFinalizer
+        )
     )
-    
+
     val state by viewModel.state.collectAsState()
-    
+
     var showDeleteDialog by remember { mutableStateOf(false) }
     var pendingDeleteId by remember { mutableStateOf<String?>(null) }
     var showSearch by remember { mutableStateOf(false) }
@@ -100,6 +105,40 @@ fun IncomeListScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
+            // Time filter indicator
+            if (state.timeFilter.preset != TimeFilterPreset.THIS_WEEK) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Spacing.medium),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${stringResource(R.string.time_range)}: ${state.timeFilter.label}",
+                            style = AppTypography.body
+                        )
+                        TextButton(
+                            onClick = {
+                                viewModel.handleEvent(
+                                    IncomeListEvent.TimeFilterChanged(TimeFilter())
+                                )
+                            }
+                        ) {
+                            Text(stringResource(R.string.clear))
+                        }
+                    }
+                }
+            }
+
             // Income Summary
             if (state.allEntries.isNotEmpty()) {
                 Row(
@@ -183,7 +222,7 @@ fun IncomeListScreen(
             if (showSearch) {
                 SearchBox(
                     query = state.searchQuery,
-                    onQueryChange = { 
+                    onQueryChange = {
                         viewModel.handleEvent(IncomeListEvent.SearchQueryChanged(it))
                     },
                     onSearch = {},
@@ -241,17 +280,17 @@ fun IncomeListScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("💰", fontSize = 48.sp)
                         Text(
-                            text = if (state.searchQuery.isNotEmpty()) 
+                            text = if (state.searchQuery.isNotEmpty())
                                 "${stringResource(R.string.no_income_found)} '${state.searchQuery}'"
-                            else 
+                            else
                                 stringResource(R.string.no_income_yet),
                             style = AppTypography.header,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
                         Text(
-                            text = if (state.searchQuery.isNotEmpty()) 
+                            text = if (state.searchQuery.isNotEmpty())
                                 stringResource(R.string.try_different_search)
-                            else 
+                            else
                                 stringResource(R.string.tap_add_expense),
                             style = AppTypography.body,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -269,9 +308,9 @@ fun IncomeListScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (state.searchQuery.isNotEmpty()) 
-                        "${state.entries.size} ${stringResource(R.string.results)} for '${state.searchQuery}'" 
-                    else 
+                    text = if (state.searchQuery.isNotEmpty())
+                        "${state.entries.size} ${stringResource(R.string.results)} for '${state.searchQuery}'"
+                    else
                         "${state.entries.size} ${stringResource(R.string.income)} entries",
                     style = AppTypography.label,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -320,6 +359,10 @@ fun IncomeListScreen(
         IncomeFilterDialog(
             streams = state.streams,
             selectedStreams = state.selectedStreamIds,
+            timeFilter = state.timeFilter,
+            onTimeFilterChange = {
+                viewModel.handleEvent(IncomeListEvent.TimeFilterChanged(it))
+            },
             onStreamToggle = { streamId ->
                 viewModel.handleEvent(IncomeListEvent.ToggleStreamFilter(streamId))
             },
@@ -346,7 +389,7 @@ fun IncomeCard(
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     val stream = streams.find { it.id == entry.incomeStreamId }
     val streamName = stream?.getDisplayName() ?: "Unknown"
-    
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -367,7 +410,7 @@ fun IncomeCard(
                     text = streamName,
                     style = AppTypography.title
                 )
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -386,7 +429,7 @@ fun IncomeCard(
                         )
                     }
                 }
-                
+
                 if (entry.description.isNotEmpty()) {
                     Text(
                         text = entry.description,
@@ -394,20 +437,20 @@ fun IncomeCard(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
                 }
-                
+
                 Text(
                     text = dateFormat.format(entry.date),
                     style = AppTypography.small,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 )
             }
-            
+
             Text(
                 text = "${entry.amount}",
                 style = AppTypography.header,
                 color = MaterialTheme.colorScheme.primary
             )
-            
+
             IconButton(onClick = onEdit) {
                 Icon(
                     Icons.Default.Edit,

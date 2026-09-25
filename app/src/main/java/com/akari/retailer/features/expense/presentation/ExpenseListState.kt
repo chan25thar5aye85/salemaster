@@ -1,5 +1,6 @@
 package com.akari.retailer.features.expense.presentation
 
+import com.akari.retailer.core.ui.components.TimeFilter
 import com.akari.retailer.features.expense.domain.models.Expense
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 
@@ -8,6 +9,7 @@ data class ExpenseListState(
     val allExpenses: List<Expense> = emptyList(),
     val categories: List<ExpenseCategory> = emptyList(),
     val selectedCategoryIds: Set<String> = emptySet(),
+    val timeFilter: TimeFilter = TimeFilter(),
     val isLoading: Boolean = true,
     val error: String? = null,
     val searchQuery: String = "",

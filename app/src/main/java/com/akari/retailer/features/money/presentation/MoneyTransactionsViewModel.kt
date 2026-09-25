@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.data.repository.MoneyTransactionRepository
 import com.akari.retailer.features.money.domain.models.FeeType
+import com.akari.retailer.core.ui.components.TimeFilter
 import com.akari.retailer.features.money.domain.models.MoneyTransactionType
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,8 +42,8 @@ class MoneyTransactionsViewModel(
                 _state.value = _state.value.copy(selectedType = event.type)
                 applyFilters()
             }
-            is MoneyTransactionsEvent.TimeRangeChanged -> {
-                _state.value = _state.value.copy(timeRange = event.range)
+            is MoneyTransactionsEvent.TimeFilterChanged -> {
+                _state.value = _state.value.copy(timeFilter = event.filter)
                 applyFilters()
             }
             is MoneyTransactionsEvent.SearchQueryChanged -> {
@@ -53,7 +54,7 @@ class MoneyTransactionsViewModel(
                 _state.value = _state.value.copy(
                     selectedAccountId = "",
                     selectedType = null,
-                    timeRange = TransactionTimeRange.ALL,
+                    timeFilter = TimeFilter(),
                     searchQuery = ""
                 )
                 applyFilters()
@@ -107,25 +108,8 @@ class MoneyTransactionsViewModel(
             filtered = filtered.filter { it.type == type }
         }
 
-        val now = System.currentTimeMillis()
-        val startDate = when (state.timeRange) {
-            TransactionTimeRange.TODAY -> Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-            }.timeInMillis
-            TransactionTimeRange.THIS_WEEK -> Calendar.getInstance().apply {
-                set(Calendar.DAY_OF_WEEK, firstDayOfWeek)
-                set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-            }.timeInMillis
-            TransactionTimeRange.THIS_MONTH -> Calendar.getInstance().apply {
-                set(Calendar.DAY_OF_MONTH, 1)
-                set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-            }.timeInMillis
-            TransactionTimeRange.ALL -> 0L
-        }
-        filtered = filtered.filter { it.date in startDate..now }
+        val range = state.timeFilter.resolveRange()
+        filtered = filtered.filter { it.date in range.first..range.last }
 
         if (state.searchQuery.isNotEmpty()) {
             val query = state.searchQuery.lowercase()

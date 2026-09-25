@@ -16,6 +16,8 @@ import androidx.navigation.NavController
 import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppScreen
+import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.inventory.domain.models.Purchase
@@ -30,14 +32,13 @@ fun PurchaseListScreen(
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
-    
-    
+
     var purchases by remember { mutableStateOf<List<Purchase>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var retryKey by remember { mutableStateOf(0) }
-    
-    // Load purchases - triggered by retryKey change
+    var timeFilter by remember { mutableStateOf(TimeFilter()) }
+
     LaunchedEffect(retryKey) {
         isLoading = true
         error = null
@@ -51,6 +52,9 @@ fun PurchaseListScreen(
             error = e.message
         }
     }
+
+    val range = timeFilter.resolveRange()
+    val filteredPurchases = purchases.filter { it.purchaseDate in range.first..range.last }
 
     AppScreen(
         title = stringResource(R.string.purchases),
@@ -85,7 +89,7 @@ fun PurchaseListScreen(
                         Text("❌", fontSize = 40.sp)
                         Text(error!!, style = AppTypography.body, color = MaterialTheme.colorScheme.error)
                         TextButton(
-                            onClick = { 
+                            onClick = {
                                 retryKey++
                             }
                         ) {
@@ -96,7 +100,7 @@ fun PurchaseListScreen(
                 return@Column
             }
 
-            if (purchases.isEmpty()) {
+            if (filteredPurchases.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -117,12 +121,25 @@ fun PurchaseListScreen(
                 return@Column
             }
 
+            // Time filter selector
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Spacing.small),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                TimeFilterSelector(
+                    filter = timeFilter,
+                    onFilterChange = { timeFilter = it }
+                )
+            }
+
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(Spacing.medium),
                 contentPadding = PaddingValues(bottom = Spacing.xxlarge)
             ) {
-                items(purchases, key = { it.id }) { purchase ->
+                items(filteredPurchases, key = { it.id }) { purchase ->
                     PurchaseCard(
                         purchase = purchase,
                         onClick = {
@@ -143,7 +160,7 @@ fun PurchaseCard(
     onClick: () -> Unit
 ) {
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
