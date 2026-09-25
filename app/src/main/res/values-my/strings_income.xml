@@ -62,4 +62,6 @@
     <string name="income_business_icon">💼 စီးပွားရေး</string>
     <string name="income_personal_icon">👤 ကိုယ်ပိုင်</string>
     <string name="search_income_types_hint">ဝင်ငွေအမျိုးအစားရှာဖွေရန်...</string>
+    <string name="edit_income">ဝင်ငွေပြင်ရန်</string>
+    <string name="update_income">ဝင်ငွေပြင်မည်</string>
 </resources>

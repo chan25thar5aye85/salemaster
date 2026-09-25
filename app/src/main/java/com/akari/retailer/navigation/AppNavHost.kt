@@ -44,6 +44,7 @@ import com.akari.retailer.features.reports.presentation.ProfitLossScreen
 import com.akari.retailer.features.reports.presentation.TrendsScreen
 import com.akari.retailer.features.sales.presentation.income.IncomeAnalyticsScreen
 import com.akari.retailer.features.sales.presentation.income.IncomeEntryScreen
+import com.akari.retailer.features.sales.presentation.income.IncomeEditScreen
 import com.akari.retailer.features.sales.presentation.income.IncomeListScreen
 import com.akari.retailer.features.sales.presentation.stream.IncomeStreamManagementScreen
 import com.akari.retailer.features.sales.presentation.entry.SaleEntryScreen
@@ -117,6 +118,18 @@ fun AppNavHost() {
                         navController = navController,
                         onBack = { navController.popBackStack() },
                         onIncomeAdded = { navController.popBackStack() }
+                    )
+                }
+
+                composable(
+                    route = Routes.INCOME_EDIT,
+                    arguments = listOf(navArgument("entryId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val entryId = backStackEntry.arguments?.getString("entryId") ?: ""
+                    IncomeEditScreen(
+                        entryId = entryId,
+                        onBack = { navController.popBackStack() },
+                        onEntryUpdated = { navController.popBackStack() }
                     )
                 }
                 

@@ -3,6 +3,7 @@ package com.akari.retailer.features.sales.presentation.income
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.sales.data.repository.IncomeEntryRepository
+import com.akari.retailer.features.sales.data.remote.FirestoreIncomeFinalizer
 import com.akari.retailer.features.sales.data.repository.IncomeStreamRepository
 import com.akari.retailer.features.sales.domain.models.IncomeEntryType
 import kotlinx.coroutines.Job
@@ -37,7 +38,8 @@ sealed class IncomeListEvent {
 
 class IncomeListViewModel(
     private val entryRepository: IncomeEntryRepository,
-    private val streamRepository: IncomeStreamRepository
+    private val streamRepository: IncomeStreamRepository,
+    private val incomeFinalizer: FirestoreIncomeFinalizer
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(IncomeListState())
@@ -109,7 +111,7 @@ class IncomeListViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
-                val result = entryRepository.deleteIncomeEntry(entryId)
+                val result = incomeFinalizer.deleteIncome(entryId)
                 if (result.isSuccess) loadEntries()
                 else _state.value = _state.value.copy(
                     isLoading = false,
@@ -173,12 +175,13 @@ class IncomeListViewModel(
 
 class IncomeListViewModelFactory(
     private val entryRepository: IncomeEntryRepository,
-    private val streamRepository: IncomeStreamRepository
+    private val streamRepository: IncomeStreamRepository,
+    private val incomeFinalizer: FirestoreIncomeFinalizer
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(IncomeListViewModel::class.java)) {
-            return IncomeListViewModel(entryRepository, streamRepository) as T
+            return IncomeListViewModel(entryRepository, streamRepository, incomeFinalizer) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

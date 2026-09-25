@@ -7,8 +7,8 @@ import com.akari.retailer.core.utils.PaymentPreferences
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.features.money.domain.models.PaymentEntry
-import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransactionUseCase
 import com.akari.retailer.features.sales.data.repository.IncomeEntryRepository
+import com.akari.retailer.features.sales.data.remote.FirestoreIncomeFinalizer
 import com.akari.retailer.features.sales.data.repository.IncomeStreamRepository
 import com.akari.retailer.features.sales.domain.models.IncomeEntry
 import com.akari.retailer.features.sales.domain.models.IncomeEntryType
@@ -72,7 +72,7 @@ class IncomeEntryViewModel(
     private val incomeEntryRepository: IncomeEntryRepository,
     private val incomeStreamRepository: IncomeStreamRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
-    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
+    private val incomeFinalizer: FirestoreIncomeFinalizer,
     private val paymentPreferences: PaymentPreferences
 ) : ViewModel() {
 
@@ -242,16 +242,9 @@ class IncomeEntryViewModel(
                 date = currentState.date
             )
 
-            val result = incomeEntryRepository.addIncomeEntry(entry)
+            val result = incomeFinalizer.addIncome(entry)
 
             if (result.isSuccess) {
-                val incomeId = result.getOrNull() ?: ""
-                processMoneyTransactionUseCase.processIncome(
-                    payments = payments,
-                    incomeId = incomeId,
-                    description = currentState.selectedStream.name
-                )
-
                 payments.firstOrNull()?.let {
                     paymentPreferences.setLastUsedAccountId(it.accountId)
                 }
@@ -275,7 +268,7 @@ class IncomeEntryViewModelFactory(
     private val incomeEntryRepository: IncomeEntryRepository,
     private val incomeStreamRepository: IncomeStreamRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
-    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
+    private val incomeFinalizer: FirestoreIncomeFinalizer,
     private val paymentPreferences: PaymentPreferences
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -285,7 +278,7 @@ class IncomeEntryViewModelFactory(
                 incomeEntryRepository,
                 incomeStreamRepository,
                 moneyAccountRepository,
-                processMoneyTransactionUseCase,
+                incomeFinalizer,
                 paymentPreferences
             ) as T
         }

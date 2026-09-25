@@ -43,4 +43,10 @@
     <string name="name_field">Name</string>
     <string name="amount_field">Amount</string>
     <string name="apply_filter_count">Apply Filter (%1$d)</string>
+    <string name="date_range">Date Range</string>
+    <string name="specific_day">Specific Day</string>
+    <string name="custom_range">Custom Range</string>
+    <string name="today">Today</string>
+    <string name="select_day">Select Day</string>
+    <string name="this_year">This Year</string>
 </resources>

@@ -10,7 +10,6 @@ import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.features.money.domain.models.CreditAccount
 import com.akari.retailer.features.money.domain.models.PaymentEntry
-import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransactionUseCase
 import com.akari.retailer.features.sales.data.repository.SaleFinalizer
 import com.akari.retailer.features.sales.domain.models.Sale
 import com.akari.retailer.features.sales.domain.models.SaleItem
@@ -28,7 +27,6 @@ class SaleEntryViewModel(
     private val repository: SaleRepository,
     private val saleFinalizer: SaleFinalizer,
     private val moneyAccountRepository: MoneyAccountRepository,
-    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
     private val customerRepository: CustomerRepository,
     private val extendCreditUseCase: ExtendCreditUseCase,
     private val paymentPreferences: PaymentPreferences
@@ -445,7 +443,6 @@ class SaleEntryViewModelFactory(
     private val repository: SaleRepository,
     private val saleFinalizer: SaleFinalizer,
     private val moneyAccountRepository: MoneyAccountRepository,
-    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
     private val customerRepository: CustomerRepository,
     private val extendCreditUseCase: ExtendCreditUseCase,
     private val paymentPreferences: PaymentPreferences
@@ -457,7 +454,6 @@ class SaleEntryViewModelFactory(
                 repository,
                 saleFinalizer,
                 moneyAccountRepository,
-                processMoneyTransactionUseCase,
                 customerRepository,
                 extendCreditUseCase,
                 paymentPreferences

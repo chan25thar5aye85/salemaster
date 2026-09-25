@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -40,7 +41,7 @@ fun IncomeListScreen(
     
     
     val viewModel: IncomeListViewModel = viewModel(
-        factory = IncomeListViewModelFactory(application.container.incomeEntryRepository, application.container.incomeStreamRepository)
+        factory = IncomeListViewModelFactory(application.container.incomeEntryRepository, application.container.incomeStreamRepository, application.container.incomeFinalizer)
     )
     
     val state by viewModel.state.collectAsState()
@@ -299,6 +300,11 @@ fun IncomeListScreen(
                     IncomeCard(
                         entry = entry,
                         streams = state.streams,
+                        onEdit = {
+                            navController.navigate(
+                                Routes.INCOME_EDIT.replace("{entryId}", entry.id)
+                            )
+                        },
                         onDelete = {
                             pendingDeleteId = entry.id
                             showDeleteDialog = true
@@ -334,6 +340,7 @@ fun IncomeListScreen(
 fun IncomeCard(
     entry: IncomeEntry,
     streams: List<com.akari.retailer.features.sales.domain.models.IncomeStream>,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
@@ -401,6 +408,14 @@ fun IncomeCard(
                 color = MaterialTheme.colorScheme.primary
             )
             
+            IconButton(onClick = onEdit) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = stringResource(R.string.edit),
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                )
+            }
+
             IconButton(onClick = onDelete) {
                 Icon(
                     Icons.Default.Delete,

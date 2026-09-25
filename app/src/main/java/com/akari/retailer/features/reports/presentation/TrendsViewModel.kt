@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.data.repository.SaleRepository
 import com.akari.retailer.features.sales.domain.models.Sale
+import com.akari.retailer.core.ui.components.TimeFilter
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,10 +12,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-
-enum class SalesTimeRange {
-    TODAY, THIS_WEEK, THIS_MONTH, LAST_MONTH, CUSTOM
-}
 
 data class TrendsState(
     val dailyTotals: List<Int> = emptyList(),
@@ -25,10 +22,7 @@ data class TrendsState(
     val salesCount: Int = 0,
     val isLoading: Boolean = true,
     val error: String? = null,
-    val monthYear: String = "",
-    val selectedMonth: Int = 0,
-    val selectedYear: Int = 0,
-    val timeRange: SalesTimeRange = SalesTimeRange.THIS_MONTH,
+    val timeFilter: TimeFilter = TimeFilter(),
     val rangeLabel: String = "This Month"
 )
 
@@ -48,6 +42,11 @@ class TrendsViewModel(
         loadData()
     }
 
+    fun setTimeFilter(filter: TimeFilter) {
+        _state.value = _state.value.copy(timeFilter = filter)
+        loadData()
+    }
+
     fun loadData() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
@@ -62,7 +61,6 @@ class TrendsViewModel(
                         averageDaily = result.averageDaily,
                         highestDay = result.highestDay,
                         salesCount = result.salesCount,
-                        monthYear = result.rangeLabel,
                         rangeLabel = result.rangeLabel,
                         isLoading = false,
                         error = null
@@ -88,28 +86,13 @@ class TrendsViewModel(
     )
 
     private fun calculateData(sales: List<Sale>): CalculatedData {
-        val now = System.currentTimeMillis()
-        val calendar = Calendar.getInstance()
-
-        val (startDate, endDate, label) = when (_state.value.timeRange) {
-            SalesTimeRange.TODAY -> Triple(getDayStart(now), getDayEnd(now), "Today")
-            SalesTimeRange.THIS_WEEK -> Triple(getWeekStart(now), getWeekEnd(now), "This Week")
-            SalesTimeRange.THIS_MONTH -> Triple(getMonthStart(now), getMonthEnd(now), "This Month")
-            SalesTimeRange.LAST_MONTH -> {
-                calendar.add(Calendar.MONTH, -1)
-                val start = getMonthStart(calendar.timeInMillis)
-                val end = getMonthEnd(calendar.timeInMillis)
-                calendar.add(Calendar.MONTH, 1)
-                val monthName = displayFormat.format(Date(start))
-                Triple(start, end, "Last Month ($monthName)")
-            }
-            SalesTimeRange.CUSTOM -> {
-                calendar.set(_state.value.selectedYear, _state.value.selectedMonth, 1)
-                val start = getMonthStart(calendar.timeInMillis)
-                val end = getMonthEnd(calendar.timeInMillis)
-                Triple(start, end, displayFormat.format(Date(start)))
-            }
-        }
+        val rawRange = _state.value.timeFilter.resolveRange()
+        // Defensive cap: never iterate more than 1 year of days in the chart.
+        val oneYearMs = 366L * 24 * 60 * 60 * 1000
+        val capEnd = System.currentTimeMillis()
+        val startDate = maxOf(rawRange.first, minOf(rawRange.last, capEnd) - oneYearMs)
+        val endDate = minOf(rawRange.last, capEnd)
+        val label = _state.value.timeFilter.label
 
         val filteredSales = sales.filter { it.timestamp in startDate..endDate }
 
@@ -146,76 +129,8 @@ class TrendsViewModel(
         )
     }
 
-    private fun getDayStart(t: Long): Long = Calendar.getInstance().apply {
-        timeInMillis = t; set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
 
-    private fun getDayEnd(t: Long): Long = Calendar.getInstance().apply {
-        timeInMillis = t; set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59)
-        set(Calendar.SECOND, 59); set(Calendar.MILLISECOND, 999)
-    }.timeInMillis
 
-    private fun getWeekStart(t: Long): Long = Calendar.getInstance().apply {
-        timeInMillis = t; set(Calendar.DAY_OF_WEEK, firstDayOfWeek); set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
-
-    private fun getWeekEnd(t: Long): Long = Calendar.getInstance().apply {
-        timeInMillis = t; set(Calendar.DAY_OF_WEEK, firstDayOfWeek)
-        add(Calendar.DAY_OF_WEEK, 6); set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59)
-        set(Calendar.SECOND, 59); set(Calendar.MILLISECOND, 999)
-    }.timeInMillis
-
-    private fun getMonthStart(t: Long): Long = Calendar.getInstance().apply {
-        timeInMillis = t; set(Calendar.DAY_OF_MONTH, 1); set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
-
-    private fun getMonthEnd(t: Long): Long = Calendar.getInstance().apply {
-        timeInMillis = t; set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
-        set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59)
-        set(Calendar.SECOND, 59); set(Calendar.MILLISECOND, 999)
-    }.timeInMillis
-
-    fun setTimeRange(range: SalesTimeRange) {
-        val calendar = Calendar.getInstance()
-        _state.value = _state.value.copy(
-            timeRange = range,
-            selectedMonth = calendar.get(Calendar.MONTH),
-            selectedYear = calendar.get(Calendar.YEAR)
-        )
-        loadData()
-    }
-
-    fun previousMonth() {
-        val calendar = Calendar.getInstance()
-        calendar.set(_state.value.selectedYear, _state.value.selectedMonth, 1)
-        calendar.add(Calendar.MONTH, -1)
-        _state.value = _state.value.copy(
-            timeRange = SalesTimeRange.CUSTOM,
-            selectedMonth = calendar.get(Calendar.MONTH),
-            selectedYear = calendar.get(Calendar.YEAR)
-        )
-        loadData()
-    }
-
-    fun nextMonth() {
-        val calendar = Calendar.getInstance()
-        calendar.set(_state.value.selectedYear, _state.value.selectedMonth, 1)
-        calendar.add(Calendar.MONTH, 1)
-        val now = Calendar.getInstance()
-        // Guard against navigating into the future
-        if (calendar.get(Calendar.YEAR) > now.get(Calendar.YEAR) ||
-            (calendar.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
-             calendar.get(Calendar.MONTH) > now.get(Calendar.MONTH))) return
-        _state.value = _state.value.copy(
-            timeRange = SalesTimeRange.CUSTOM,
-            selectedMonth = calendar.get(Calendar.MONTH),
-            selectedYear = calendar.get(Calendar.YEAR)
-        )
-        loadData()
-    }
 }
 
 class TrendsViewModelFactory(

@@ -24,7 +24,6 @@ import com.akari.retailer.features.money.data.repository.FirestoreMoneyAccountRe
 import com.akari.retailer.features.money.data.repository.FirestoreMoneyTransactionRepository
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.features.money.domain.models.PaymentEntry
-import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransactionUseCase
 import com.akari.retailer.features.supplier.data.repository.FirestoreSupplierRepository
 import com.akari.retailer.features.supplier.data.remote.FirestoreSupplierService
 import kotlinx.coroutines.Job
@@ -81,9 +80,6 @@ class PurchaseOrderDetailViewModel(
     }
     private val transactionRepo by lazy {
         FirestoreMoneyTransactionRepository(FirestoreMoneyTransactionService())
-    }
-    private val processMoneyTransactionUseCase by lazy {
-        ProcessMoneyTransactionUseCase(moneyAccountRepository, transactionRepo)
     }
 
     init {

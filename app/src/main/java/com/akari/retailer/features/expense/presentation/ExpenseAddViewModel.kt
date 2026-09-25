@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.akari.retailer.core.ui.components.PaymentRow
 import com.akari.retailer.core.utils.PaymentPreferences
 import com.akari.retailer.features.expense.data.repository.CategoryRepository
+import com.akari.retailer.features.expense.data.remote.FirestoreExpenseFinalizer
 import com.akari.retailer.features.expense.data.repository.ExpenseRepository
 import com.akari.retailer.features.expense.domain.models.Expense
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
@@ -12,7 +13,6 @@ import com.akari.retailer.features.expense.domain.models.ExpenseType
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.features.money.domain.models.PaymentEntry
-import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransactionUseCase
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -77,7 +77,7 @@ class ExpenseAddViewModel(
     private val expenseRepository: ExpenseRepository,
     private val categoryRepository: CategoryRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
-    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
+    private val expenseFinalizer: FirestoreExpenseFinalizer,
     private val paymentPreferences: PaymentPreferences
 ) : ViewModel() {
 
@@ -267,15 +267,9 @@ class ExpenseAddViewModel(
                 description = currentState.description.trim()
             )
 
-            val result = expenseRepository.addExpense(expense)
+            val result = expenseFinalizer.addExpense(expense)
 
             if (result.isSuccess) {
-                val expenseId = result.getOrNull() ?: ""
-                processMoneyTransactionUseCase.processExpense(
-                    payments = payments,
-                    expenseId = expenseId,
-                    description = currentState.title
-                )
                 payments.firstOrNull()?.let {
                     paymentPreferences.setLastUsedAccountId(it.accountId)
                 }
@@ -298,7 +292,7 @@ class ExpenseAddViewModelFactory(
     private val expenseRepository: ExpenseRepository,
     private val categoryRepository: CategoryRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
-    private val processMoneyTransactionUseCase: ProcessMoneyTransactionUseCase,
+    private val expenseFinalizer: FirestoreExpenseFinalizer,
     private val paymentPreferences: PaymentPreferences
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -308,7 +302,7 @@ class ExpenseAddViewModelFactory(
                 expenseRepository,
                 categoryRepository,
                 moneyAccountRepository,
-                processMoneyTransactionUseCase,
+                expenseFinalizer,
                 paymentPreferences
             ) as T
         }

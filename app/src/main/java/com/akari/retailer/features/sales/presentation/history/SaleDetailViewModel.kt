@@ -9,6 +9,7 @@ import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.CreditAccount
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.features.sales.domain.models.Sale
+import com.akari.retailer.features.sales.data.repository.SaleFinalizer
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +29,7 @@ class SaleDetailViewModel(
     private val saleRepository: SaleRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
     private val customerRepository: CustomerRepository,
+    private val saleFinalizer: SaleFinalizer,
     private val saleId: String
 ) : ViewModel() {
 
@@ -46,7 +48,7 @@ class SaleDetailViewModel(
 
     fun deleteSale() {
         viewModelScope.launch {
-            val result = saleRepository.deleteSale(saleId)
+            val result = saleFinalizer.deleteSale(saleId)
             _state.value = _state.value.copy(deleteSuccess = result.isSuccess)
         }
     }
@@ -113,12 +115,13 @@ class SaleDetailViewModelFactory(
     private val saleRepository: SaleRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
     private val customerRepository: CustomerRepository,
+    private val saleFinalizer: SaleFinalizer,
     private val saleId: String
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SaleDetailViewModel::class.java)) {
-            return SaleDetailViewModel(saleRepository, moneyAccountRepository, customerRepository, saleId) as T
+            return SaleDetailViewModel(saleRepository, moneyAccountRepository, customerRepository, saleFinalizer, saleId) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

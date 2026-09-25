@@ -39,7 +39,7 @@ fun ExpenseListScreen(
     val application = context.applicationContext as RetailApplication
     
     val viewModel: ExpenseListViewModel = viewModel(
-        factory = ExpenseListViewModelFactory(application.container.expenseRepository, application.container.categoryRepository)
+        factory = ExpenseListViewModelFactory(application.container.expenseRepository, application.container.categoryRepository, application.container.expenseFinalizer)
     )
     
     val state by viewModel.state.collectAsState()

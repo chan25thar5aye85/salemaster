@@ -3,6 +3,7 @@ package com.akari.retailer.features.sales.presentation.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.data.repository.SaleRepository
+import com.akari.retailer.features.sales.data.repository.SaleFinalizer
 import com.akari.retailer.features.sales.domain.models.Sale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +16,8 @@ import java.util.Date
 import java.util.Locale
 
 class SaleHistoryViewModel(
-    private val repository: SaleRepository
+    private val repository: SaleRepository,
+    private val saleFinalizer: SaleFinalizer
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SaleHistoryState())
@@ -66,7 +68,7 @@ class SaleHistoryViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                val result = repository.deleteSale(saleId)
+                val result = saleFinalizer.deleteSale(saleId)
                 if (result.isSuccess) loadSales()
                 else _state.value = _state.value.copy(
                     isLoading = false,
@@ -124,12 +126,13 @@ class SaleHistoryViewModel(
 }
 
 class SaleHistoryViewModelFactory(
-    private val repository: SaleRepository
+    private val repository: SaleRepository,
+    private val saleFinalizer: SaleFinalizer
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SaleHistoryViewModel::class.java)) {
-            return SaleHistoryViewModel(repository) as T
+            return SaleHistoryViewModel(repository, saleFinalizer) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }

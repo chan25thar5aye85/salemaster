@@ -56,14 +56,12 @@ fun SaleEntryScreen(
 
     val repository = remember { application.container.saleRepository }
     val moneyAccountRepository = remember { application.container.moneyAccountRepository }
-    val processMoneyTransactionUseCase = remember { application.container.processMoneyTransactionUseCase }
 
     val viewModel: SaleEntryViewModel = viewModel(
         factory = SaleEntryViewModelFactory(
             repository,
             application.container.saleFinalizer,
             moneyAccountRepository,
-            processMoneyTransactionUseCase,
             application.container.customerRepository,
             application.container.extendCreditUseCase,
             application.container.paymentPreferences

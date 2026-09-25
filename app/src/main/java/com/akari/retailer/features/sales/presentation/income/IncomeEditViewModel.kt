@@ -1,17 +1,18 @@
-package com.akari.retailer.features.expense.presentation
+package com.akari.retailer.features.sales.presentation.income
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.core.ui.components.PaymentRow
 import com.akari.retailer.core.utils.PaymentPreferences
-import com.akari.retailer.features.expense.data.remote.FirestoreExpenseFinalizer
-import com.akari.retailer.features.expense.data.repository.CategoryRepository
-import com.akari.retailer.features.expense.data.repository.ExpenseRepository
-import com.akari.retailer.features.expense.domain.models.Expense
-import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.features.money.domain.models.PaymentEntry
+import com.akari.retailer.features.sales.data.remote.FirestoreIncomeFinalizer
+import com.akari.retailer.features.sales.data.repository.IncomeEntryRepository
+import com.akari.retailer.features.sales.data.repository.IncomeStreamRepository
+import com.akari.retailer.features.sales.domain.models.IncomeEntry
+import com.akari.retailer.features.sales.domain.models.IncomeEntryType
+import com.akari.retailer.features.sales.domain.models.IncomeStream
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,17 +20,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-data class ExpenseEditState(
+data class IncomeEditState(
     val id: String = "",
-    val title: String = "",
     val amount: String = "",
-    val selectedCategory: ExpenseCategory? = null,
-    val categories: List<ExpenseCategory> = emptyList(),
-    val description: String = "",
+    val selectedStream: IncomeStream? = null,
+    val streams: List<IncomeStream> = emptyList(),
     val accounts: List<MoneyAccount> = emptyList(),
     val paymentRows: List<PaymentRow> = listOf(
         PaymentRow(id = 1L, accountId = "default_cash", amount = "")
     ),
+    val entryType: IncomeEntryType = IncomeEntryType.BUSINESS,
+    val description: String = "",
+    val originalDate: Long = System.currentTimeMillis(),
+    val originalCreatedAt: Long = System.currentTimeMillis(),
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
@@ -44,69 +47,69 @@ data class ExpenseEditState(
         .map { PaymentEntry(it.accountId, it.amount.toIntOrNull() ?: 0) }
 }
 
-sealed class ExpenseEditEvent {
-    data class TitleChanged(val value: String) : ExpenseEditEvent()
-    data class AmountChanged(val value: String) : ExpenseEditEvent()
-    data class CategorySelected(val category: ExpenseCategory) : ExpenseEditEvent()
-    data class DescriptionChanged(val value: String) : ExpenseEditEvent()
-    data class PaymentAccountChanged(val rowId: Long, val account: MoneyAccount) : ExpenseEditEvent()
-    data class PaymentAmountChanged(val rowId: Long, val amount: String) : ExpenseEditEvent()
-    data object AddPaymentRow : ExpenseEditEvent()
-    data class RemovePaymentRow(val rowId: Long) : ExpenseEditEvent()
-    data object LoadExpense : ExpenseEditEvent()
-    data object SaveExpense : ExpenseEditEvent()
-    data object ClearError : ExpenseEditEvent()
-    data object ResetSuccess : ExpenseEditEvent()
+sealed class IncomeEditEvent {
+    data class AmountChanged(val value: String) : IncomeEditEvent()
+    data class StreamSelected(val stream: IncomeStream) : IncomeEditEvent()
+    data class EntryTypeChanged(val type: IncomeEntryType) : IncomeEditEvent()
+    data class DescriptionChanged(val value: String) : IncomeEditEvent()
+    data class PaymentAccountChanged(val rowId: Long, val account: MoneyAccount) : IncomeEditEvent()
+    data class PaymentAmountChanged(val rowId: Long, val amount: String) : IncomeEditEvent()
+    data object AddPaymentRow : IncomeEditEvent()
+    data class RemovePaymentRow(val rowId: Long) : IncomeEditEvent()
+    data object LoadEntry : IncomeEditEvent()
+    data object SaveEntry : IncomeEditEvent()
+    data object ClearError : IncomeEditEvent()
+    data object ResetSuccess : IncomeEditEvent()
 }
 
-class ExpenseEditViewModel(
-    private val expenseRepository: ExpenseRepository,
-    private val categoryRepository: CategoryRepository,
+class IncomeEditViewModel(
+    private val entryRepository: IncomeEntryRepository,
+    private val streamRepository: IncomeStreamRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
-    private val expenseFinalizer: FirestoreExpenseFinalizer,
+    private val incomeFinalizer: FirestoreIncomeFinalizer,
     private val paymentPreferences: PaymentPreferences,
-    private val expenseId: String
+    private val entryId: String
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(ExpenseEditState(id = expenseId))
-    val state: StateFlow<ExpenseEditState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(IncomeEditState(id = entryId))
+    val state: StateFlow<IncomeEditState> = _state.asStateFlow()
 
-    private var loadExpenseJob: Job? = null
-    private var loadCategoriesJob: Job? = null
+    private var loadEntryJob: Job? = null
+    private var loadStreamsJob: Job? = null
     private var loadAccountsJob: Job? = null
 
     private var nextPaymentRowId = 2L
     private var userTouchedAmounts = false
 
     init {
-        loadCategories()
+        loadStreams()
         loadAccounts()
-        loadExpense()
+        loadEntry()
     }
 
-    fun handleEvent(event: ExpenseEditEvent) {
+    fun handleEvent(event: IncomeEditEvent) {
         when (event) {
-            is ExpenseEditEvent.TitleChanged -> _state.value = _state.value.copy(title = event.value)
-            is ExpenseEditEvent.AmountChanged -> handleAmountChanged(event.value)
-            is ExpenseEditEvent.CategorySelected -> _state.value = _state.value.copy(selectedCategory = event.category)
-            is ExpenseEditEvent.DescriptionChanged -> _state.value = _state.value.copy(description = event.value)
-            is ExpenseEditEvent.PaymentAccountChanged -> updatePaymentAccount(event.rowId, event.account)
-            is ExpenseEditEvent.PaymentAmountChanged -> updatePaymentAmount(event.rowId, event.amount)
-            is ExpenseEditEvent.AddPaymentRow -> addPaymentRow()
-            is ExpenseEditEvent.RemovePaymentRow -> removePaymentRow(event.rowId)
-            ExpenseEditEvent.LoadExpense -> loadExpense()
-            ExpenseEditEvent.SaveExpense -> saveExpense()
-            ExpenseEditEvent.ClearError -> _state.value = _state.value.copy(error = null)
-            ExpenseEditEvent.ResetSuccess -> _state.value = _state.value.copy(saveSuccess = false)
+            is IncomeEditEvent.AmountChanged -> handleAmountChanged(event.value)
+            is IncomeEditEvent.StreamSelected -> _state.value = _state.value.copy(selectedStream = event.stream)
+            is IncomeEditEvent.EntryTypeChanged -> _state.value = _state.value.copy(entryType = event.type)
+            is IncomeEditEvent.DescriptionChanged -> _state.value = _state.value.copy(description = event.value)
+            is IncomeEditEvent.PaymentAccountChanged -> updatePaymentAccount(event.rowId, event.account)
+            is IncomeEditEvent.PaymentAmountChanged -> updatePaymentAmount(event.rowId, event.amount)
+            is IncomeEditEvent.AddPaymentRow -> addPaymentRow()
+            is IncomeEditEvent.RemovePaymentRow -> removePaymentRow(event.rowId)
+            IncomeEditEvent.LoadEntry -> loadEntry()
+            IncomeEditEvent.SaveEntry -> saveEntry()
+            IncomeEditEvent.ClearError -> _state.value = _state.value.copy(error = null)
+            IncomeEditEvent.ResetSuccess -> _state.value = _state.value.copy(saveSuccess = false)
         }
     }
 
-    private fun loadCategories() {
-        loadCategoriesJob?.cancel()
-        loadCategoriesJob = viewModelScope.launch {
+    private fun loadStreams() {
+        loadStreamsJob?.cancel()
+        loadStreamsJob = viewModelScope.launch {
             try {
-                categoryRepository.getCategories().collect { categories ->
-                    _state.value = _state.value.copy(categories = categories)
+                streamRepository.getIncomeStreams().collect { streams ->
+                    _state.value = _state.value.copy(streams = streams)
                 }
             } catch (e: Exception) { }
         }
@@ -123,50 +126,52 @@ class ExpenseEditViewModel(
         }
     }
 
-    private fun loadExpense() {
-        loadExpenseJob?.cancel()
-        loadExpenseJob = viewModelScope.launch {
+    private fun loadEntry() {
+        loadEntryJob?.cancel()
+        loadEntryJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                val expense = expenseRepository.getExpenseById(expenseId).first()
-                if (expense != null) {
-                    val category = _state.value.categories.find { it.id == expense.categoryId }
-
-                    // Map existing payments to payment rows
-                    val rows = if (expense.payments.isNotEmpty()) {
-                        expense.payments.mapIndexed { index, p ->
-                            PaymentRow(
-                                id = (index + 1).toLong(),
-                                accountId = p.accountId,
-                                amount = p.amount.toString()
-                            )
-                        }
-                    } else {
-                        listOf(PaymentRow(id = 1L, accountId = "default_cash", amount = expense.amount.toString()))
-                    }
-                    nextPaymentRowId = (rows.maxOfOrNull { it.id } ?: 1L) + 1
-                    userTouchedAmounts = true  // don't auto-overwrite loaded values
-
-                    _state.value = _state.value.copy(
-                        id = expense.id,
-                        title = expense.title,
-                        amount = expense.amount.toString(),
-                        selectedCategory = category,
-                        description = expense.description,
-                        paymentRows = rows,
-                        isLoading = false,
-                        error = null
-                    )
-                } else {
+                val entry = entryRepository.getIncomeEntryById(entryId).first()
+                if (entry == null) {
                     _state.value = _state.value.copy(
                         isLoading = false,
-                        error = "Expense not found"
+                        error = "Income entry not found"
                     )
+                    return@launch
                 }
+
+                val stream = _state.value.streams.find { it.id == entry.incomeStreamId }
+
+                val rows = if (entry.payments.isNotEmpty()) {
+                    entry.payments.mapIndexed { index, p ->
+                        PaymentRow(
+                            id = (index + 1).toLong(),
+                            accountId = p.accountId,
+                            amount = p.amount.toString()
+                        )
+                    }
+                } else {
+                    listOf(PaymentRow(id = 1L, accountId = "default_cash", amount = entry.amount.toString()))
+                }
+                nextPaymentRowId = (rows.maxOfOrNull { it.id } ?: 1L) + 1
+                userTouchedAmounts = true
+
+                _state.value = _state.value.copy(
+                    id = entry.id,
+                    amount = entry.amount.toString(),
+                    selectedStream = stream,
+                    paymentRows = rows,
+                    entryType = entry.type,
+                    description = entry.description,
+                    originalDate = entry.date,
+                    originalCreatedAt = entry.createdAt,
+                    isLoading = false,
+                    error = null
+                )
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     isLoading = false,
-                    error = e.message ?: "Failed to load expense"
+                    error = e.message ?: "Failed to load income entry"
                 )
             }
         }
@@ -232,13 +237,8 @@ class ExpenseEditViewModel(
         syncSinglePaymentRow(previousTotal)
     }
 
-    private fun saveExpense() {
+    private fun saveEntry() {
         val currentState = _state.value
-
-        if (currentState.title.isBlank()) {
-            _state.value = _state.value.copy(error = "Title is required")
-            return
-        }
 
         val amountInt = currentState.amount.toIntOrNull()
         if (amountInt == null || amountInt <= 0) {
@@ -246,8 +246,8 @@ class ExpenseEditViewModel(
             return
         }
 
-        if (currentState.selectedCategory == null) {
-            _state.value = _state.value.copy(error = "Select a category")
+        if (currentState.selectedStream == null) {
+            _state.value = _state.value.copy(error = "Select an income stream")
             return
         }
 
@@ -267,30 +267,19 @@ class ExpenseEditViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
 
-            // Fetch current version to preserve fields not editable on this screen
-            // (type, businessPercentage, date).
-            val existing = try {
-                expenseRepository.getExpenseById(expenseId).first()
-            } catch (e: Exception) { null }
-
-            if (existing == null) {
-                _state.value = _state.value.copy(
-                    isSaving = false,
-                    error = "Expense not found"
-                )
-                return@launch
-            }
-
-            val updated = existing.copy(
-                title = currentState.title.trim(),
+            val updated = IncomeEntry(
+                id = currentState.id,
                 amount = amountInt,
-                categoryId = currentState.selectedCategory.id,
-                description = currentState.description.trim(),
+                incomeStreamId = currentState.selectedStream.id,
                 payments = payments,
+                description = currentState.description.trim(),
+                type = currentState.entryType,
+                date = currentState.originalDate,
+                createdAt = currentState.originalCreatedAt,
                 updatedAt = System.currentTimeMillis()
             )
 
-            val result = expenseFinalizer.updateExpense(updated)
+            val result = incomeFinalizer.updateIncome(updated)
 
             if (result.isSuccess) {
                 payments.firstOrNull()?.let {
@@ -304,31 +293,31 @@ class ExpenseEditViewModel(
             } else {
                 _state.value = _state.value.copy(
                     isSaving = false,
-                    error = result.exceptionOrNull()?.message ?: "Failed to update expense"
+                    error = result.exceptionOrNull()?.message ?: "Failed to update income entry"
                 )
             }
         }
     }
 }
 
-class ExpenseEditViewModelFactory(
-    private val expenseRepository: ExpenseRepository,
-    private val categoryRepository: CategoryRepository,
+class IncomeEditViewModelFactory(
+    private val entryRepository: IncomeEntryRepository,
+    private val streamRepository: IncomeStreamRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
-    private val expenseFinalizer: FirestoreExpenseFinalizer,
+    private val incomeFinalizer: FirestoreIncomeFinalizer,
     private val paymentPreferences: PaymentPreferences,
-    private val expenseId: String
+    private val entryId: String
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ExpenseEditViewModel::class.java)) {
-            return ExpenseEditViewModel(
-                expenseRepository,
-                categoryRepository,
+        if (modelClass.isAssignableFrom(IncomeEditViewModel::class.java)) {
+            return IncomeEditViewModel(
+                entryRepository,
+                streamRepository,
                 moneyAccountRepository,
-                expenseFinalizer,
+                incomeFinalizer,
                 paymentPreferences,
-                expenseId
+                entryId
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

@@ -17,6 +17,7 @@ object Routes {
     const val PROFIT_LOSS = "profit_loss"
     
     const val INCOME_ENTRY = "income_entry"
+    const val INCOME_EDIT = "income_edit/{entryId}"
     const val INCOME_LIST = "income_list"
     const val INCOME_STREAMS = "income_streams"
     const val INCOME_ANALYTICS = "income_analytics"

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.expense.data.repository.CategoryRepository
 import com.akari.retailer.features.expense.data.repository.ExpenseRepository
+import com.akari.retailer.features.expense.data.remote.FirestoreExpenseFinalizer
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +13,8 @@ import kotlinx.coroutines.launch
 
 class ExpenseListViewModel(
     private val expenseRepository: ExpenseRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val expenseFinalizer: FirestoreExpenseFinalizer
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ExpenseListState())
@@ -79,7 +81,7 @@ class ExpenseListViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             try {
-                val result = expenseRepository.deleteExpense(expenseId)
+                val result = expenseFinalizer.deleteExpense(expenseId)
                 if (result.isSuccess) loadExpenses()
                 else _state.value = _state.value.copy(
                     isLoading = false,
@@ -142,12 +144,13 @@ class ExpenseListViewModel(
 
 class ExpenseListViewModelFactory(
     private val expenseRepository: ExpenseRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val expenseFinalizer: FirestoreExpenseFinalizer
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ExpenseListViewModel::class.java)) {
-            return ExpenseListViewModel(expenseRepository, categoryRepository) as T
+            return ExpenseListViewModel(expenseRepository, categoryRepository, expenseFinalizer) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

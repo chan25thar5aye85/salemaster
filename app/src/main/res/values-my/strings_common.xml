@@ -43,4 +43,10 @@
     <string name="name_field">အမည်</string>
     <string name="amount_field">ပမာဏ</string>
     <string name="apply_filter_count">စစ်ထုတ်မှုအသုံးပြုရန် (%1$d)</string>
+    <string name="date_range">ကာလအပိုင်းအခြား</string>
+    <string name="specific_day">သတ်မှတ်ရက်</string>
+    <string name="custom_range">စိတ်ကြိုက်ကာလ</string>
+    <string name="today">ယနေ့</string>
+    <string name="select_day">ရက်ရွေးပါ</string>
+    <string name="this_year">ဤနှစ်</string>
 </resources>

@@ -32,7 +32,7 @@ fun SaleHistoryScreen(
     val repository = remember { application.container.saleRepository }
     
     val viewModel: SaleHistoryViewModel = viewModel(
-        factory = SaleHistoryViewModelFactory(repository)
+        factory = SaleHistoryViewModelFactory(repository, application.container.saleFinalizer)
     )
     
     val state by viewModel.state.collectAsState()

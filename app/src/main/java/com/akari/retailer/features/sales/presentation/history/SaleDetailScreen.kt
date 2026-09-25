@@ -43,6 +43,7 @@ fun SaleDetailScreen(
             application.container.saleRepository,
             application.container.moneyAccountRepository,
             application.container.customerRepository,
+            application.container.saleFinalizer,
             saleId
         )
     )

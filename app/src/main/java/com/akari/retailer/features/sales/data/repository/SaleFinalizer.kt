@@ -23,4 +23,16 @@ interface SaleFinalizer {
         sale: Sale,
         overpaymentCredit: com.akari.retailer.features.money.domain.models.PaymentEntry? = null
     ): Result<String>
+
+    /**
+     * Atomically delete a sale and reverse everything it did:
+     *   - reverses money payments (accounts -= amount, logs ADJUSTMENT)
+     *   - reverses credit payments (customer balance -= amount, logs PAYMENT)
+     *   - reverses overpayment credit (customer balance += amount, logs SALE_ON_CREDIT)
+     *   - deletes the sale document
+     *
+     * Sales created before the overpayment-credit field existed will not
+     * reverse their overpayment credit (no data to know about it).
+     */
+    suspend fun deleteSale(saleId: String): Result<Unit>
 }

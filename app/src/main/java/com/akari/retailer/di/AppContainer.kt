@@ -9,6 +9,7 @@ import com.akari.retailer.features.customer.data.repository.CustomerRepository
 import com.akari.retailer.features.customer.data.repository.FirestoreCustomerRepository
 import com.akari.retailer.features.expense.data.remote.FirestoreCategoryService
 import com.akari.retailer.features.expense.data.remote.FirestoreExpenseService
+import com.akari.retailer.features.expense.data.remote.FirestoreExpenseFinalizer
 import com.akari.retailer.features.expense.data.repository.CategoryRepository
 import com.akari.retailer.features.expense.data.repository.ExpenseRepository
 import com.akari.retailer.features.expense.data.repository.FirestoreCategoryRepository
@@ -31,9 +32,9 @@ import com.akari.retailer.features.money.data.repository.FirestoreMoneyTransacti
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.data.repository.MoneyTransactionRepository
 import com.akari.retailer.features.money.domain.usecases.ExternalTransferUseCase
-import com.akari.retailer.features.money.domain.usecases.ProcessMoneyTransactionUseCase
 import com.akari.retailer.features.money.domain.usecases.TransferMoneyUseCase
 import com.akari.retailer.features.sales.data.remote.FirestoreIncomeEntryService
+import com.akari.retailer.features.sales.data.remote.FirestoreIncomeFinalizer
 import com.akari.retailer.features.sales.data.remote.FirestoreIncomeStreamService
 import com.akari.retailer.features.sales.data.repository.FirestoreIncomeEntryRepository
 import com.akari.retailer.features.sales.data.repository.FirestoreIncomeStreamRepository
@@ -82,6 +83,10 @@ class AppContainer(private val appContext: android.content.Context) {
     val incomeEntryRepository: IncomeEntryRepository by lazy {
         FirestoreIncomeEntryRepository(incomeEntryService)
     }
+
+    val incomeFinalizer: FirestoreIncomeFinalizer by lazy {
+        FirestoreIncomeFinalizer()
+    }
     
     // Customers
     private val customerFirestoreService by lazy { FirestoreCustomerService() }
@@ -104,6 +109,10 @@ class AppContainer(private val appContext: android.content.Context) {
     private val expenseFirestoreService by lazy { FirestoreExpenseService() }
     val expenseRepository: ExpenseRepository by lazy {
         FirestoreExpenseRepository(expenseFirestoreService)
+    }
+
+    val expenseFinalizer: FirestoreExpenseFinalizer by lazy {
+        FirestoreExpenseFinalizer()
     }
     
     // Categories
@@ -165,14 +174,6 @@ class AppContainer(private val appContext: android.content.Context) {
     private val moneyTransactionService by lazy { FirestoreMoneyTransactionService() }
     val moneyTransactionRepository: MoneyTransactionRepository by lazy {
         FirestoreMoneyTransactionRepository(moneyTransactionService)
-    }
-    
-    // Process Money Transaction
-    val processMoneyTransactionUseCase by lazy {
-        ProcessMoneyTransactionUseCase(
-            moneyAccountRepository,
-            moneyTransactionRepository
-        )
     }
     
     // Transfer Money

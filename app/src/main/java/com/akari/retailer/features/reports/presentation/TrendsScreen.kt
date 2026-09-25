@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -21,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
+import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
@@ -100,125 +102,28 @@ fun TrendsScreen(
                 return@Column
             }
 
-            // ✅ Time Range Selector
+            // ✅ Unified date range selector
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
-                Column(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(Spacing.medium)
+                        .padding(Spacing.medium),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Month navigation
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(
-                                onClick = { viewModel.previousMonth() },
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "Previous", modifier = Modifier.size(20.dp))
-                            }
-                            
-                            Text(
-                                text = monthFormat.format(
-                                    Calendar.getInstance()
-                                        .apply { set(state.selectedYear, state.selectedMonth, 1) }
-                                        .time
-                                ),
-                                style = AppTypography.title,
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-                            
-                            val isFutureMonth = state.selectedYear > currentYear || 
-                                (state.selectedYear == currentYear && state.selectedMonth > currentMonth)
-                            
-                            IconButton(
-                                onClick = { viewModel.nextMonth() },
-                                enabled = !isFutureMonth,
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.ArrowForward, 
-                                    contentDescription = "Next",
-                                    modifier = Modifier.size(20.dp),
-                                    tint = if (isFutureMonth) 
-                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) 
-                                    else 
-                                        MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
-                        
-                        // Time range dropdown
-                        ExposedDropdownMenuBox(
-                            expanded = showRangeMenu,
-                            onExpandedChange = { showRangeMenu = it }
-                        ) {
-                            OutlinedButton(
-                                onClick = { showRangeMenu = true },
-                                modifier = Modifier.menuAnchor()
-                            ) {
-                                Text(
-                                    text = state.rangeLabel,
-                                    style = AppTypography.small
-                                )
-                                Icon(
-                                    Icons.Default.ArrowDropDown,
-                                    contentDescription = "Select range",
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                            
-                            ExposedDropdownMenu(
-                                expanded = showRangeMenu,
-                                onDismissRequest = { showRangeMenu = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("📅 Today") },
-                                    onClick = {
-                                        viewModel.setTimeRange(SalesTimeRange.TODAY)
-                                        showRangeMenu = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("📅 This Week") },
-                                    onClick = {
-                                        viewModel.setTimeRange(SalesTimeRange.THIS_WEEK)
-                                        showRangeMenu = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("📅 This Month") },
-                                    onClick = {
-                                        viewModel.setTimeRange(SalesTimeRange.THIS_MONTH)
-                                        showRangeMenu = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("📅 Last Month") },
-                                    onClick = {
-                                        viewModel.setTimeRange(SalesTimeRange.LAST_MONTH)
-                                        showRangeMenu = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                    
                     Text(
-                        text = "Showing: ${state.rangeLabel}",
-                        style = AppTypography.small,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        modifier = Modifier.padding(top = 4.dp)
+                        text = "📊 " + stringResource(R.string.monthly_sales_trend),
+                        style = AppTypography.body,
+                        fontWeight = FontWeight.Medium
+                    )
+                    TimeFilterSelector(
+                        filter = state.timeFilter,
+                        onFilterChange = { viewModel.setTimeFilter(it) }
                     )
                 }
             }

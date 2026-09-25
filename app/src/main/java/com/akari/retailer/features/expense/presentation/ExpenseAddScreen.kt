@@ -36,7 +36,7 @@ fun ExpenseAddScreen(
             application.container.expenseRepository,
             application.container.categoryRepository,
             application.container.moneyAccountRepository,
-            application.container.processMoneyTransactionUseCase,
+            application.container.expenseFinalizer,
             application.container.paymentPreferences
         )
     )

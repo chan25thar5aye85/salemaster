@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +37,7 @@ import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
+import com.akari.retailer.core.ui.components.PaymentListComponent
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
@@ -51,7 +53,14 @@ fun ExpenseEditScreen(
     val application = context.applicationContext as RetailApplication
     
     val viewModel: ExpenseEditViewModel = viewModel(
-        factory = ExpenseEditViewModelFactory(application.container.expenseRepository, application.container.categoryRepository, expenseId)
+        factory = ExpenseEditViewModelFactory(
+            application.container.expenseRepository,
+            application.container.categoryRepository,
+            application.container.moneyAccountRepository,
+            application.container.expenseFinalizer,
+            application.container.paymentPreferences,
+            expenseId
+        )
     )
     
     val state by viewModel.state.collectAsState()
@@ -65,6 +74,7 @@ fun ExpenseEditScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+            .imePadding()
         ) {
             if (state.isLoading) {
                 Box(
@@ -157,7 +167,25 @@ fun ExpenseEditScreen(
             }
             
             Spacer(modifier = Modifier.height(Spacing.medium))
-            
+
+            // ✅ Split payment component
+            PaymentListComponent(
+                paymentRows = state.paymentRows,
+                accounts = state.accounts,
+                totalAmount = state.getTotalAmount(),
+                showCreditOption = false,
+                onAccountSelected = { rowId, account ->
+                    viewModel.handleEvent(ExpenseEditEvent.PaymentAccountChanged(rowId, account))
+                },
+                onAmountChanged = { rowId, amount ->
+                    viewModel.handleEvent(ExpenseEditEvent.PaymentAmountChanged(rowId, amount))
+                },
+                onAddRow = { viewModel.handleEvent(ExpenseEditEvent.AddPaymentRow) },
+                onRemoveRow = { rowId -> viewModel.handleEvent(ExpenseEditEvent.RemovePaymentRow(rowId)) }
+            )
+
+            Spacer(modifier = Modifier.height(Spacing.medium))
+
             OutlinedTextField(
                 value = state.description,
                 onValueChange = { viewModel.handleEvent(ExpenseEditEvent.DescriptionChanged(it)) },
@@ -184,7 +212,7 @@ fun ExpenseEditScreen(
                     viewModel.handleEvent(ExpenseEditEvent.SaveExpense)
                 },
                 isLoading = state.isSaving,
-                enabled = state.title.isNotEmpty() && state.amount.isNotEmpty() && !state.isSaving
+                enabled = state.title.isNotEmpty() && state.amount.isNotEmpty() && state.isFullyPaid() && !state.isSaving
             )
             
             if (state.saveSuccess) {

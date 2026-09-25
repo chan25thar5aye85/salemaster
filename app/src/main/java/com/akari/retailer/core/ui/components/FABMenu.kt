@@ -1,9 +1,13 @@
 package com.akari.retailer.core.ui.components
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -31,18 +35,28 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.akari.retailer.R
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 enum class FABSubmenu {
     NONE,
@@ -57,6 +71,38 @@ fun FABMenu(
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     var currentSubmenu by remember { mutableStateOf(FABSubmenu.NONE) }
+
+    // ── Drag state ──
+    val offsetX = remember { Animatable(0f) }
+    val offsetY = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    var isDragging by remember { mutableStateOf(false) }
+
+    val springSpec = spring<Float>(
+        dampingRatio = 0.55f,
+        stiffness = Spring.StiffnessMediumLow
+    )
+
+    // When drag ends, decide whether to linger or snap home.
+    // Cancelled automatically if another effect key changes (e.g. user taps FAB).
+    LaunchedEffect(isDragging) {
+        if (isDragging) return@LaunchedEffect
+
+        val magnitude = sqrt(
+            offsetX.value * offsetX.value +
+            offsetY.value * offsetY.value
+        )
+        val thresholdPx = with(density) { 40.dp.toPx() }
+
+        if (magnitude > thresholdPx) {
+            // Deliberate move — linger 3s, then spring home
+            delay(3000L)
+        }
+        // Spring home (parallel)
+        launch { offsetX.animateTo(0f, animationSpec = springSpec) }
+        launch { offsetY.animateTo(0f, animationSpec = springSpec) }
+    }
 
     // Main menu items
     val mainItems = listOf(
@@ -137,7 +183,14 @@ fun FABMenu(
                 )
             ) {
                 Row(
-                    modifier = Modifier.padding(start = 16.dp, bottom = 80.dp),
+                    modifier = Modifier
+                        .offset {
+                            IntOffset(
+                                offsetX.value.roundToInt(),
+                                offsetY.value.roundToInt()
+                            )
+                        }
+                        .padding(start = 16.dp, bottom = 80.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Column(
@@ -183,7 +236,12 @@ fun FABMenu(
 
             // FAB button
             FloatingActionButton(
-                onClick = { 
+                onClick = {
+                    // Cancel any pending linger and spring home
+                    scope.launch {
+                        launch { offsetX.animateTo(0f, animationSpec = springSpec) }
+                        launch { offsetY.animateTo(0f, animationSpec = springSpec) }
+                    }
                     if (isExpanded && currentSubmenu != FABSubmenu.NONE) {
                         currentSubmenu = FABSubmenu.NONE
                     } else {
@@ -196,6 +254,38 @@ fun FABMenu(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            offsetX.value.roundToInt(),
+                            offsetY.value.roundToInt()
+                        )
+                    }
+                    .pointerInput(isExpanded) {
+                        // Drag only when the menu is closed — when open, taps close the menu.
+                        if (!isExpanded) {
+                            detectDragGestures(
+                                onDragStart = {
+                                    isDragging = true
+                                    scope.launch { offsetX.stop() }
+                                    scope.launch { offsetY.stop() }
+                                },
+                                onDragEnd = {
+                                    isDragging = false
+                                },
+                                onDragCancel = {
+                                    isDragging = false
+                                }
+                            ) { change, drag ->
+                                change.consume()
+                                scope.launch {
+                                    offsetX.snapTo(offsetX.value + drag.x)
+                                }
+                                scope.launch {
+                                    offsetY.snapTo(offsetY.value + drag.y)
+                                }
+                            }
+                        }
+                    }
                     .padding(start = 16.dp, bottom = 16.dp)
                     .size(56.dp)
                     .clip(CircleShape)
