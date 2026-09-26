@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -17,11 +18,15 @@ import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppPrimaryButton
 import com.akari.retailer.core.ui.components.AppScreen
 import com.akari.retailer.core.ui.components.SaleCard
+import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.core.ui.components.TimeFilterPreset
 import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
+import com.akari.retailer.core.utils.MoneyFormatter
 import com.akari.retailer.navigation.Routes
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SaleHistoryScreen(
     navController: androidx.navigation.NavController,
@@ -30,13 +35,13 @@ fun SaleHistoryScreen(
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
     val repository = remember { application.container.saleRepository }
-    
+
     val viewModel: SaleHistoryViewModel = viewModel(
         factory = SaleHistoryViewModelFactory(repository, application.container.saleFinalizer)
     )
-    
+
     val state by viewModel.state.collectAsState()
-    
+
     var showDeleteDialog by remember { mutableStateOf(false) }
     var pendingDeleteId by remember { mutableStateOf<String?>(null) }
     var showTimeFilterDialog by remember { mutableStateOf(false) }
@@ -118,7 +123,7 @@ fun SaleHistoryScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             // Filter indicator (only when non-default)
-            if (state.timeFilter.preset != com.akari.retailer.core.ui.components.TimeFilterPreset.THIS_WEEK) {
+            if (state.timeFilter.preset != TimeFilterPreset.TODAY) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -142,7 +147,7 @@ fun SaleHistoryScreen(
                             onClick = {
                                 viewModel.handleEvent(
                                     SaleHistoryEvent.TimeFilterChanged(
-                                        com.akari.retailer.core.ui.components.TimeFilter()
+                                        TimeFilter(preset = TimeFilterPreset.TODAY)
                                     )
                                 )
                             }
@@ -209,6 +214,10 @@ fun SaleHistoryScreen(
                     )
                 }
             } else {
+                // Summary card
+                SaleSummaryCard(state = state)
+                Spacer(modifier = Modifier.height(Spacing.medium))
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(Spacing.medium),
@@ -234,5 +243,75 @@ fun SaleHistoryScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SaleSummaryCard(state: SaleHistoryState) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.medium)
+        ) {
+            Text(
+                text = "📊 ${state.timeFilter.label.ifEmpty { "Today" }}",
+                style = AppTypography.title,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(Spacing.small))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                StatCell(
+                    label = stringResource(R.string.total_sales),
+                    value = MoneyFormatter.format(state.totalSales)
+                )
+                StatCell(
+                    label = stringResource(R.string.sales_count),
+                    value = state.salesCount.toString()
+                )
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.small))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                StatCell(
+                    label = stringResource(R.string.paid),
+                    value = MoneyFormatter.format(state.totalPaid)
+                )
+                StatCell(
+                    label = stringResource(R.string.credit),
+                    value = MoneyFormatter.format(state.totalCredit)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatCell(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = value,
+            style = AppTypography.header,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = label,
+            style = AppTypography.small,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        )
     }
 }

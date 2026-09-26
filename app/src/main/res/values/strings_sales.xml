@@ -48,4 +48,8 @@
     <string name="select_customer_via_credit_toggle">Select a customer via the Credit option to attribute the overpayment</string>
     <string name="credit_to_customer">Credit to customer</string>
     <string name="keep_in_account">Keep in money account</string>
+    <string name="paid">Paid</string>
+    <string name="summary_total_sales">Total Sales</string>
+    <string name="summary_sales_count">Sales Count</string>
+    <string name="summary_credit">Credit Given</string>
 </resources>

@@ -2,8 +2,8 @@ package com.akari.retailer.features.sales.presentation.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.akari.retailer.data.repository.SaleRepository
 import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.data.repository.SaleRepository
 import com.akari.retailer.features.sales.data.repository.SaleFinalizer
 import com.akari.retailer.features.sales.domain.models.Sale
 import kotlinx.coroutines.Job
@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 class SaleHistoryViewModel(
     private val repository: SaleRepository,
@@ -86,11 +85,22 @@ class SaleHistoryViewModel(
 
     private fun applyFilters() {
         val range = _state.value.timeFilter.resolveRange()
-        val filtered = allSales.filter { sale ->
-            sale.timestamp in range.first..range.last
+        val filtered = allSales.filter { it.timestamp in range.first..range.last }
+
+        val totalSales = filtered.sumOf { it.total }
+        val totalPaid = filtered.sumOf { sale ->
+            sale.payments.filter { !it.isCredit }.sumOf { it.amount }
         }
+        val totalCredit = filtered.sumOf { sale ->
+            sale.payments.filter { it.isCredit }.sumOf { it.amount }
+        }
+
         _state.value = _state.value.copy(
             sales = filtered,
+            totalSales = totalSales,
+            salesCount = filtered.size,
+            totalPaid = totalPaid,
+            totalCredit = totalCredit,
             isLoading = false,
             isRefreshing = false
         )

@@ -48,4 +48,8 @@
     <string name="select_customer_via_credit_toggle">ပိုလျှံငွေကို ဖောက်သည်တစ်ဦးထံ ထည့်ရန် Credit ကိုနှိပ်၍ ဖောက်သည်ရွေးပါ</string>
     <string name="credit_to_customer">ဖောက်သည်ထံ အကြွေးအဖြစ်ထည့်မည်</string>
     <string name="keep_in_account">ငွေအကောင့်ထဲ ထားရှိမည်</string>
+    <string name="paid">ပေးချေပြီး</string>
+    <string name="summary_total_sales">စုစုပေါင်းအရောင်း</string>
+    <string name="summary_sales_count">အရောင်းအရေအတွက်</string>
+    <string name="summary_credit">အကြွေးပေးခဲ့သည်</string>
 </resources>
