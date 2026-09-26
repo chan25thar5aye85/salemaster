@@ -1,5 +1,6 @@
 package com.akari.retailer.features.money.presentation
 
+import com.akari.retailer.features.money.domain.models.FeeType
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.core.ui.components.TimeFilter
@@ -115,13 +116,18 @@ class ExternalTransferHistoryViewModel(
             filtered = filtered.filter { it.externalAccountName == s.selectedExternalName }
         }
 
-        val totalSent = filtered
-            .filter { it.type == MoneyTransactionType.EXTERNAL_OUT }
-            .sumOf { it.amount }
+        val sentTxns = filtered.filter { it.type == MoneyTransactionType.EXTERNAL_OUT }
+        val receivedTxns = filtered.filter { it.type == MoneyTransactionType.EXTERNAL_IN }
 
-        val totalReceived = filtered
-            .filter { it.type == MoneyTransactionType.EXTERNAL_IN }
-            .sumOf { it.amount }
+        val totalSent = sentTxns.sumOf { it.amount }
+        val totalReceived = receivedTxns.sumOf { it.amount }
+
+        val feesPaid = filtered
+            .filter { it.feeType == FeeType.FEE_PAID }
+            .sumOf { it.fee }
+        val feesEarned = filtered
+            .filter { it.feeType == FeeType.FEE_EARNED }
+            .sumOf { it.fee }
 
         val grouped = filtered.groupBy { txn ->
             txn.externalAccountName.ifEmpty { txn.externalAccountNumber.ifEmpty { "Unknown" } }
@@ -143,6 +149,10 @@ class ExternalTransferHistoryViewModel(
             filteredTransfers = filtered,
             totalSent = totalSent,
             totalReceived = totalReceived,
+            sentCount = sentTxns.size,
+            receivedCount = receivedTxns.size,
+            feesPaid = feesPaid,
+            feesEarned = feesEarned,
             netFlow = totalReceived - totalSent,
             byExternalAccount = byAccount,
             isLoading = false

@@ -29,8 +29,14 @@ data class ExternalTransferHistoryState(
     // Totals
     val totalSent: Int = 0,
     val totalReceived: Int = 0,
+    val sentCount: Int = 0,
+    val receivedCount: Int = 0,
+    val feesPaid: Int = 0,
+    val feesEarned: Int = 0,
     val netFlow: Int = 0,
 
-    // Grouped by external account
-    val byExternalAccount: List<ExternalAccountSummary> = emptyList()
+    /**
+     * Grouped totals per external account (kept for compatibility with VM).
+     */
+    val byExternalAccount: List<ExternalAccountSummary> = emptyList(),
 )

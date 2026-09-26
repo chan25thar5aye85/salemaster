@@ -175,7 +175,11 @@ fun ExternalTransferHistoryScreen(
         showFilterButton = true,
         onFilterClick = { showFilterDialog = true }
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
 
             if (state.isLoading && state.transfers.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -263,108 +267,144 @@ fun ExternalTransferHistoryScreen(
                 return@Column
             }
 
-            // Summary card
+            // ── Compact summary ──
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Spacing.small),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
-                Column(modifier = Modifier.fillMaxWidth().padding(Spacing.medium)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        StatCell(
-                            label = stringResource(R.string.total_sent),
-                            value = MoneyFormatter.format(state.totalSent),
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        StatCell(
-                            label = stringResource(R.string.total_received),
-                            value = MoneyFormatter.format(state.totalReceived),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(Spacing.small))
-                    HorizontalDivider()
-                    Spacer(modifier = Modifier.height(Spacing.small))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Spacing.medium)
+                ) {
+                    // Row 1: total transfers + net
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = stringResource(R.string.net_external_flow),
-                            style = AppTypography.body
+                            text = "${state.filteredTransfers.size} transfers",
+                            style = AppTypography.body,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                         Text(
-                            text = (if (state.netFlow >= 0) "+" else "") + MoneyFormatter.format(state.netFlow),
-                            style = AppTypography.header,
+                            text = "Net " + (if (state.netFlow >= 0) "+" else "") +
+                                MoneyFormatter.format(state.netFlow),
+                            style = AppTypography.body,
+                            fontWeight = FontWeight.Bold,
                             color = if (state.netFlow >= 0)
                                 MaterialTheme.colorScheme.primary
                             else
-                                MaterialTheme.colorScheme.error,
-                            fontWeight = FontWeight.Bold
+                                MaterialTheme.colorScheme.error
                         )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Row 2: sent (count + amount) | received (count + amount)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "▲ ",
+                                style = AppTypography.small,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Text(
+                                text = "${state.sentCount} sent  ",
+                                style = AppTypography.small,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = MoneyFormatter.format(state.totalSent),
+                                style = AppTypography.body,
+                                color = MaterialTheme.colorScheme.error,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "▼ ",
+                                style = AppTypography.small,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "${state.receivedCount} received  ",
+                                style = AppTypography.small,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = MoneyFormatter.format(state.totalReceived),
+                                style = AppTypography.body,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+
+                    // Fees row (only if any fees exist)
+                    if (state.feesPaid > 0 || state.feesEarned > 0) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Fees paid  ",
+                                    style = AppTypography.small,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                                Text(
+                                    text = MoneyFormatter.format(state.feesPaid),
+                                    style = AppTypography.body,
+                                    color = if (state.feesPaid > 0)
+                                        MaterialTheme.colorScheme.error
+                                    else
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Fees earned  ",
+                                    style = AppTypography.small,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                                Text(
+                                    text = MoneyFormatter.format(state.feesEarned),
+                                    style = AppTypography.body,
+                                    color = if (state.feesEarned > 0)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
-            // By external account
-            if (state.byExternalAccount.isNotEmpty()) {
-                Text(
-                    text = stringResource(R.string.by_external_account),
-                    style = AppTypography.title,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = Spacing.small)
-                )
-                state.byExternalAccount.forEach { account ->
-                    AppCard {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(account.name, style = AppTypography.body, fontWeight = FontWeight.Medium)
-                                Text(
-                                    text = "${account.count}",
-                                    style = AppTypography.small,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
-                            ) {
-                                if (account.sent > 0) {
-                                    Text(
-                                        text = "▲ ${MoneyFormatter.format(account.sent)}",
-                                        style = AppTypography.small,
-                                        color = MaterialTheme.colorScheme.error,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                                if (account.received > 0) {
-                                    Text(
-                                        text = "▼ ${MoneyFormatter.format(account.received)}",
-                                        style = AppTypography.small,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(Spacing.small))
-                }
-                Spacer(modifier = Modifier.height(Spacing.small))
-            }
-
-            // Individual transfers
+            // ── Transactions ──
             Text(
                 text = stringResource(R.string.transactions),
                 style = AppTypography.title,
@@ -372,15 +412,15 @@ fun ExternalTransferHistoryScreen(
                 modifier = Modifier.padding(bottom = Spacing.small)
             )
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(Spacing.small),
-                contentPadding = PaddingValues(bottom = Spacing.xxlarge)
-            ) {
-                items(state.filteredTransfers, key = { it.id }) { txn ->
+            // Flat list, newest first
+            state.filteredTransfers
+                .sortedByDescending { it.date }
+                .forEach { txn ->
                     TransferRow(txn = txn)
+                    Spacer(modifier = Modifier.height(Spacing.small))
                 }
-            }
+
+            Spacer(modifier = Modifier.height(Spacing.xxlarge))
         }
     }
 }
@@ -414,7 +454,7 @@ private fun StatCell(label: String, value: String, color: androidx.compose.ui.gr
 
 @Composable
 private fun TransferRow(txn: MoneyTransaction) {
-    val dateFormat = remember { SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()) }
+    val dateFormat = remember { SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()) }
     val isOutgoing = txn.type == MoneyTransactionType.EXTERNAL_OUT
     val color = if (isOutgoing) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
 
@@ -424,18 +464,21 @@ private fun TransferRow(txn: MoneyTransaction) {
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(Spacing.medium),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.medium, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Direction badge
             Surface(
-                modifier = Modifier.size(36.dp),
+                modifier = Modifier.size(32.dp),
                 shape = MaterialTheme.shapes.small,
                 color = color.copy(alpha = 0.15f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = if (isOutgoing) "↑" else "↓",
-                        style = AppTypography.title,
+                        style = AppTypography.body,
                         color = color,
                         fontWeight = FontWeight.Bold
                     )
@@ -444,29 +487,53 @@ private fun TransferRow(txn: MoneyTransaction) {
 
             Spacer(modifier = Modifier.width(Spacing.medium))
 
+            // Middle: time · name, description below
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = txn.externalAccountName.ifEmpty { "—" },
-                    style = AppTypography.body,
-                    fontWeight = FontWeight.Medium
-                )
-                if (txn.externalAccountNumber.isNotEmpty()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = txn.externalAccountNumber,
+                        text = dateFormat.format(Date(txn.date)),
                         style = AppTypography.small,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                         fontSize = 11.sp
                     )
+                    Text(
+                        text = "  ·  ",
+                        style = AppTypography.small,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                        fontSize = 11.sp
+                    )
+                    Text(
+                        text = txn.externalAccountName.ifEmpty { "—" },
+                        style = AppTypography.body,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1
+                    )
                 }
+                if (txn.description.isNotEmpty()) {
+                    Text(
+                        text = txn.description,
+                        style = AppTypography.small,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        fontSize = 11.sp,
+                        maxLines = 1
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Right: amount + optional fee
+            Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = dateFormat.format(Date(txn.date)),
-                    style = AppTypography.small,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                    fontSize = 11.sp
+                    text = (if (isOutgoing) "-" else "+") + MoneyFormatter.format(txn.amount),
+                    style = AppTypography.body,
+                    color = color,
+                    fontWeight = FontWeight.Bold
                 )
                 if (txn.fee > 0) {
                     Text(
-                        text = if (txn.feeType == FeeType.FEE_PAID) "Fee: -${txn.fee}" else "Fee: +${txn.fee}",
+                        text = "fee " + (if (txn.feeType == FeeType.FEE_PAID) "-" else "+") +
+                            MoneyFormatter.format(txn.fee),
                         style = AppTypography.small,
                         color = if (txn.feeType == FeeType.FEE_PAID)
                             MaterialTheme.colorScheme.error
@@ -476,13 +543,6 @@ private fun TransferRow(txn: MoneyTransaction) {
                     )
                 }
             }
-
-            Text(
-                text = (if (isOutgoing) "-" else "+") + MoneyFormatter.format(txn.amount),
-                style = AppTypography.title,
-                color = color,
-                fontWeight = FontWeight.Bold
-            )
         }
     }
 }

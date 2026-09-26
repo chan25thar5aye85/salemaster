@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- House/Shop silhouette (darker blue) -->
+    <path
+        android:fillColor="#0D47A1"
+        android:pathData="M54,18 L86,42 L86,88 L22,88 L22,42 Z" />
+
+    <!-- House roof detail (medium blue) -->
+    <path
+        android:fillColor="#1565C0"
+        android:pathData="M54,18 L86,42 L78,42 L54,24 L30,42 L22,42 Z" />
+
+    <!-- Letter A (white, on top) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,32 L68,78 L60,78 L57,66 L51,66 L48,78 L40,78 L54,32 Z M52,58 L56,58 L54,48 Z" />
+
+</vector>
