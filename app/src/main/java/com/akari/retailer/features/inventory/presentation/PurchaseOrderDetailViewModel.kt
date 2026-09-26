@@ -11,6 +11,7 @@ import com.akari.retailer.features.expense.domain.models.Expense
 import com.akari.retailer.features.inventory.data.repository.FirestoreInventoryRepository
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
 import com.akari.retailer.features.inventory.data.repository.PurchaseOrderRepository
+import com.akari.retailer.features.inventory.data.repository.PurchaseFinalizer
 import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseRepository
 import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
 import com.akari.retailer.features.inventory.domain.models.Purchase
@@ -63,6 +64,7 @@ data class PurchaseOrderDetailState(
 
 class PurchaseOrderDetailViewModel(
     private val repository: PurchaseOrderRepository,
+    private val purchaseFinalizer: PurchaseFinalizer,
     private val paymentPreferences: PaymentPreferences
 ) : ViewModel() {
 
@@ -233,193 +235,42 @@ class PurchaseOrderDetailViewModel(
     }
 
     suspend fun createPurchase(orderId: String): Result<Unit> {
-        return try {
-            val currentOrder = _state.value.order
-                ?: return Result.failure(Exception("Order not found"))
+        val currentOrder = _state.value.order
+            ?: return Result.failure(Exception("Order not found"))
 
-            if (currentOrder.status == PurchaseOrderStatus.COMPLETED) {
-                return Result.failure(Exception("Purchase already created"))
-            }
-            if (currentOrder.receivedItems.isEmpty()) {
-                return Result.failure(Exception("No items to purchase"))
-            }
-
-            val payments = _state.value.getPayments()
-            val totalCost = currentOrder.receivedItems.sumOf { it.total }
-            val totalPaid = payments.sumOf { it.amount }
-
-            if (totalPaid > totalCost) {
-                return Result.failure(Exception(
-                    "Payments ($totalPaid) cannot exceed total ($totalCost)"
-                ))
-            }
-
-            // Remainder goes on supplier credit (payable)
-            val creditAmount = totalCost - totalPaid
-
-            val receiptNumber = generateReceiptNumber()
-            val now = System.currentTimeMillis()
-
-            // ── Atomic transaction: purchase + stock + expense + money + supplier + status ──
-            // Purchase doc ID = orderId → idempotent on retry.
-            val db = repository.firestore
-            val purchaseOrderRef = db.collection("purchase_orders").document(orderId)
-            val purchasesCol = db.collection("purchases")
-            val productsCol = db.collection("products")
-            val stockMovementsCol = db.collection("stock_movements")
-            val expensesCol = db.collection("expenses")
-            val accountsCol = db.collection("money_accounts")
-            val moneyTxnsCol = db.collection("money_transactions")
-            val suppliersCol = db.collection("suppliers")
-
-            db.runTransaction { txn ->
-                // READ order — reject if already completed (idempotency guard)
-                val orderSnap = txn.get(purchaseOrderRef)
-                if (orderSnap.exists()) {
-                    val status = orderSnap.getString("status")
-                    if (status == PurchaseOrderStatus.COMPLETED.name) {
-                        throw IllegalStateException("Purchase already created")
-                    }
-                }
-
-                // WRITE purchase doc (id = orderId)
-                txn.set(purchasesCol.document(orderId), mapOf(
-                    "orderId" to currentOrder.id,
-                    "orderName" to currentOrder.orderName,
-                    "orderNumber" to currentOrder.orderNumber,
-                    "supplierId" to currentOrder.supplierId,
-                    "supplierName" to currentOrder.supplierName,
-                    "items" to currentOrder.receivedItems.map { item ->
-                        mapOf(
-                            "productId" to item.productId,
-                            "productName" to item.productName,
-                            "quantity" to item.quantity,
-                            "costPrice" to item.costPrice,
-                            "total" to item.total
-                        )
-                    },
-                    "totalCost" to totalCost,
-                    "paidAmount" to totalPaid,
-                    "creditAmount" to creditAmount,
-                    "payments" to payments.map { p ->
-                        mapOf("accountId" to p.accountId, "amount" to p.amount)
-                    },
-                    "purchaseDate" to now,
-                    "notes" to currentOrder.notes,
-                    "receiptNumber" to receiptNumber,
-                    "createdAt" to now
-                ))
-
-                // WRITE stock increments + movement records
-                currentOrder.receivedItems.forEach { item ->
-                    txn.update(
-                        productsCol.document(item.productId),
-                        "stockQuantity", com.google.firebase.firestore.FieldValue.increment(item.quantity.toLong()),
-                        "updatedAt", now
-                    )
-                    txn.set(stockMovementsCol.document(), mapOf(
-                        "productId" to item.productId,
-                        "type" to "PURCHASE",
-                        "quantity" to item.quantity,
-                        "previousStock" to 0,   // not known inside txn without reading product
-                        "newStock" to 0,        // same
-                        "reason" to "Purchase: ${currentOrder.orderName}",
-                        "saleId" to "",
-                        "purchaseOrderId" to orderId,
-                        "createdAt" to now,
-                        "userId" to "default"
-                    ))
-                }
-
-                // WRITE expense doc
-                txn.set(expensesCol.document(), mapOf(
-                    "title" to "Purchase Order: ${currentOrder.orderName}",
-                    "amount" to totalCost,
-                    "categoryId" to "default_inventory",
-                    "type" to "BUSINESS",
-                    "businessPercentage" to 100,
-                    "payments" to payments.map { p ->
-                        mapOf("accountId" to p.accountId, "amount" to p.amount)
-                    },
-                    "description" to "PO #${currentOrder.orderNumber} from ${currentOrder.supplierName}",
-                    "date" to now,
-                    "createdAt" to now,
-                    "updatedAt" to now
-                ))
-
-                // WRITE money transactions + debit accounts
-                payments.forEach { payment ->
-                    txn.update(
-                        accountsCol.document(payment.accountId),
-                        "currentBalance", com.google.firebase.firestore.FieldValue.increment(-payment.amount.toLong()),
-                        "updatedAt", now
-                    )
-                    txn.set(moneyTxnsCol.document(), mapOf(
-                        "type" to "PURCHASE_OUT",
-                        "fromAccountId" to payment.accountId,
-                        "toAccountId" to "",
-                        "amount" to payment.amount,
-                        "fee" to 0,
-                        "feeType" to "NONE",
-                        "netAmount" to payment.amount,
-                        "description" to "PO #${currentOrder.orderNumber}",
-                        "referenceId" to orderId,
-                        "referenceType" to "PURCHASE",
-                        "externalAccountName" to "",
-                        "externalAccountNumber" to "",
-                        "date" to now,
-                        "createdAt" to now
-                    ))
-                }
-
-                // WRITE supplier increment + payable if partial/credit
-                if (currentOrder.supplierId.isNotEmpty()) {
-                    val supplierUpdates = mutableMapOf<String, Any>(
-                        "totalPurchased" to com.google.firebase.firestore.FieldValue.increment(totalCost.toLong()),
-                        "lastOrderDate" to now,
-                        "updatedAt" to now
-                    )
-
-                    if (creditAmount > 0) {
-                        // Increase payable balance (you owe them more)
-                        supplierUpdates["payableBalance"] =
-                            com.google.firebase.firestore.FieldValue.increment(creditAmount.toLong())
-                    }
-
-                    txn.update(suppliersCol.document(currentOrder.supplierId), supplierUpdates)
-
-                    // Log supplier transaction for the credit portion
-                    if (creditAmount > 0) {
-                        val supplierTxnsCol = db.collection("supplier_transactions")
-                        txn.set(supplierTxnsCol.document(), mapOf(
-                            "supplierId" to currentOrder.supplierId,
-                            "type" to "PURCHASE_ON_CREDIT",
-                            "amount" to creditAmount,
-                            "purchaseId" to orderId,
-                            "paymentAccountId" to "",
-                            "description" to "Purchase: ${currentOrder.orderName}",
-                            "date" to now,
-                            "createdAt" to now
-                        ))
-                    }
-                }
-
-                // WRITE order status = COMPLETED
-                txn.update(
-                    purchaseOrderRef,
-                    "status", PurchaseOrderStatus.COMPLETED.name,
-                    "completedDate", now,
-                    "updatedAt", now
-                )
-            }.await()
-
-            loadOrder(orderId)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "createPurchase failed: ${e.message}", e)
-            Result.failure(e)
+        if (currentOrder.status == PurchaseOrderStatus.COMPLETED) {
+            return Result.failure(Exception("Purchase already created"))
         }
+        if (currentOrder.receivedItems.isEmpty()) {
+            return Result.failure(Exception("No items to purchase"))
+        }
+
+        val payments = _state.value.getPayments()
+        val totalCost = currentOrder.receivedItems.sumOf { it.total }
+        val totalPaid = payments.sumOf { it.amount }
+
+        if (totalPaid > totalCost) {
+            return Result.failure(
+                Exception("Payments ($totalPaid) cannot exceed total ($totalCost)")
+            )
+        }
+
+        val receiptNumber = generateReceiptNumber()
+
+        // Atomic cascade via PurchaseFinalizer (purchase + stock + expense +
+        // money + supplier + payable + order status). Idempotent on order id.
+        val result = purchaseFinalizer.finalizePurchase(
+            order = currentOrder,
+            payments = payments,
+            receiptNumber = receiptNumber
+        )
+
+        if (result.isSuccess) {
+            loadOrder(orderId)
+        }
+        return result.map { }
     }
+
 
     fun updateStatus(orderId: String, newStatus: PurchaseOrderStatus) {
         viewModelScope.launch {
@@ -443,12 +294,13 @@ class PurchaseOrderDetailViewModel(
 
 class PurchaseOrderDetailViewModelFactory(
     private val repository: PurchaseOrderRepository,
+    private val purchaseFinalizer: PurchaseFinalizer,
     private val paymentPreferences: PaymentPreferences
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PurchaseOrderDetailViewModel::class.java)) {
-            return PurchaseOrderDetailViewModel(repository, paymentPreferences) as T
+            return PurchaseOrderDetailViewModel(repository, purchaseFinalizer, paymentPreferences) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

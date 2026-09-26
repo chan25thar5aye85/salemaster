@@ -1,5 +1,6 @@
 package com.akari.retailer.features.inventory.presentation
 
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -196,7 +197,7 @@ fun PurchaseDetailScreen(
                                 }
                             }
                             
-                            Divider(
+                            HorizontalDivider(
                                 modifier = Modifier.padding(vertical = Spacing.medium)
                             )
                             

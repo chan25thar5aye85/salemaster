@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Money Accounts -->
+    <string name="money_accounts">Money Accounts</string>
+    <string name="add_account">Add Account</string>
+    <string name="edit_account">Edit Account</string>
+    <string name="delete_account">Delete Account</string>
+    <string name="delete_account_confirmation">Are you sure you want to delete this account?</string>
+    <string name="account_name">Account Name</string>
+    <string name="opening_balance">Opening Balance</string>
+    <string name="account_number">Account Number (optional)</string>
+    <string name="total_balance">Total Balance</string>
+    <string name="accounts">accounts</string>
+    <string name="balance">Balance</string>
+    <string name="default_label">Default</string>
+    <string name="no_accounts_yet">No accounts yet</string>
+    <string name="tap_add_account">Tap + to add your first account</string>
+    <string name="icon">Icon</string>
+    <string name="color">Color</string>
+    <string name="update">Update</string>
+    <string name="edit">Edit</string>
+    <string name="money_account">Money Account</string>
+    <string name="select_account">Select Account</string>
+    
+    <!-- Transfer Money -->
+    <string name="transfer_money">Transfer Money</string>
+    <string name="from_account">From Account</string>
+    <string name="to_account">To Account</string>
+    <string name="fee_type">Fee Type</string>
+    <string name="fee_none">No Fee</string>
+    <string name="fee_paid">Fee Paid</string>
+    <string name="fee_earned">Fee Earned</string>
+    <string name="fee_you_pay">Fee You Pay</string>
+    <string name="fee_you_earn">Fee You Earn</string>
+    <string name="description_optional">Description (optional)</string>
+    <string name="transfer_summary">Transfer Summary</string>
+    <string name="confirm_transfer">Confirm Transfer</string>
+    
+    <!-- External Transfer -->
+    <string name="external_transfer">External Transfer</string>
+    <string name="direction">Direction</string>
+    <string name="outgoing">Outgoing</string>
+    <string name="incoming">Incoming</string>
+    <string name="external_account_name">External Account Name</string>
+    <string name="external_account_number">External Account Number (optional)</string>
+    
+    <!-- Money Transactions -->
+    <string name="transactions">Transactions</string>
+    <string name="no_transactions">No transactions yet</string>
+    <string name="transactions_will_appear_here">Transactions will appear here</string>
+    <string name="search_transactions">Search transactions...</string>
+    <string name="money_in">Money In</string>
+    <string name="money_out">Money Out</string>
+    <string name="fees_paid">Fees Paid</string>
+    <string name="fees_earned">Fees Earned</string>
+    <string name="filters">Filters</string>
+    <string name="time_range">Time Range</string>
+    <string name="transaction_type">Transaction Type</string>
+    <string name="all_accounts">All Accounts</string>
+    
+    <!-- Money Analytics -->
+    <string name="money_analytics">Money Analytics</string>
+    <string name="balance_distribution">Balance Distribution</string>
+    <string name="account_balances">Account Balances</string>
+    <string name="fee_summary">Fee Summary</string>
+    <string name="net_fee">Net Fee</string>
+    <string name="fee_comparison">Fee Comparison</string>
+    <string name="net_flow">Net Flow</string>
+    <string name="add_another_payment">Add Another Payment</string>
+    <string name="account_field">Account</string>
+    <string name="payments">Payments</string>
+    <string name="external_transfer_history">External Transfer History</string>
+    <string name="fab_external_transfer_history">Transfer History</string>
+    <string name="total_sent">Sent</string>
+    <string name="total_received">Received</string>
+    <string name="net_external_flow">Net</string>
+    <string name="by_external_account">By External Account</string>
+    <string name="no_external_transfers">No external transfers yet</string>
+</resources>

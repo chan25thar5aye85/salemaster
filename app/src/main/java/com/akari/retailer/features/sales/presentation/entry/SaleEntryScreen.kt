@@ -44,6 +44,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExtendedFloatingActionButton
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -232,8 +233,10 @@ fun SaleEntryScreen(
             ) {
                 ExtendedFloatingActionButton(
                     onClick = {
-                        focusManager.clearFocus()
-                        viewModel.handleEvent(SaleEntryEvent.SaveSale)
+                        if (!state.isSaving) {
+                            focusManager.clearFocus()
+                            viewModel.handleEvent(SaleEntryEvent.SaveSale)
+                        }
                     },
                     icon = {
                         if (state.isSaving) {
@@ -530,7 +533,7 @@ private fun SectionCard(
                 trailing?.invoke()
             }
             Spacer(modifier = Modifier.height(Spacing.small))
-            Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
             Spacer(modifier = Modifier.height(Spacing.small))
             content()
         }
@@ -607,7 +610,7 @@ private fun RecentSalesCard(
                 exit = shrinkVertically() + fadeOut()
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
 
                     if (sales.isEmpty()) {
                         Box(
@@ -626,7 +629,7 @@ private fun RecentSalesCard(
                         sales.take(5).forEachIndexed { index, sale ->
                             CompactSaleRow(sale = sale)
                             if (index < sales.take(5).size - 1) {
-                                Divider(
+                                HorizontalDivider(
                                     modifier = Modifier.padding(horizontal = Spacing.medium),
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
                                 )

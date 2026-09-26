@@ -1,5 +1,6 @@
 package com.akari.retailer.features.inventory.presentation
 
+import androidx.compose.material3.HorizontalDivider
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -43,7 +44,7 @@ fun PurchaseOrderDetailScreen(
     val scope = rememberCoroutineScope()
 
     val viewModel: PurchaseOrderDetailViewModel = viewModel(
-        factory = PurchaseOrderDetailViewModelFactory(application.container.purchaseOrderRepository, application.container.paymentPreferences)
+        factory = PurchaseOrderDetailViewModelFactory(application.container.purchaseOrderRepository, application.container.purchaseFinalizer, application.container.paymentPreferences)
     )
     
     val state by viewModel.state.collectAsState()
@@ -634,7 +635,7 @@ fun PurchaseOrderDetailScreen(
                     val creditDlg = totalCostDlg - totalPaidDlg
                     if (creditDlg > 0) {
                         Spacer(modifier = Modifier.height(Spacing.small))
-                        Divider()
+                        HorizontalDivider()
                         Spacer(modifier = Modifier.height(Spacing.small))
                         Text(
                             text = stringResource(R.string.paid_now_x_credit_y, totalPaidDlg, creditDlg),

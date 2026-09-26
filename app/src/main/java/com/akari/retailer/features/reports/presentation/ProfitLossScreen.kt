@@ -1,5 +1,6 @@
 package com.akari.retailer.features.reports.presentation
 
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -18,6 +19,9 @@ import com.akari.retailer.R
 import com.akari.retailer.RetailApplication
 import com.akari.retailer.core.ui.components.AppCard
 import com.akari.retailer.core.ui.components.AppScreen
+import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.core.ui.components.TimeFilterPreset
+import com.akari.retailer.core.ui.components.TimeFilterSelector
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.features.expense.domain.usecases.ProfitData
@@ -36,15 +40,36 @@ fun ProfitLossScreen(
     )
     
     val state by viewModel.state.collectAsState()
-    
+    var showTimeFilterDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         viewModel.loadData()
+    }
+
+    if (showTimeFilterDialog) {
+        AlertDialog(
+            onDismissRequest = { showTimeFilterDialog = false },
+            title = { Text(stringResource(R.string.date_range)) },
+            text = {
+                TimeFilterSelector(
+                    filter = state.timeFilter,
+                    onFilterChange = { viewModel.setTimeFilter(it) }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showTimeFilterDialog = false }) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
     }
 
     AppScreen(
         title = stringResource(R.string.profit_loss_title),
         showBackButton = true,
-        onBackClick = onBack
+        onBackClick = onBack,
+        showFilterButton = true,
+        onFilterClick = { showTimeFilterDialog = true }
     ) {
         Column(
             modifier = Modifier
@@ -64,12 +89,6 @@ fun ProfitLossScreen(
                             style = AppTypography.body,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
-                        TextButton(
-                            onClick = { viewModel.loadData() },
-                            modifier = Modifier.padding(top = Spacing.medium)
-                        ) {
-                            Text(stringResource(R.string.retry))
-                        }
                     }
                 }
                 return@Column
@@ -99,6 +118,37 @@ fun ProfitLossScreen(
             }
 
             state.profitData?.let { data ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Spacing.medium),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "📅 " + state.timeFilter.label.ifEmpty { stringResource(R.string.this_month) },
+                            style = AppTypography.body
+                        )
+                        TextButton(
+                            onClick = {
+                                viewModel.setTimeFilter(
+                                    TimeFilter(preset = TimeFilterPreset.THIS_MONTH)
+                                )
+                            }
+                        ) {
+                            Text(stringResource(R.string.clear))
+                        }
+                    }
+                }
+
                 // Three Summary Cards
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -289,7 +339,7 @@ fun ProfitLossScreen(
                         }
                         
                         Spacer(modifier = Modifier.height(Spacing.small))
-                        Divider()
+                        HorizontalDivider()
                         Spacer(modifier = Modifier.height(Spacing.small))
                         
                         // Section: Expenses
@@ -360,7 +410,7 @@ fun ProfitLossScreen(
                         }
                         
                         Spacer(modifier = Modifier.height(Spacing.small))
-                        Divider()
+                        HorizontalDivider()
                         Spacer(modifier = Modifier.height(Spacing.small))
                         
                         // Net Profit

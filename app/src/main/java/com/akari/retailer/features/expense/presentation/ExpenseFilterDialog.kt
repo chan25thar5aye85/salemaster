@@ -1,5 +1,6 @@
 package com.akari.retailer.features.expense.presentation
 
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -79,7 +80,7 @@ fun ExpenseFilterDialog(
                     onFilterChange = onTimeFilterChange
                 )
                 Spacer(modifier = Modifier.height(Spacing.medium))
-                Divider()
+                HorizontalDivider()
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
                 // Search Box

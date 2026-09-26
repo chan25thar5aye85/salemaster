@@ -1,5 +1,6 @@
 package com.akari.retailer.features.money.presentation
 
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -309,7 +310,7 @@ fun TransferMoneyScreen(
                         
                         if (state.feeType != FeeType.NONE && (state.fee.toIntOrNull() ?: 0) > 0) {
                             Spacer(modifier = Modifier.height(Spacing.small))
-                            Divider()
+                            HorizontalDivider()
                             Spacer(modifier = Modifier.height(Spacing.small))
                             
                             Row(

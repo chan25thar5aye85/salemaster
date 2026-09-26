@@ -1,5 +1,6 @@
 package com.akari.retailer.features.inventory.presentation
 
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -147,7 +148,7 @@ fun PurchaseOrderItemsList(
                     }
                 }
                 
-                Divider(modifier = Modifier.padding(vertical = Spacing.small))
+                HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.small))
                 
                 Row(
                     modifier = Modifier.fillMaxWidth(),

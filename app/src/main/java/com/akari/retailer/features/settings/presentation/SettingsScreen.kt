@@ -3,6 +3,7 @@ package com.akari.retailer.features.settings.presentation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -72,7 +73,7 @@ fun SettingsScreen(
                     )
 
                     if (option != LanguageManager.getAvailableLanguages().last()) {
-                        Divider(
+                        HorizontalDivider(
                             modifier = Modifier.padding(
                                 horizontal = Spacing.small
                             ),

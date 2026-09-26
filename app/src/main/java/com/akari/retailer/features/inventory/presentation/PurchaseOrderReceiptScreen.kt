@@ -1,5 +1,6 @@
 package com.akari.retailer.features.inventory.presentation
 
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -57,7 +58,7 @@ fun PurchaseOrderReceiptScreen(
                         modifier = Modifier.padding(bottom = Spacing.small)
                     )
                     
-                    Divider(
+                    HorizontalDivider(
                         modifier = Modifier.padding(vertical = Spacing.medium),
                         thickness = 2.dp
                     )
@@ -130,7 +131,7 @@ fun PurchaseOrderReceiptScreen(
                         }
                     }
                     
-                    Divider(
+                    HorizontalDivider(
                         modifier = Modifier.padding(vertical = Spacing.medium),
                         thickness = 2.dp
                     )
@@ -162,7 +163,7 @@ fun PurchaseOrderReceiptScreen(
                         )
                     }
                     
-                    Divider(modifier = Modifier.padding(vertical = Spacing.small))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.small))
                     
                     // Items
                     items.forEach { item ->
@@ -196,7 +197,7 @@ fun PurchaseOrderReceiptScreen(
                         }
                     }
                     
-                    Divider(
+                    HorizontalDivider(
                         modifier = Modifier.padding(vertical = Spacing.medium),
                         thickness = 2.dp
                     )
@@ -218,7 +219,7 @@ fun PurchaseOrderReceiptScreen(
                     }
                     
                     if (order.notes.isNotEmpty()) {
-                        Divider(modifier = Modifier.padding(vertical = Spacing.medium))
+                        HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.medium))
                         Text(
                             text = "Notes:",
                             style = AppTypography.body,
@@ -230,7 +231,7 @@ fun PurchaseOrderReceiptScreen(
                         )
                     }
                     
-                    Divider(
+                    HorizontalDivider(
                         modifier = Modifier.padding(vertical = Spacing.medium),
                         thickness = 2.dp
                     )
