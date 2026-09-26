@@ -7,7 +7,6 @@ sealed class IncomeStreamManagementEvent {
     data object RefreshStreams : IncomeStreamManagementEvent()
     data class DeleteStream(val streamId: String) : IncomeStreamManagementEvent()
     data object ClearError : IncomeStreamManagementEvent()
-    data class SelectTab(val tabIndex: Int) : IncomeStreamManagementEvent()
     data object ShowAddDialog : IncomeStreamManagementEvent()
     data class ShowEditDialog(val stream: IncomeStream) : IncomeStreamManagementEvent()
     data object DismissDialog : IncomeStreamManagementEvent()

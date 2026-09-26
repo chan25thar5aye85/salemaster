@@ -26,6 +26,7 @@ object Routes {
     const val MONEY_ACCOUNTS = "money_accounts"
     const val TRANSFER_MONEY = "transfer_money"
     const val EXTERNAL_TRANSFER = "external_transfer"
+    const val EXTERNAL_TRANSFER_HISTORY = "external_transfer_history"
     const val MONEY_TRANSACTIONS = "money_transactions"
     const val MONEY_ANALYTICS = "money_analytics"
     

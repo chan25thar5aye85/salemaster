@@ -154,7 +154,7 @@ class FirestoreExpenseService {
                         id = doc.id,
                         title = data["title"] as? String ?: "",
                         amount = (data["amount"] as? Number)?.toInt() ?: 0,
-                        categoryId = data["categoryId"] as? String ?: "default_other",
+                        categoryId = data["categoryId"] as? String ?: "",
                         type = try {
                             ExpenseType.valueOf(data["type"] as? String ?: "BUSINESS")
                         } catch (e: Exception) { ExpenseType.BUSINESS },
@@ -218,7 +218,7 @@ class FirestoreExpenseService {
                     id = snapshot.id,
                     title = data["title"] as? String ?: "",
                     amount = (data["amount"] as? Number)?.toInt() ?: 0,
-                    categoryId = data["categoryId"] as? String ?: "default_other",
+                    categoryId = data["categoryId"] as? String ?: "",
                     type = try {
                         ExpenseType.valueOf(data["type"] as? String ?: "BUSINESS")
                     } catch (e: Exception) { ExpenseType.BUSINESS },

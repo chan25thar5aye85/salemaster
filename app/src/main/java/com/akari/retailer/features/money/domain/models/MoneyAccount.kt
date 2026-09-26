@@ -20,7 +20,6 @@ data class MoneyAccount(
     val currentBalance: Int = 0,
     val accountNumber: String = "",
     val notes: String = "",
-    val isDefault: Boolean = false,
     val isActive: Boolean = true,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
@@ -29,6 +28,10 @@ data class MoneyAccount(
     fun getColorInt(): Int = Color.parseColor(color)
 }
 
+/**
+ * Single starter account seeded on first launch.
+ * Users can rename it, change icon/color, and add more accounts.
+ */
 object DefaultMoneyAccounts {
     val list = listOf(
         MoneyAccount(
@@ -36,32 +39,7 @@ object DefaultMoneyAccounts {
             name = "Cash",
             type = MoneyAccountType.CASH,
             icon = "💵",
-            color = "#4CAF50",
-            isDefault = true
-        ),
-        MoneyAccount(
-            id = "default_kpay",
-            name = "KPay",
-            type = MoneyAccountType.MOBILE_WALLET,
-            icon = "📱",
-            color = "#2196F3",
-            isDefault = true
-        ),
-        MoneyAccount(
-            id = "default_wave",
-            name = "Wave Money",
-            type = MoneyAccountType.MOBILE_WALLET,
-            icon = "🌊",
-            color = "#FF9800",
-            isDefault = true
-        ),
-        MoneyAccount(
-            id = "default_bank",
-            name = "Bank Account",
-            type = MoneyAccountType.BANK,
-            icon = "🏦",
-            color = "#9C27B0",
-            isDefault = true
+            color = "#4CAF50"
         )
     )
 }

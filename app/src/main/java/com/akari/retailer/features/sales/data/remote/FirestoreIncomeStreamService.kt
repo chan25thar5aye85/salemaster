@@ -2,7 +2,6 @@ package com.akari.retailer.features.sales.data.remote
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
-import com.akari.retailer.features.sales.domain.models.DefaultIncomeStreams
 import com.akari.retailer.features.sales.domain.models.IncomeStream
 import com.akari.retailer.features.sales.domain.models.IncomeType
 import kotlinx.coroutines.channels.awaitClose
@@ -40,7 +39,6 @@ class FirestoreIncomeStreamService {
                 "type" to stream.type.name,
                 "icon" to stream.icon,
                 "color" to stream.color,
-                "isDefault" to stream.isDefault,
                 "createdAt" to System.currentTimeMillis(),
                 "updatedAt" to System.currentTimeMillis()
             )
@@ -57,11 +55,6 @@ class FirestoreIncomeStreamService {
             val collection = getCollection()
             if (collection == null || stream.id.isEmpty()) {
                 return Result.failure(Exception("Invalid stream or Firestore not available"))
-            }
-            
-            val existing = getIncomeStreamByIdSync(stream.id)
-            if (existing?.isDefault == true && stream.name != existing.name) {
-                return Result.failure(Exception("Cannot rename default income stream"))
             }
             
             val data = mapOf(
@@ -83,11 +76,6 @@ class FirestoreIncomeStreamService {
             val collection = getCollection()
             if (collection == null) {
                 return Result.failure(Exception("Firestore not available"))
-            }
-            
-            val stream = getIncomeStreamByIdSync(streamId)
-            if (stream?.isDefault == true) {
-                return Result.failure(Exception("Cannot delete default income stream"))
             }
             
             collection.document(streamId).delete().await()
@@ -131,7 +119,6 @@ class FirestoreIncomeStreamService {
                         },
                         icon = data["icon"] as? String ?: "💰",
                         color = data["color"] as? String ?: "#4CAF50",
-                        isDefault = data["isDefault"] as? Boolean ?: false,
                         createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                         updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis()
                     )
@@ -177,7 +164,6 @@ class FirestoreIncomeStreamService {
                     },
                     icon = data["icon"] as? String ?: "💰",
                     color = data["color"] as? String ?: "#4CAF50",
-                    isDefault = data["isDefault"] as? Boolean ?: false,
                     createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                     updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis()
                 )
@@ -203,7 +189,6 @@ class FirestoreIncomeStreamService {
                 },
                 icon = data["icon"] as? String ?: "💰",
                 color = data["color"] as? String ?: "#4CAF50",
-                isDefault = data["isDefault"] as? Boolean ?: false,
                 createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                 updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis()
             )
@@ -213,38 +198,30 @@ class FirestoreIncomeStreamService {
         }
     }
     
-    suspend fun seedDefaultIncomeStreams(): Result<Unit> {
+
+    suspend fun seedIfEmpty(name: String, icon: String, color: String): Result<Unit> {
         return try {
             val collection = getCollection()
-            if (collection == null) {
-                return Result.failure(Exception("Firestore not available"))
-            }
-            
+                ?: return Result.failure(Exception("Firestore not available"))
+
             val existing = collection.limit(1).get().await()
-            if (!existing.isEmpty) {
-                Log.d(TAG, "Income streams already exist, skipping seed")
-                return Result.success(Unit)
-            }
-            
-            DefaultIncomeStreams.list.forEach { stream ->
-                val docRef = collection.document(stream.id)
-                val data = mapOf(
-                    "name" to stream.name,
-                    "type" to stream.type.name,
-                    "icon" to stream.icon,
-                    "color" to stream.color,
-                    "isDefault" to true,
-                    "createdAt" to System.currentTimeMillis(),
-                    "updatedAt" to System.currentTimeMillis()
-                )
-                docRef.set(data).await()
-                Log.d(TAG, "✅ Seeded income stream: ${stream.name}")
-            }
-            
-            Log.d(TAG, "✅ All default income streams seeded")
+            if (!existing.isEmpty) return Result.success(Unit)
+
+            val docRef = collection.document()
+            val now = System.currentTimeMillis()
+            docRef.set(mapOf(
+                "name" to name,
+                "type" to "OTHER",
+                "icon" to icon,
+                "color" to color,
+                "createdAt" to now,
+                "updatedAt" to now
+            )).await()
+
+            Log.d(TAG, "✅ Seeded starter income stream: $name")
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Seed income streams error: ${e.message}")
+            Log.e(TAG, "❌ seedIfEmpty error: ${e.message}")
             Result.failure(e)
         }
     }

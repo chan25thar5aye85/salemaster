@@ -29,7 +29,8 @@ import com.akari.retailer.features.money.domain.usecases.ExternalTransferUseCase
 @Composable
 fun ExternalTransferScreen(
     onBack: () -> Unit,
-    onTransferSuccess: () -> Unit = {}
+    onTransferSuccess: () -> Unit = {},
+    onViewHistory: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as RetailApplication
@@ -381,6 +382,39 @@ fun ExternalTransferScreen(
                 Spacer(modifier = Modifier.height(Spacing.medium))
             }
             
+            // View History shortcut
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Spacing.medium),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Spacing.medium),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "📋 " + stringResource(R.string.external_transfer_history),
+                            style = AppTypography.title
+                        )
+                        Text(
+                            text = stringResource(R.string.view_all),
+                            style = AppTypography.small,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
+                    OutlinedButton(onClick = onViewHistory) {
+                        Text(stringResource(R.string.view_all))
+                    }
+                }
+            }
+
             AppPrimaryButton(
                 text = if (state.isSaving) stringResource(R.string.saving) else stringResource(R.string.confirm_transfer),
                 onClick = { viewModel.handleEvent(ExternalTransferEvent.SaveTransfer) },

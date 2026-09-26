@@ -87,39 +87,6 @@ fun CategoryManagementScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Tab Row
-            TabRow(selectedTabIndex = state.selectedTab) {
-                listOf("All", "Default", "Custom").forEachIndexed { index, label ->
-                    val count = when (index) {
-                        0 -> state.categories.size
-                        1 -> state.defaultCategories.size
-                        2 -> state.customCategories.size
-                        else -> 0
-                    }
-                    Tab(
-                        selected = state.selectedTab == index,
-                        onClick = { viewModel.handleEvent(CategoryManagementEvent.SelectTab(index)) },
-                        text = {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(label)
-                                if (count > 0) {
-                                    Badge(
-                                        containerColor = if (state.selectedTab == index) 
-                                            MaterialTheme.colorScheme.primary 
-                                        else 
-                                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                                    ) {
-                                        Text("$count")
-                                    }
-                                }
-                            }
-                        }
-                    )
-                }
-            }
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
@@ -168,21 +135,15 @@ fun CategoryManagementScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("📂", fontSize = 48.sp)
                         Text(
-                            text = when (state.selectedTab) {
-                                1 -> "No default categories"
-                                2 -> "No custom categories yet"
-                                else -> "No categories found"
-                            },
+                            text = "No categories yet",
                             style = AppTypography.header,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
-                        if (state.selectedTab == 2) {
-                            Text(
-                                text = "Tap + to add your first custom category",
-                                style = AppTypography.body,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-                        }
+                        Text(
+                            text = "Tap + to add your first category",
+                            style = AppTypography.body,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
                     }
                 }
                 return@Column
@@ -211,16 +172,10 @@ fun CategoryManagementScreen(
                                     text = category.name,
                                     style = AppTypography.body
                                 )
-                                if (category.isDefault) {
-                                    Text(
-                                        text = "Default",
-                                        style = AppTypography.small,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                    )
-                                }
+
                             }
                             
-                            if (!category.isDefault) {
+                            run {
                                 IconButton(
                                     onClick = { 
                                         viewModel.handleEvent(CategoryManagementEvent.ShowEditDialog(category))
@@ -243,18 +198,6 @@ fun CategoryManagementScreen(
                                         contentDescription = "Delete",
                                         modifier = Modifier.size(20.dp),
                                         tint = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            } else {
-                                Surface(
-                                    color = MaterialTheme.colorScheme.primaryContainer,
-                                    shape = MaterialTheme.shapes.small
-                                ) {
-                                    Text(
-                                        text = "Default",
-                                        style = AppTypography.small,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                     )
                                 }
                             }

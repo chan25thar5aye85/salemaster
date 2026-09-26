@@ -69,4 +69,11 @@
     <string name="add_another_payment">နောက်ထပ်ငွေပေးချေမှုထည့်ရန်</string>
     <string name="account_field">အကောင့်</string>
     <string name="payments">ငွေပေးချေမှုများ</string>
+    <string name="external_transfer_history">ပြင်ပငွေလွှဲမှတ်တမ်း</string>
+    <string name="fab_external_transfer_history">ငွေလွှဲမှတ်တမ်း</string>
+    <string name="total_sent">ပို့ပြီး</string>
+    <string name="total_received">လက်ခံပြီး</string>
+    <string name="net_external_flow">အသားတင်</string>
+    <string name="by_external_account">ပြင်ပအကောင့်အလိုက်</string>
+    <string name="no_external_transfers">ပြင်ပငွေလွှဲမှုမရှိသေးပါ</string>
 </resources>

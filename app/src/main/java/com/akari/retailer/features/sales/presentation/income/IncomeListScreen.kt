@@ -388,7 +388,7 @@ fun IncomeCard(
 ) {
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     val stream = streams.find { it.id == entry.incomeStreamId }
-    val streamName = stream?.getDisplayName() ?: "Unknown"
+    val streamName = stream?.getDisplayName() ?: stringResource(R.string.uncategorized)
 
     Card(
         modifier = Modifier.fillMaxWidth(),

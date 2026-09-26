@@ -89,7 +89,6 @@ class IncomeAnalyticsViewModel(
         val streamMap = mutableMapOf<IncomeStream, Pair<Int, Int>>()
         filteredEntries.forEach { entry ->
             val stream = streams.find { it.id == entry.incomeStreamId }
-                ?: streams.find { it.id == "default_product_sales" }
                 ?: return@forEach
             val current = streamMap[stream] ?: (0 to 0)
             streamMap[stream] = (current.first + entry.amount) to (current.second + 1)

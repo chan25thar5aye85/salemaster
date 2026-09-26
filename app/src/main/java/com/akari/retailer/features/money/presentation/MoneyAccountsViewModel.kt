@@ -196,7 +196,6 @@ class MoneyAccountsViewModel(
                         currentBalance = openingBalance,
                         accountNumber = _state.value.dialogAccountNumber,
                         notes = _state.value.dialogNotes,
-                        isDefault = false
                     )
                     val result = repository.addAccount(newAccount)
                     if (result.isSuccess) dismissDialog()

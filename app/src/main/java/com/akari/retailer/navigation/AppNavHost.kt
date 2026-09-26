@@ -36,6 +36,7 @@ import com.akari.retailer.features.expense.presentation.ExpenseEditScreen
 import com.akari.retailer.features.expense.presentation.ExpenseListScreen
 import com.akari.retailer.features.inventory.presentation.*
 import com.akari.retailer.features.money.presentation.ExternalTransferScreen
+import com.akari.retailer.features.money.presentation.ExternalTransferHistoryScreen
 import com.akari.retailer.features.money.presentation.MoneyAccountsScreen
 import com.akari.retailer.features.money.presentation.MoneyAnalyticsScreen
 import com.akari.retailer.features.money.presentation.MoneyTransactionsScreen
@@ -324,10 +325,19 @@ fun AppNavHost() {
                     )
                 }
                 
+                composable(Routes.EXTERNAL_TRANSFER_HISTORY) {
+                    ExternalTransferHistoryScreen(
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
                 composable(Routes.EXTERNAL_TRANSFER) {
                     ExternalTransferScreen(
                         onBack = { navController.popBackStack() },
-                        onTransferSuccess = { navController.popBackStack() }
+                        onTransferSuccess = { navController.popBackStack() },
+                        onViewHistory = {
+                            navController.navigate(Routes.EXTERNAL_TRANSFER_HISTORY)
+                        }
                     )
                 }
                 
@@ -487,6 +497,7 @@ fun AppNavHost() {
                         "money_accounts" -> navController.navigate(Routes.MONEY_ACCOUNTS)
                         "transfer_money" -> navController.navigate(Routes.TRANSFER_MONEY)
                         "external_transfer" -> navController.navigate(Routes.EXTERNAL_TRANSFER)
+                        "external_transfer_history" -> navController.navigate(Routes.EXTERNAL_TRANSFER_HISTORY)
                         "money_transactions" -> navController.navigate(Routes.MONEY_TRANSACTIONS)
                         "money_analytics" -> navController.navigate(Routes.MONEY_ANALYTICS)
                         else -> {

@@ -7,4 +7,7 @@ interface MoneyTransactionRepository {
     suspend fun addTransaction(transaction: MoneyTransaction): Result<String>
     fun getTransactions(): Flow<List<MoneyTransaction>>
     fun getTransactionsForAccount(accountId: String): Flow<List<MoneyTransaction>>
+
+    /** External transfers only (EXTERNAL_OUT + EXTERNAL_IN). */
+    fun getExternalTransfers(): Flow<List<MoneyTransaction>>
 }

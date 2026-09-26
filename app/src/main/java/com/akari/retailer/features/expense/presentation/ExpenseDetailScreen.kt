@@ -95,7 +95,7 @@ fun ExpenseDetailScreen(
             }
 
             state.expense?.let { expense ->
-                val categoryName = state.categories.find { it.id == expense.categoryId }?.name ?: "Other"
+                val categoryName = state.categories.find { it.id == expense.categoryId }?.name ?: stringResource(R.string.uncategorized)
                 
                 AppCard {
                     Column(

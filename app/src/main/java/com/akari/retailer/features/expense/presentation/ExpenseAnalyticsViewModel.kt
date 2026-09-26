@@ -86,7 +86,6 @@ class ExpenseAnalyticsViewModel(
         val categoryMap = mutableMapOf<ExpenseCategory, Pair<Int, Int>>()
         filteredExpenses.forEach { expense ->
             val category = categories.find { it.id == expense.categoryId }
-                ?: categories.find { it.id == "default_other" }
                 ?: return@forEach
             val current = categoryMap[category] ?: (0 to 0)
             categoryMap[category] = (current.first + expense.amount) to (current.second + 1)

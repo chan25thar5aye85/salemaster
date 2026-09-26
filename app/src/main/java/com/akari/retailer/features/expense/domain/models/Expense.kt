@@ -12,7 +12,7 @@ data class Expense(
     val id: String = "",
     val title: String = "",
     val amount: Int = 0,
-    val categoryId: String = "default_other",
+    val categoryId: String = "",
     val type: ExpenseType = ExpenseType.BUSINESS,
     val businessPercentage: Int = 100,
     val payments: List<PaymentEntry> = emptyList(),  // ✅ NEW - Multiple payments

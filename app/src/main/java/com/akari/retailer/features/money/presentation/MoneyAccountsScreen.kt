@@ -371,13 +371,6 @@ fun MoneyAccountCard(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
                 }
-                if (account.isDefault) {
-                    Text(
-                        text = stringResource(R.string.default_label),
-                        style = AppTypography.small,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
             }
             
             Column(
@@ -399,7 +392,7 @@ fun MoneyAccountCard(
                 )
             }
             
-            if (!account.isDefault) {
+            run {
                 IconButton(onClick = onEdit) {
                     Icon(
                         Icons.Default.Edit,
@@ -415,8 +408,6 @@ fun MoneyAccountCard(
                         tint = MaterialTheme.colorScheme.error
                     )
                 }
-            } else {
-                Spacer(modifier = Modifier.width(16.dp))
             }
         }
     }

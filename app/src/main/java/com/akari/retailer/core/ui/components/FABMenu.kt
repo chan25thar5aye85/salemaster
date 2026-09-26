@@ -134,6 +134,7 @@ fun FABMenu(
         FABMenuItemData(Icons.Default.AccountBalanceWallet, stringResource(R.string.fab_money_accounts), "money_accounts"),
         FABMenuItemData(Icons.Default.SwapHoriz, stringResource(R.string.fab_transfer_money), "transfer_money"),
         FABMenuItemData(Icons.Default.Public, stringResource(R.string.fab_external_transfer), "external_transfer"),
+        FABMenuItemData(Icons.Default.ReceiptLong, stringResource(R.string.fab_external_transfer_history), "external_transfer_history"),
         FABMenuItemData(Icons.Default.ReceiptLong, stringResource(R.string.fab_transactions), "money_transactions"),
         FABMenuItemData(Icons.Default.Insights, stringResource(R.string.fab_money_analytics), "money_analytics")
     )

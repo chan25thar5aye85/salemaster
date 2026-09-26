@@ -29,7 +29,6 @@ class CategoryManagementViewModel(
             is CategoryManagementEvent.RefreshCategories -> loadCategories()
             is CategoryManagementEvent.DeleteCategory -> deleteCategory(event.categoryId)
             is CategoryManagementEvent.ClearError -> clearError()
-            is CategoryManagementEvent.SelectTab -> selectTab(event.tabIndex)
             is CategoryManagementEvent.ShowAddDialog -> showAddDialog()
             is CategoryManagementEvent.ShowEditDialog -> showEditDialog(event.category)
             is CategoryManagementEvent.DismissDialog -> dismissDialog()
@@ -44,12 +43,8 @@ class CategoryManagementViewModel(
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 repository.getCategories().collect { categories ->
-                    val defaultCats = categories.filter { it.isDefault }
-                    val customCats = categories.filter { !it.isDefault }
                     _state.value = _state.value.copy(
                         categories = categories,
-                        defaultCategories = defaultCats,
-                        customCategories = customCats,
                         isLoading = false,
                         error = null
                     )
@@ -82,9 +77,6 @@ class CategoryManagementViewModel(
         }
     }
 
-    private fun selectTab(tabIndex: Int) {
-        _state.value = _state.value.copy(selectedTab = tabIndex)
-    }
 
     private fun showAddDialog() {
         _state.value = _state.value.copy(
@@ -143,7 +135,7 @@ class CategoryManagementViewModel(
                         error = result.exceptionOrNull()?.message ?: "Failed to update category"
                     )
                 } else {
-                    val newCategory = ExpenseCategory(name = name, isDefault = false)
+                    val newCategory = ExpenseCategory(name = name)
                     val result = repository.addCategory(newCategory)
                     if (result.isSuccess) { dismissDialog(); loadCategories() }
                     else _state.value = _state.value.copy(
@@ -165,12 +157,7 @@ class CategoryManagementViewModel(
     }
 
     fun getFilteredCategories(): List<ExpenseCategory> {
-        return when (_state.value.selectedTab) {
-            0 -> _state.value.categories
-            1 -> _state.value.defaultCategories
-            2 -> _state.value.customCategories
-            else -> _state.value.categories
-        }
+        return _state.value.categories
     }
 }
 

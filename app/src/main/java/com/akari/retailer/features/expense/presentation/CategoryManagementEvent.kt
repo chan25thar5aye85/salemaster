@@ -7,7 +7,6 @@ sealed class CategoryManagementEvent {
     data object RefreshCategories : CategoryManagementEvent()
     data class DeleteCategory(val categoryId: String) : CategoryManagementEvent()
     data object ClearError : CategoryManagementEvent()
-    data class SelectTab(val tabIndex: Int) : CategoryManagementEvent()
     
     // Dialog events
     data object ShowAddDialog : CategoryManagementEvent()

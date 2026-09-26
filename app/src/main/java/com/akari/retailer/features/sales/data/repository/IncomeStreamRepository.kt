@@ -9,5 +9,7 @@ interface IncomeStreamRepository {
     suspend fun deleteIncomeStream(streamId: String): Result<Unit>
     fun getIncomeStreams(): Flow<List<IncomeStream>>
     fun getIncomeStreamById(streamId: String): Flow<IncomeStream?>
-    suspend fun seedDefaultIncomeStreams(): Result<Unit>
+
+    /** Seed one starter income stream if the collection is empty. */
+    suspend fun seedIfEmpty(name: String, icon: String, color: String): Result<Unit>
 }

@@ -2,7 +2,6 @@ package com.akari.retailer.features.expense.data.remote
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
-import com.akari.retailer.features.expense.domain.models.DefaultCategories
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -46,7 +45,6 @@ class FirestoreCategoryService {
                 "name" to category.name,
                 "icon" to category.icon,
                 "color" to category.color,
-                "isDefault" to category.isDefault,
                 "createdAt" to category.createdAt,
                 "updatedAt" to System.currentTimeMillis()
             )
@@ -68,12 +66,6 @@ class FirestoreCategoryService {
             val collection = getCollection()
             if (collection == null || category.id.isEmpty()) {
                 return Result.failure(Exception("Invalid category or Firestore not available"))
-            }
-            
-            // Don't allow renaming default categories
-            val existing = getCategoryByIdSync(category.id)
-            if (existing?.isDefault == true && category.name != existing.name) {
-                return Result.failure(Exception("Cannot rename default category"))
             }
             
             val data = mapOf(
@@ -100,12 +92,6 @@ class FirestoreCategoryService {
             val collection = getCollection()
             if (collection == null) {
                 return Result.failure(Exception("Firestore not available"))
-            }
-            
-            // Check if it's a default category
-            val category = getCategoryByIdSync(categoryId)
-            if (category?.isDefault == true) {
-                return Result.failure(Exception("Cannot delete default category"))
             }
             
             collection.document(categoryId).delete().await()
@@ -150,7 +136,6 @@ class FirestoreCategoryService {
                         name = data["name"] as? String ?: "",
                         icon = data["icon"] as? String ?: "📌",
                         color = data["color"] as? String ?: "#636E72",
-                        isDefault = data["isDefault"] as? Boolean ?: false,
                         createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                         updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis()
                     )
@@ -199,7 +184,6 @@ class FirestoreCategoryService {
                     name = data["name"] as? String ?: "",
                     icon = data["icon"] as? String ?: "📌",
                     color = data["color"] as? String ?: "#636E72",
-                    isDefault = data["isDefault"] as? Boolean ?: false,
                     createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                     updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis()
                 )
@@ -225,7 +209,6 @@ class FirestoreCategoryService {
                 name = data["name"] as? String ?: "",
                 icon = data["icon"] as? String ?: "📌",
                 color = data["color"] as? String ?: "#636E72",
-                isDefault = data["isDefault"] as? Boolean ?: false,
                 createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                 updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis()
             )
@@ -255,42 +238,35 @@ class FirestoreCategoryService {
         }
     }
     
+
     /**
-     * Seed default categories into Firestore
+     * Seed one starter category if the collection is empty.
+     * The caller supplies the localized display name (and icon/color).
      */
-    suspend fun seedDefaultCategories(): Result<Unit> {
+    suspend fun seedIfEmpty(name: String, icon: String, color: String): Result<Unit> {
         return try {
             val collection = getCollection()
-            if (collection == null) {
-                return Result.failure(Exception("Firestore not available"))
-            }
-            
-            // Check if any categories exist
+                ?: return Result.failure(Exception("Firestore not available"))
+
             val existing = collection.limit(1).get().await()
             if (!existing.isEmpty) {
-                Log.d(TAG, "Categories already exist, skipping seed")
                 return Result.success(Unit)
             }
-            
-            // Add all default categories
-            DefaultCategories.list.forEach { category ->
-                val docRef = collection.document(category.id)
-                val data = mapOf(
-                    "name" to category.name,
-                    "icon" to category.icon,
-                    "color" to category.color,
-                    "isDefault" to true,
-                    "createdAt" to System.currentTimeMillis(),
-                    "updatedAt" to System.currentTimeMillis()
-                )
-                docRef.set(data).await()
-                Log.d(TAG, "✅ Seeded category: ${category.name}")
-            }
-            
-            Log.d(TAG, "✅ All default categories seeded")
+
+            val docRef = collection.document()
+            val now = System.currentTimeMillis()
+            docRef.set(mapOf(
+                "name" to name,
+                "icon" to icon,
+                "color" to color,
+                "createdAt" to now,
+                "updatedAt" to now
+            )).await()
+
+            Log.d(TAG, "✅ Seeded starter category: $name")
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Seed categories error: ${e.message}")
+            Log.e(TAG, "❌ seedIfEmpty error: ${e.message}")
             Result.failure(e)
         }
     }

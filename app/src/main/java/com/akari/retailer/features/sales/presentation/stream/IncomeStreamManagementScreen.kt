@@ -87,38 +87,6 @@ fun IncomeStreamManagementScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            TabRow(selectedTabIndex = state.selectedTab) {
-                listOf("All", "Default", "Custom").forEachIndexed { index, label ->
-                    val count = when (index) {
-                        0 -> state.streams.size
-                        1 -> state.defaultStreams.size
-                        2 -> state.customStreams.size
-                        else -> 0
-                    }
-                    Tab(
-                        selected = state.selectedTab == index,
-                        onClick = { viewModel.handleEvent(IncomeStreamManagementEvent.SelectTab(index)) },
-                        text = {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(label)
-                                if (count > 0) {
-                                    Badge(
-                                        containerColor = if (state.selectedTab == index) 
-                                            MaterialTheme.colorScheme.primary 
-                                        else 
-                                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                                    ) {
-                                        Text("$count")
-                                    }
-                                }
-                            }
-                        }
-                    )
-                }
-            }
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
@@ -167,21 +135,15 @@ fun IncomeStreamManagementScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("📂", fontSize = 48.sp)
                         Text(
-                            text = when (state.selectedTab) {
-                                1 -> "No default income streams"
-                                2 -> "No custom income streams yet"
-                                else -> "No income streams found"
-                            },
+                            text = "No income streams yet",
                             style = AppTypography.header,
                             modifier = Modifier.padding(top = Spacing.medium)
                         )
-                        if (state.selectedTab == 2) {
-                            Text(
-                                text = "Tap + to add your first custom income stream",
-                                style = AppTypography.body,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-                        }
+                        Text(
+                            text = "Tap + to add your first income stream",
+                            style = AppTypography.body,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
                     }
                 }
                 return@Column
@@ -210,16 +172,10 @@ fun IncomeStreamManagementScreen(
                                     text = "${stream.icon} ${stream.name}",
                                     style = AppTypography.body
                                 )
-                                if (stream.isDefault) {
-                                    Text(
-                                        text = "Default",
-                                        style = AppTypography.small,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                    )
-                                }
+
                             }
                             
-                            if (!stream.isDefault) {
+                            run {
                                 IconButton(
                                     onClick = { 
                                         viewModel.handleEvent(IncomeStreamManagementEvent.ShowEditDialog(stream))
@@ -242,18 +198,6 @@ fun IncomeStreamManagementScreen(
                                         contentDescription = "Delete",
                                         modifier = Modifier.size(20.dp),
                                         tint = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            } else {
-                                Surface(
-                                    color = MaterialTheme.colorScheme.primaryContainer,
-                                    shape = MaterialTheme.shapes.small
-                                ) {
-                                    Text(
-                                        text = "Default",
-                                        style = AppTypography.small,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                     )
                                 }
                             }

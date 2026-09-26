@@ -116,6 +116,57 @@ class FirestoreMoneyTransactionService {
         awaitClose { listener.remove() }
     }
     
+    /**
+     * External transfers only. Filters client-side to avoid a composite
+     * index on (type, date). Fine for small-to-medium datasets.
+     */
+    fun getExternalTransfers(): Flow<List<MoneyTransaction>> = callbackFlow {
+        val collection = getCollection()
+        if (collection == null) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+
+        val listener = collection
+            .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) { close(error); return@addSnapshotListener }
+                if (snapshot == null) { trySend(emptyList()); return@addSnapshotListener }
+
+                val external = snapshot.documents.mapNotNull { doc ->
+                    val data = doc.data ?: return@mapNotNull null
+                    val typeStr = data["type"] as? String ?: return@mapNotNull null
+                    if (typeStr != "EXTERNAL_OUT" && typeStr != "EXTERNAL_IN") {
+                        return@mapNotNull null
+                    }
+                    MoneyTransaction(
+                        id = doc.id,
+                        type = MoneyTransactionType.valueOf(typeStr),
+                        fromAccountId = data["fromAccountId"] as? String ?: "",
+                        toAccountId = data["toAccountId"] as? String ?: "",
+                        amount = (data["amount"] as? Number)?.toInt() ?: 0,
+                        fee = (data["fee"] as? Number)?.toInt() ?: 0,
+                        feeType = try {
+                            FeeType.valueOf(data["feeType"] as? String ?: "NONE")
+                        } catch (e: Exception) { FeeType.NONE },
+                        netAmount = (data["netAmount"] as? Number)?.toInt() ?: 0,
+                        description = data["description"] as? String ?: "",
+                        referenceId = data["referenceId"] as? String ?: "",
+                        referenceType = data["referenceType"] as? String ?: "",
+                        externalAccountName = data["externalAccountName"] as? String ?: "",
+                        externalAccountNumber = data["externalAccountNumber"] as? String ?: "",
+                        date = (data["date"] as? Number)?.toLong() ?: System.currentTimeMillis(),
+                        createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis()
+                    )
+                }
+                trySend(external)
+            }
+
+        awaitClose { listener.remove() }
+    }
+
+
     fun getTransactionsForAccount(accountId: String): Flow<List<MoneyTransaction>> = callbackFlow {
         val collection = getCollection()
         if (collection == null) {

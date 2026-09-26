@@ -393,7 +393,7 @@ fun ExpenseCard(
 ) {
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     val category = categories.find { it.id == expense.categoryId }
-    val categoryName = category?.name ?: "Other"
+    val categoryName = category?.name ?: stringResource(R.string.uncategorized)
     
     Card(
         modifier = Modifier

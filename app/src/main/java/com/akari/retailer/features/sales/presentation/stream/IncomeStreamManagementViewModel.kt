@@ -30,7 +30,6 @@ class IncomeStreamManagementViewModel(
             is IncomeStreamManagementEvent.RefreshStreams -> loadStreams()
             is IncomeStreamManagementEvent.DeleteStream -> deleteStream(event.streamId)
             is IncomeStreamManagementEvent.ClearError -> clearError()
-            is IncomeStreamManagementEvent.SelectTab -> selectTab(event.tabIndex)
             is IncomeStreamManagementEvent.ShowAddDialog -> showAddDialog()
             is IncomeStreamManagementEvent.ShowEditDialog -> showEditDialog(event.stream)
             is IncomeStreamManagementEvent.DismissDialog -> dismissDialog()
@@ -45,12 +44,8 @@ class IncomeStreamManagementViewModel(
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
                 repository.getIncomeStreams().collect { streams ->
-                    val defaultStreams = streams.filter { it.isDefault }
-                    val customStreams = streams.filter { !it.isDefault }
                     _state.value = _state.value.copy(
                         streams = streams,
-                        defaultStreams = defaultStreams,
-                        customStreams = customStreams,
                         isLoading = false,
                         error = null
                     )
@@ -83,9 +78,6 @@ class IncomeStreamManagementViewModel(
         }
     }
 
-    private fun selectTab(tabIndex: Int) {
-        _state.value = _state.value.copy(selectedTab = tabIndex)
-    }
 
     private fun showAddDialog() {
         _state.value = _state.value.copy(
@@ -148,8 +140,7 @@ class IncomeStreamManagementViewModel(
                         name = name,
                         type = IncomeType.OTHER,
                         icon = "💰",
-                        color = "#636E72",
-                        isDefault = false
+                        color = "#636E72"
                     )
                     val result = repository.addIncomeStream(newStream)
                     if (result.isSuccess) { dismissDialog(); loadStreams() }
@@ -172,12 +163,7 @@ class IncomeStreamManagementViewModel(
     }
 
     fun getFilteredStreams(): List<IncomeStream> {
-        return when (_state.value.selectedTab) {
-            0 -> _state.value.streams
-            1 -> _state.value.defaultStreams
-            2 -> _state.value.customStreams
-            else -> _state.value.streams
-        }
+        return _state.value.streams
     }
 }
 

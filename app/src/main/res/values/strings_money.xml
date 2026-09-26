@@ -69,4 +69,11 @@
     <string name="add_another_payment">Add Another Payment</string>
     <string name="account_field">Account</string>
     <string name="payments">Payments</string>
+    <string name="external_transfer_history">External Transfer History</string>
+    <string name="fab_external_transfer_history">Transfer History</string>
+    <string name="total_sent">Sent</string>
+    <string name="total_received">Received</string>
+    <string name="net_external_flow">Net</string>
+    <string name="by_external_account">By External Account</string>
+    <string name="no_external_transfers">No external transfers yet</string>
 </resources>

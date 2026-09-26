@@ -25,4 +25,5 @@
     <string name="category_name">အမျိုးအစားအမည်</string>
     <string name="search_categories_hint">အမျိုးအစားရှာဖွေရန်...</string>
     <string name="business_percentage_hint">စီးပွားရေးရာခိုင်နှုန်း (၀-၁၀၀)</string>
+    <string name="uncategorized">အမျိုးအစားမသတ်မှတ်</string>
 </resources>

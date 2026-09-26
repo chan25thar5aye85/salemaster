@@ -45,7 +45,6 @@ class FirestoreMoneyService {
                 "currentBalance" to account.currentBalance,
                 "accountNumber" to account.accountNumber,
                 "notes" to account.notes,
-                "isDefault" to account.isDefault,
                 "isActive" to account.isActive,
                 "createdAt" to System.currentTimeMillis(),
                 "updatedAt" to System.currentTimeMillis()
@@ -93,9 +92,10 @@ class FirestoreMoneyService {
                 return Result.failure(Exception("Firestore not available"))
             }
             
-            val account = getAccountByIdSync(accountId)
-            if (account?.isDefault == true) {
-                return Result.failure(Exception("Cannot delete default account"))
+            // Refuse to delete the last account
+            val snapshot = collection.limit(2).get().await()
+            if (snapshot.size() <= 1) {
+                return Result.failure(Exception("You must have at least one account"))
             }
             
             collection.document(accountId).delete().await()
@@ -144,7 +144,6 @@ class FirestoreMoneyService {
                         currentBalance = (data["currentBalance"] as? Number)?.toInt() ?: 0,
                         accountNumber = data["accountNumber"] as? String ?: "",
                         notes = data["notes"] as? String ?: "",
-                        isDefault = data["isDefault"] as? Boolean ?: false,
                         isActive = data["isActive"] as? Boolean ?: true,
                         createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                         updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis()
@@ -195,7 +194,6 @@ class FirestoreMoneyService {
                     currentBalance = (data["currentBalance"] as? Number)?.toInt() ?: 0,
                     accountNumber = data["accountNumber"] as? String ?: "",
                     notes = data["notes"] as? String ?: "",
-                    isDefault = data["isDefault"] as? Boolean ?: false,
                     isActive = data["isActive"] as? Boolean ?: true,
                     createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                     updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis()
@@ -226,7 +224,6 @@ class FirestoreMoneyService {
                 currentBalance = (data["currentBalance"] as? Number)?.toInt() ?: 0,
                 accountNumber = data["accountNumber"] as? String ?: "",
                 notes = data["notes"] as? String ?: "",
-                isDefault = data["isDefault"] as? Boolean ?: false,
                 isActive = data["isActive"] as? Boolean ?: true,
                 createdAt = (data["createdAt"] as? Number)?.toLong() ?: System.currentTimeMillis(),
                 updatedAt = (data["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis()
@@ -300,7 +297,6 @@ class FirestoreMoneyService {
                     "currentBalance" to 0,
                     "accountNumber" to "",
                     "notes" to "",
-                    "isDefault" to true,
                     "isActive" to true,
                     "createdAt" to System.currentTimeMillis(),
                     "updatedAt" to System.currentTimeMillis()

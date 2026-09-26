@@ -35,11 +35,22 @@ class RetailApplication : Application() {
         // 3. DI container
         container = AppContainer(this)
 
-        // 4. Seed defaults
+        // 4. Seed one starter entry per user-definable list, if empty.
+        //    Names are localized at seed time using the device language.
         CoroutineScope(Dispatchers.IO).launch {
             runCatching {
-                container.categoryRepository.seedDefaultCategories()
-                container.incomeStreamRepository.seedDefaultIncomeStreams()
+                val uncategorized = getString(R.string.uncategorized)
+
+                container.categoryRepository.seedIfEmpty(
+                    name = uncategorized,
+                    icon = "📌",
+                    color = "#636E72"
+                )
+                container.incomeStreamRepository.seedIfEmpty(
+                    name = uncategorized,
+                    icon = "💰",
+                    color = "#636E72"
+                )
                 container.moneyAccountRepository.seedDefaultAccounts()
             }.onFailure { Log.e("RetailApplication", "Seeding failed", it) }
         }

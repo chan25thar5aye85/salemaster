@@ -7,16 +7,20 @@ import kotlinx.coroutines.flow.Flow
 class FirestoreMoneyTransactionRepository(
     private val service: FirestoreMoneyTransactionService
 ) : MoneyTransactionRepository {
-    
+
     override suspend fun addTransaction(transaction: MoneyTransaction): Result<String> {
         return service.addTransaction(transaction)
     }
-    
+
     override fun getTransactions(): Flow<List<MoneyTransaction>> {
         return service.getTransactions()
     }
-    
+
     override fun getTransactionsForAccount(accountId: String): Flow<List<MoneyTransaction>> {
         return service.getTransactionsForAccount(accountId)
+    }
+
+    override fun getExternalTransfers(): Flow<List<MoneyTransaction>> {
+        return service.getExternalTransfers()
     }
 }
