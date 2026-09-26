@@ -69,4 +69,8 @@
     <string name="refund_recorded">Refund recorded!</string>
 
     <string name="credit_refund">Refund issued</string>
+    <string name="add_credit">Add Credit</string>
+    <string name="customer_is_settled">No outstanding balance</string>
+    <string name="add_credit_hint">Add to this customer\'s outstanding balance.</string>
+    <string name="pay_all">Pay All</string>
 </resources>

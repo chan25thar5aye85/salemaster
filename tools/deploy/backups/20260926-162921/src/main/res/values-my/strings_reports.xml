@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Profit & Loss -->
+    <string name="profit_loss">အမြတ်နှင့် အရှုံး</string>
+    <string name="profit_loss_title">အမြတ်နှင့် အရှုံး</string>
+    <string name="revenue">ဝင်ငွေ</string>
+    <string name="other_income">အခြားဝင်ငွေ</string>
+    <string name="net_profit">အသားတင်အမြတ်</string>
+    <string name="profit_margin">အမြတ်နှုန်း</string>
+    <string name="detailed_breakdown">အသေးစိတ်ခွဲခြမ်းစိတ်ဖြာချက်</string>
+    <string name="sales_revenue">ရောင်းအားဝင်ငွေ</string>
+    <string name="business_expenses">စီးပွားရေးအသုံးစရိတ်</string>
+    <string name="personal_expenses">ကိုယ်ပိုင်အသုံးစရိတ်</string>
+    <string name="how_is_this_calculated">ဤသည်ကို မည်သို့တွက်ချက်သနည်း။</string>
+    <string name="revenue_calculation">• ဝင်ငွေ - ရောင်းအား + အခြားစီးပွားရေးဝင်ငွေ</string>
+    <string name="business_expenses_calculation">• စီးပွားရေးအသုံးစရိတ် - စီးပွားရေး + ရောနှော (စီးပွားရေး%) အသုံးစရိတ်</string>
+    <string name="personal_expenses_calculation">• ကိုယ်ပိုင်အသုံးစရိတ် - ကိုယ်ပိုင်အသုံးစရိတ်သာ (အမြတ်မှ မနုတ်ပါ)</string>
+    <string name="profit_margin_calculation">• အမြတ်နှုန်း - (အမြတ် / ဝင်ငွေ) × 100</string>
+    
+    <!-- Reports General -->
+    <string name="reports">အစီရင်ခံစာ</string>
+    <string name="monthly_sales_trend">လစဉ်အရောင်းလမ်းကြောင်း</string>
+    <string name="loading_sales_data">အရောင်းဒေတာဖွင့်နေသည်...</string>
+    <string name="no_sales_data_for">အတွက် အရောင်းဒေတာမရှိပါ</string>
+    <string name="start_recording_sales">လမ်းကြောင်းများကြည့်ရန် အရောင်းစတင်မှတ်တမ်းတင်ပါ!</string>
+    <string name="month_year">လ/နှစ်</string>
+    <string name="avg_day">ပျမ်းမျှ/ရက်</string>
+    <string name="highest">အမြင့်ဆုံး</string>
+    
+    <!-- Analytics General -->
+    <string name="spending_by_category">အမျိုးအစားအလိုက် သုံးစွဲမှု</string>
+    <string name="category_comparison">အမျိုးအစားနှိုင်းယှဉ်ချက်</string>
+    <string name="category_details_title">အမျိုးအစားအသေးစိတ်</string>
+    <string name="top_category">ထိပ်ဆုံးအမျိုးအစား</string>
+    <string name="no_expenses_period">ဤကာလအတွင်း အသုံးစရိတ်မရှိပါ</string>
+    <string name="add_expenses_to_see_analytics">ခွဲခြမ်းစိတ်ဖြာချက်ကြည့်ရန် အသုံးစရိတ်ထည့်ပါ</string>
+    <string name="avg_per_day">ပျမ်းမျှ/ရက်</string>
+    
+    <!-- Common Analytics Filters -->
+    <string name="filter_by_type">အမျိုးအစားအလိုက် စစ်ထုတ်ရန်</string>
+    <string name="all_types">အားလုံး</string>
+    <string name="business_type">စီးပွားရေး</string>
+    <string name="personal_type">ကိုယ်ပိုင်</string>
+    <string name="mixed_type">ရောနှော</string>
+    <string name="today_range">ယနေ့</string>
+    <string name="this_week">ဤတစ်ပတ်</string>
+    <string name="this_month">ဤလ</string>
+    <string name="last_month">ပြီးခဲ့သည့်လ</string>
+    <string name="calculating">တွက်ချက်နေသည်...</string>
+    <string name="select_range">ကာလရွေးပါ</string>
+    <string name="showing">ပြသသည်</string>
+</resources>

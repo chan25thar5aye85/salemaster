@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sale_entry">Sale Entry</string>
+    <string name="item">Item</string>
+    <string name="item_number">Item %d</string>
+    <string name="total">Total</string>
+    <string name="payment">Payment</string>
+    <string name="cash">Cash</string>
+    <string name="kpay">KPay</string>
+    <string name="wave">Wave</string>
+    <string name="save_sale">Save Sale</string>
+    <string name="saved">Saved!</string>
+    <string name="saving">Saving...</string>
+    <string name="add_at_least_one_item">Add at least one item</string>
+    <string name="failed_to_save_sale">Failed to save sale</string>
+    <string name="enter_amount">Enter amount</string>
+    <string name="history">History</string>
+    <string name="recent_sales">Recent Sales</string>
+    <string name="view_all">View All</string>
+    <string name="delete_sale">Delete Sale</string>
+    <string name="delete_confirmation">Are you sure you want to delete this sale?</string>
+    <string name="daily_summary">Daily Sales Summary</string>
+    <string name="total_sales">Total Sales</string>
+    <string name="sales_count">Sales Count</string>
+    <string name="payment_breakdown">Payment Breakdown</string>
+    <string name="no_sales_today">No sales today</string>
+    <string name="filter_by_date">Filter by date</string>
+    <string name="sales">Sales</string>
+    <string name="normal_payment">Normal Payment</string>
+    <string name="credit">Credit</string>
+    <string name="sell_on_credit">Sell on Credit</string>
+    <string name="no_customer_selected">No customer selected</string>
+    <string name="select_customer">Select Customer</string>
+    <string name="change_customer">Change Customer</string>
+    <string name="select_customer_for_credit">Select Customer for Credit</string>
+    <string name="search_customers_short">Search customers...</string>
+    <string name="no_customers_found_short">No customers found</string>
+    <string name="customer">Customer</string>
+    <string name="owes_label">Owes</string>
+
+    <string name="items">Items</string>
+    <string name="offline_banner_sale">No internet. Saving requires connection — try again when online.</string>
+    <string name="sale_detail">Sale Detail</string>
+
+    <string name="overpayment">Overpayment</string>
+    <string name="overpaid_amount">Overpaid by %1$d — will be credited to customer</string>
+    <string name="will_credit_customer">Excess will be credited to %1$s</string>
+    <string name="select_customer_via_credit_toggle">Select a customer via the Credit option to attribute the overpayment</string>
+    <string name="credit_to_customer">Credit to customer</string>
+    <string name="keep_in_account">Keep in money account</string>
+    <string name="paid">Paid</string>
+    <string name="summary_total_sales">Total Sales</string>
+    <string name="summary_sales_count">Sales Count</string>
+    <string name="summary_credit">Credit Given</string>
+</resources>

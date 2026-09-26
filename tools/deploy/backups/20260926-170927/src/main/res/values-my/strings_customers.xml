@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="customers">ဖောက်သည်များ</string>
+    <string name="add_customer">ဖောက်သည်ထည့်ရန်</string>
+    <string name="customer_details">ဖောက်သည်အသေးစိတ်</string>
+    <string name="edit_customer">ဖောက်သည်ပြင်ရန်</string>
+    <string name="delete_customer">ဖောက်သည်ဖျက်မည်</string>
+    <string name="delete_customer_confirmation">ဤဖောက်သည်ကို ဖျက်ရန် သေချာပါသလား?</string>
+    <string name="no_customers_yet">ဖောက်သည်မရှိသေးပါ</string>
+    <string name="tap_add_customer">ပထမဆုံးဖောက်သည်ထည့်ရန် + ကိုနှိပ်ပါ</string>
+    <string name="no_customers_found">တွေ့ရှိသည့်ဖောက်သည်မရှိပါ</string>
+    <string name="try_different_search">မတူညီသော ရှာဖွေမှုကို စမ်းကြည့်ပါ</string>
+    <string name="search_customers">အမည် သို့မဟုတ် ဖုန်းဖြင့် ရှာဖွေရန်...</string>
+    <string name="loading_customers">ဖောက်သည်များဖွင့်နေသည်...</string>
+    <string name="save_customer">ဖောက်သည်သိမ်းမည်</string>
+    <string name="customer_name_required">ဖောက်သည်အမည် လိုအပ်သည်</string>
+    <string name="failed_to_save_customer">ဖောက်သည်သိမ်းရန် မအောင်မြင်ပါ</string>
+    <string name="update_customer">ဖောက်သည်ပြင်မည်</string>
+    <string name="customer_not_found">ဖောက်သည်မတွေ့ပါ</string>
+    <string name="failed_to_load_customer">ဖောက်သည်ဖွင့်ရန် မအောင်မြင်ပါ</string>
+    <string name="failed_to_update_customer">ဖောက်သည်ပြင်ရန် မအောင်မြင်ပါ</string>
+    <string name="total_orders">စုစုပေါင်းအော်ဒါ</string>
+    <string name="total_spent">စုစုပေါင်းသုံးစွဲမှု</string>
+    <string name="last_order">နောက်ဆုံးအော်ဒါ</string>
+    <string name="no_phone">ဖုန်းမရှိပါ</string>
+    <string name="customers_count">ဖောက်သည်များ</string>
+    <string name="credit_balance_label">အကြွေးလက်ကျန်</string>
+    <string name="customer_owes_amount">ဖောက်သည်အကြွေး %1$d</string>
+    <string name="record_payment">ငွေပေးချေမှုမှတ်တမ်းတင်ရန်</string>
+    <string name="credit_history">အကြွေးမှတ်တမ်း</string>
+    <string name="credit_sale">အကြွေးဖြင့်ရောင်းခြင်း</string>
+    <string name="credit_payment">ငွေလက်ခံရရှိမှု</string>
+    <string name="amount_owed">အကြွေးပမာဏ: %1$d</string>
+    <string name="payment_recorded">ငွေပေးချေမှု မှတ်တမ်းတင်ပြီး!</string>
+    <string name="confirm">အတည်ပြုမည်</string>
+    <string name="outstanding_credit">ပေးရန်ကျန်ရှိသောအကြွေး</string>
+    <string name="debtors_count">အကြွေးကျန်ဖောက်သည် %1$d ဦး</string>
+
+    <string name="current_balance">လက်ရှိလက်ကျန်</string>
+    <string name="total_credit_given">ပေးခဲ့သောအကြွေး</string>
+    <string name="total_paid">ပေးချေပြီး</string>
+    <string name="no_transactions_for_filter">ဤစစ်ထုတ်မှုအတွက် ငွေလွှဲမှုမရှိပါ</string>
+    <string name="view_full_history">မှတ်တမ်းအပြည့်အစုံကြည့်ရန်</string>
+
+    <string name="aging_report">အကြွေးသက်တမ်း</string>
+    <string name="total_outstanding">စုစုပေါင်းအကြွေး</string>
+    <string name="n_customers_owe">ဖောက်သည် %1$d ဦး အကြွေးကျန်ရှိသည်</string>
+    <string name="by_age">သက်တမ်းအလိုက်</string>
+    <string name="no_outstanding_credit">အကြွေးကျန်မရှိပါ</string>
+    <string name="everyone_paid_up">အားလုံးပေးချေပြီးပါပြီ — ကောင်းပါသည်!</string>
+    <string name="bucket_current">၀-၃၀ ရက်</string>
+    <string name="bucket_30">၃၁-၆၀ ရက်</string>
+    <string name="bucket_60">၆၁-၉၀ ရက်</string>
+    <string name="bucket_90">၉၀ ရက်အထက်</string>
+    <string name="n_customers">ဖောက်သည် %1$d ဦး</string>
+    <string name="no_customers_in_bucket">ဤအုပ်စုတွင် ဖောက်သည်မရှိပါ</string>
+    <string name="aging_report_subtitle">၃၀ / ၆၀ / ၉၀ ရက် ခွဲခြမ်းစိတ်ဖြာချက်</string>
+
+    <string name="receivables">လက်ခံရန်</string>
+    <string name="payables">ပေးရန်</string>
+    <string name="n_parties_owe">%1$d ဦး</string>
+    <string name="n_parties">%1$d ဦး</string>
+
+    <string name="you_owe_customer">ဖောက်သည်အား သင်ပေးရန် %1$d</string>
+    <string name="customer_owes_you">ဖောက်သည်က သင်အား %1$d အကြွေးကျန်သည်</string>
+    <string name="record_refund">ပြန်အမ်းငွေမှတ်တမ်းတင်ရန်</string>
+    <string name="refund_amount">ပြန်အမ်းငွေပမာဏ</string>
+    <string name="refund_from_account">ပြန်အမ်းငွေထုတ်သည့်အကောင့်</string>
+    <string name="refund_recorded">ပြန်အမ်းငွေ မှတ်တမ်းတင်ပြီး!</string>
+
+    <string name="credit_refund">ပြန်အမ်းငွေထုတ်ပေးမှု</string>
+    <string name="add_credit">အကြွေးထည့်ရန်</string>
+    <string name="customer_is_settled">ကျန်ရှိသောလက်ကျန်မရှိပါ</string>
+    <string name="add_credit_hint">ဤဖောက်သည်၏ အကြွေးလက်ကျန်သို့ ထည့်ရန်။</string>
+</resources>

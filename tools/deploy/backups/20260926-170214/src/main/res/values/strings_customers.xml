@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="customers">Customers</string>
+    <string name="add_customer">Add Customer</string>
+    <string name="customer_details">Customer Details</string>
+    <string name="edit_customer">Edit Customer</string>
+    <string name="delete_customer">Delete Customer</string>
+    <string name="delete_customer_confirmation">Are you sure you want to delete this customer?</string>
+    <string name="no_customers_yet">No customers yet</string>
+    <string name="tap_add_customer">Tap + to add your first customer</string>
+    <string name="no_customers_found">No customers found for</string>
+    <string name="try_different_search">Try a different search</string>
+    <string name="search_customers">Search by name or phone...</string>
+    <string name="loading_customers">Loading customers...</string>
+    <string name="save_customer">Save Customer</string>
+    <string name="customer_name_required">Customer name is required</string>
+    <string name="failed_to_save_customer">Failed to save customer</string>
+    <string name="update_customer">Update Customer</string>
+    <string name="customer_not_found">Customer not found</string>
+    <string name="failed_to_load_customer">Failed to load customer</string>
+    <string name="failed_to_update_customer">Failed to update customer</string>
+    <string name="total_orders">Total Orders</string>
+    <string name="total_spent">Total Spent</string>
+    <string name="last_order">Last Order</string>
+    <string name="no_phone">No phone</string>
+    <string name="customers_count">customers</string>
+    <string name="credit_balance_label">Credit Balance</string>
+    <string name="customer_owes_amount">Customer owes %1$d</string>
+    <string name="record_payment">Record Payment</string>
+    <string name="credit_history">Credit History</string>
+    <string name="credit_sale">Sale on credit</string>
+    <string name="credit_payment">Payment received</string>
+    <string name="amount_owed">Amount owed: %1$d</string>
+    <string name="payment_recorded">Payment recorded!</string>
+    <string name="confirm">Confirm</string>
+    <string name="outstanding_credit">Outstanding Credit</string>
+    <string name="debtors_count">%1$d customers with credit</string>
+
+    <string name="current_balance">Current balance</string>
+    <string name="total_credit_given">Credit Given</string>
+    <string name="total_paid">Paid</string>
+    <string name="no_transactions_for_filter">No transactions for this filter</string>
+    <string name="view_full_history">View Full History</string>
+
+    <string name="aging_report">Credit Aging</string>
+    <string name="total_outstanding">Total Outstanding</string>
+    <string name="n_customers_owe">%1$d customers owe you money</string>
+    <string name="by_age">By Age</string>
+    <string name="no_outstanding_credit">No Outstanding Credit</string>
+    <string name="everyone_paid_up">Everyone is paid up — nice!</string>
+    <string name="bucket_current">0-30 days</string>
+    <string name="bucket_30">31-60 days</string>
+    <string name="bucket_60">61-90 days</string>
+    <string name="bucket_90">90+ days</string>
+    <string name="n_customers">%1$d customers</string>
+    <string name="no_customers_in_bucket">No customers in this bucket</string>
+    <string name="aging_report_subtitle">30 / 60 / 90 day breakdown</string>
+
+    <string name="receivables">Receivables</string>
+    <string name="payables">Payables</string>
+    <string name="n_parties_owe">%1$d parties</string>
+    <string name="n_parties">%1$d parties</string>
+
+    <string name="you_owe_customer">You owe customer %1$d</string>
+    <string name="customer_owes_you">Customer owes you %1$d</string>
+    <string name="record_refund">Record Refund</string>
+    <string name="refund_amount">Refund amount</string>
+    <string name="refund_from_account">Refund from account</string>
+    <string name="refund_recorded">Refund recorded!</string>
+
+    <string name="credit_refund">Refund issued</string>
+    <string name="add_credit">Add Credit</string>
+    <string name="customer_is_settled">No outstanding balance</string>
+    <string name="add_credit_hint">Add to this customer\'s outstanding balance.</string>
+</resources>

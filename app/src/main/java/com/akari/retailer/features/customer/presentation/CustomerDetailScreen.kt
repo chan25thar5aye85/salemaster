@@ -251,73 +251,89 @@ fun CustomerDetailScreen(
                 }
 
                 // ── Credit balance card (bidirectional) ──
-                if (!customer.isSettled() || state.creditTransactions.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(Spacing.medium))
-                    AppCard {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "💳 ${stringResource(R.string.credit_balance_label)}",
-                                    style = AppTypography.title
-                                )
-                                Text(
-                                    text = when {
-                                        customer.owesCredit() -> "+${customer.creditBalance}"
-                                        customer.weOweCustomer() -> "${customer.creditBalance}"
-                                        else -> "0"
-                                    },
-                                    style = AppTypography.header,
-                                    color = when {
-                                        customer.owesCredit() -> MaterialTheme.colorScheme.error
-                                        customer.weOweCustomer() -> Color(0xFF4CAF50)  // green
-                                        else -> MaterialTheme.colorScheme.onSurface
-                                    }
-                                )
-                            }
+                Spacer(modifier = Modifier.height(Spacing.medium))
+                AppCard {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // Header: balance label + value
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "💳 ${stringResource(R.string.credit_balance_label)}",
+                                style = AppTypography.title
+                            )
+                            Text(
+                                text = when {
+                                    customer.owesCredit() -> "+${customer.creditBalance}"
+                                    customer.weOweCustomer() -> "${customer.creditBalance}"
+                                    else -> "0"
+                                },
+                                style = AppTypography.header,
+                                color = when {
+                                    customer.owesCredit() -> MaterialTheme.colorScheme.error
+                                    customer.weOweCustomer() -> Color(0xFF4CAF50)
+                                    else -> MaterialTheme.colorScheme.onSurface
+                                }
+                            )
+                        }
 
-                            if (customer.owesCredit()) {
-                                // They owe us — collect
-                                Spacer(modifier = Modifier.height(Spacing.small))
-                                Text(
-                                    text = stringResource(R.string.customer_owes_you, customer.creditBalance),
-                                    style = AppTypography.small,
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                                Spacer(modifier = Modifier.height(Spacing.small))
-                                Button(
-                                    onClick = {
-                                        viewModel.handleEvent(CustomerDetailEvent.OpenPaymentDialog)
-                                    },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(stringResource(R.string.record_payment))
-                                }
-                            } else if (customer.weOweCustomer()) {
-                                // We owe them — refund
-                                Spacer(modifier = Modifier.height(Spacing.small))
-                                Text(
-                                    text = stringResource(R.string.you_owe_customer, customer.getBalanceAbsolute()),
-                                    style = AppTypography.small,
-                                    color = Color(0xFF4CAF50)
-                                )
-                                Spacer(modifier = Modifier.height(Spacing.small))
-                                Button(
-                                    onClick = {
-                                        viewModel.handleEvent(CustomerDetailEvent.OpenRefundDialog)
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF4CAF50),
-                                        contentColor = Color.White
-                                    )
-                                ) {
-                                    Text(stringResource(R.string.record_refund))
-                                }
+                        // Contextual subtext + primary action button
+                        if (customer.owesCredit()) {
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            Text(
+                                text = stringResource(R.string.customer_owes_you, customer.creditBalance),
+                                style = AppTypography.small,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            Button(
+                                onClick = {
+                                    viewModel.handleEvent(CustomerDetailEvent.OpenPaymentDialog)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(stringResource(R.string.record_payment))
                             }
+                        } else if (customer.weOweCustomer()) {
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            Text(
+                                text = stringResource(R.string.you_owe_customer, customer.getBalanceAbsolute()),
+                                style = AppTypography.small,
+                                color = Color(0xFF4CAF50)
+                            )
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            Button(
+                                onClick = {
+                                    viewModel.handleEvent(CustomerDetailEvent.OpenRefundDialog)
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF4CAF50),
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text(stringResource(R.string.record_refund))
+                            }
+                        } else {
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            Text(
+                                text = stringResource(R.string.customer_is_settled),
+                                style = AppTypography.small,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+
+                        // Always-visible: Add Credit
+                        Spacer(modifier = Modifier.height(Spacing.small))
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.handleEvent(CustomerDetailEvent.OpenCreditDialog)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("+  " + stringResource(R.string.add_credit))
                         }
                     }
                 }
@@ -442,6 +458,20 @@ fun CustomerDetailScreen(
             onDismiss = { viewModel.handleEvent(CustomerDetailEvent.CloseRefundDialog) }
         )
     }
+
+    // ── Add credit dialog (manual extend) ──
+    if (state.showCreditDialog && state.customer != null) {
+        RecordCreditExtendDialog(
+            amount = state.creditAmount,
+            notes = state.creditNotes,
+            error = state.creditError,
+            isProcessing = state.isRecordingCredit,
+            onAmountChange = { viewModel.handleEvent(CustomerDetailEvent.CreditAmountChanged(it)) },
+            onNotesChange = { viewModel.handleEvent(CustomerDetailEvent.CreditNotesChanged(it)) },
+            onSubmit = { viewModel.handleEvent(CustomerDetailEvent.SubmitCredit) },
+            onDismiss = { viewModel.handleEvent(CustomerDetailEvent.CloseCreditDialog) }
+        )
+    }
 }
 
 
@@ -530,7 +560,22 @@ private fun RecordCreditPaymentDialog(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     enabled = !isProcessing,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    trailingIcon = {
+                        if (maxAmount > 0) {
+                            TextButton(
+                                onClick = { onAmountChange(maxAmount.toString()) },
+                                enabled = !isProcessing
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.pay_all),
+                                    style = AppTypography.small,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(Spacing.small))
@@ -702,6 +747,89 @@ private fun RecordCreditRefundDialog(
                         }
                     }
                 }
+
+                if (error != null) {
+                    Spacer(modifier = Modifier.height(Spacing.small))
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = AppTypography.small
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onSubmit,
+                enabled = !isProcessing
+            ) {
+                if (isProcessing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(stringResource(R.string.confirm))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isProcessing
+            ) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RecordCreditExtendDialog(
+    amount: String,
+    notes: String,
+    error: String?,
+    isProcessing: Boolean,
+    onAmountChange: (String) -> Unit,
+    onNotesChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { if (!isProcessing) onDismiss() },
+        title = { Text(stringResource(R.string.add_credit)) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(R.string.add_credit_hint),
+                    style = AppTypography.small,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(bottom = Spacing.small)
+                )
+
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = onAmountChange,
+                    label = { Text(stringResource(R.string.amount)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    enabled = !isProcessing,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.small))
+
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = onNotesChange,
+                    label = { Text(stringResource(R.string.notes_optional)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isProcessing,
+                    maxLines = 2
+                )
 
                 if (error != null) {
                     Spacer(modifier = Modifier.height(Spacing.small))

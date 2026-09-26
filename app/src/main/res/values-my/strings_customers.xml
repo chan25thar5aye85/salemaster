@@ -69,4 +69,8 @@
     <string name="refund_recorded">ပြန်အမ်းငွေ မှတ်တမ်းတင်ပြီး!</string>
 
     <string name="credit_refund">ပြန်အမ်းငွေထုတ်ပေးမှု</string>
+    <string name="add_credit">အကြွေးထည့်ရန်</string>
+    <string name="customer_is_settled">ကျန်ရှိသောလက်ကျန်မရှိပါ</string>
+    <string name="add_credit_hint">ဤဖောက်သည်၏ အကြွေးလက်ကျန်သို့ ထည့်ရန်။</string>
+    <string name="pay_all">အားလုံးပေးရန်</string>
 </resources>
