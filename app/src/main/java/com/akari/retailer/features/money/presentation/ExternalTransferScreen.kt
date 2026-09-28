@@ -206,15 +206,24 @@ fun ExternalTransferScreen(
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(
-                        text = if (state.isOutgoing())
-                            stringResource(R.string.to_account)
-                        else
-                            stringResource(R.string.from_account),
-                        style = AppTypography.label,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = if (state.isOutgoing())
+                                stringResource(R.string.to_account)
+                            else
+                                stringResource(R.string.from_account),
+                            style = AppTypography.label,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "(${stringResource(R.string.optional)})",
+                            style = AppTypography.small,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            fontSize = 10.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     val query = state.externalAccountName.trim()
                     val suggestions: List<String> =
@@ -576,9 +585,8 @@ fun ExternalTransferScreen(
                 text = if (state.isSaving) stringResource(R.string.saving) else stringResource(R.string.confirm_transfer),
                 onClick = { viewModel.handleEvent(ExternalTransferEvent.SaveTransfer) },
                 isLoading = state.isSaving,
-                enabled = state.selectedAccount != null && 
-                         state.externalAccountName.isNotEmpty() && 
-                         state.amount.isNotEmpty() && 
+                enabled = state.selectedAccount != null &&
+                         state.amount.isNotEmpty() &&
                          !state.isSaving
             )
             

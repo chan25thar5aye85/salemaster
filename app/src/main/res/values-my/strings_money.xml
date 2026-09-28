@@ -78,4 +78,5 @@
     <string name="no_external_transfers">ပြင်ပငွေလွှဲမှုမရှိသေးပါ</string>
     <string name="send_money">ငွေလွှဲပို့ရန်</string>
     <string name="receive_money">ငွေလက်ခံရန်</string>
+    <string name="optional">မထည့်လည်းရ</string>
 </resources>

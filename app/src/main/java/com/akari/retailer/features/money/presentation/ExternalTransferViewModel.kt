@@ -109,11 +109,6 @@ class ExternalTransferViewModel(
             _state.value = _state.value.copy(error = "Select account")
             return
         }
-        if (currentState.externalAccountName.isBlank()) {
-            _state.value = _state.value.copy(error = "External account name is required")
-            return
-        }
-
         val amountInt = currentState.amount.toIntOrNull()
         if (amountInt == null || amountInt <= 0) {
             _state.value = _state.value.copy(error = "Enter a valid amount")
@@ -138,7 +133,7 @@ class ExternalTransferViewModel(
             val params = ExternalTransferUseCase.Params(
                 direction = direction,
                 accountId = currentState.selectedAccount.id,
-                externalAccountName = currentState.externalAccountName.trim(),
+                externalAccountName = currentState.externalAccountName.trim().ifBlank { "External" },
                 externalAccountNumber = "",
                 amount = amountInt,
                 fee = feeInt,

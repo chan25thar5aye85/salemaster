@@ -503,7 +503,7 @@ private fun TransferRow(txn: MoneyTransaction) {
                         fontSize = 11.sp
                     )
                     Text(
-                        text = txn.externalAccountName.ifEmpty { "—" },
+                        text = txn.externalAccountName.ifBlank { "External" },
                         style = AppTypography.body,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1

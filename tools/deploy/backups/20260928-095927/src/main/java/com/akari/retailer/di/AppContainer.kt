@@ -1,0 +1,203 @@
+package com.akari.retailer.di
+
+import com.akari.retailer.core.utils.PaymentPreferences
+import com.akari.retailer.data.remote.FirestoreService
+import com.akari.retailer.data.repository.FirestoreSaleRepository
+import com.akari.retailer.data.repository.SaleRepository
+import com.akari.retailer.features.customer.data.remote.FirestoreCustomerService
+import com.akari.retailer.features.customer.data.repository.CustomerRepository
+import com.akari.retailer.features.customer.data.repository.FirestoreCustomerRepository
+import com.akari.retailer.features.expense.data.remote.FirestoreCategoryService
+import com.akari.retailer.features.expense.data.remote.FirestoreExpenseService
+import com.akari.retailer.features.expense.data.remote.FirestoreExpenseFinalizer
+import com.akari.retailer.features.expense.data.repository.CategoryRepository
+import com.akari.retailer.features.expense.data.repository.ExpenseRepository
+import com.akari.retailer.features.expense.data.repository.FirestoreCategoryRepository
+import com.akari.retailer.features.expense.data.repository.FirestoreExpenseRepository
+import com.akari.retailer.features.expense.domain.usecases.CalculateBusinessProfitUseCase
+import com.akari.retailer.features.inventory.data.repository.FirestoreInventoryRepository
+import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseOrderRepository
+import com.akari.retailer.features.inventory.data.repository.FirestorePurchaseRepository
+import com.akari.retailer.features.inventory.data.repository.InventoryRepository
+import com.akari.retailer.features.inventory.data.repository.PurchaseOrderRepository
+import com.akari.retailer.features.inventory.data.repository.PurchaseRepository
+import com.akari.retailer.features.inventory.data.repository.PurchaseFinalizer
+import com.akari.retailer.features.inventory.data.remote.FirestorePurchaseFinalizer
+import com.akari.retailer.features.inventory.data.remote.FirestoreInventoryService
+import com.akari.retailer.features.inventory.data.remote.FirestoreStockService
+import com.akari.retailer.features.inventory.data.repository.FirestoreStockRepository
+import com.akari.retailer.features.inventory.data.repository.StockRepository
+import com.akari.retailer.features.money.data.remote.FirestoreMoneyService
+import com.akari.retailer.features.money.data.remote.FirestoreMoneyTransactionService
+import com.akari.retailer.features.money.data.repository.FirestoreMoneyAccountRepository
+import com.akari.retailer.features.money.data.repository.FirestoreMoneyTransactionRepository
+import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
+import com.akari.retailer.features.money.data.repository.MoneyTransactionRepository
+import com.akari.retailer.features.money.domain.usecases.ExternalTransferUseCase
+import com.akari.retailer.features.money.domain.usecases.TransferMoneyUseCase
+import com.akari.retailer.features.sales.data.remote.FirestoreIncomeEntryService
+import com.akari.retailer.features.sales.data.remote.FirestoreIncomeFinalizer
+import com.akari.retailer.features.sales.data.remote.FirestoreIncomeStreamService
+import com.akari.retailer.features.sales.data.repository.FirestoreIncomeEntryRepository
+import com.akari.retailer.features.sales.data.repository.FirestoreIncomeStreamRepository
+import com.akari.retailer.features.sales.data.repository.IncomeEntryRepository
+import com.akari.retailer.features.sales.data.repository.IncomeStreamRepository
+import com.akari.retailer.features.supplier.data.remote.FirestoreSupplierService
+import com.akari.retailer.features.supplier.data.repository.FirestoreSupplierRepository
+import com.akari.retailer.features.supplier.data.repository.SupplierRepository
+import com.akari.retailer.features.customer.data.remote.FirestoreCreditService
+import com.akari.retailer.features.customer.data.repository.CreditRepository
+import com.akari.retailer.features.customer.data.repository.FirestoreCreditRepository
+import com.akari.retailer.features.customer.domain.usecases.CalculateAgingReportUseCase
+import com.akari.retailer.features.customer.domain.usecases.ExtendCreditUseCase
+import com.akari.retailer.features.customer.domain.usecases.GetCreditTransactionsUseCase
+import com.akari.retailer.features.customer.domain.usecases.RecordCreditPaymentUseCase
+import com.akari.retailer.features.customer.domain.usecases.RecordCreditRefundUseCase
+import com.akari.retailer.features.sales.data.remote.FirestoreSaleFinalizer
+import com.akari.retailer.features.sales.data.repository.SaleFinalizer
+import com.akari.retailer.features.supplier.data.remote.FirestoreSupplierCreditService
+import com.akari.retailer.features.supplier.data.repository.SupplierCreditRepository
+import com.akari.retailer.features.supplier.data.repository.FirestoreSupplierCreditRepository
+import com.akari.retailer.features.supplier.domain.usecases.GetSupplierTransactionsUseCase
+import com.akari.retailer.features.supplier.domain.usecases.RecordSupplierPaymentUseCase
+import com.akari.retailer.features.supplier.domain.usecases.RecordSupplierRefundReceivedUseCase
+
+class AppContainer(private val appContext: android.content.Context) {
+
+    // Cross-cutting utilities
+    val paymentPreferences: PaymentPreferences by lazy { PaymentPreferences(appContext) }
+
+    // Sales
+    private val firestoreService by lazy { FirestoreService() }
+    val saleRepository: SaleRepository by lazy { 
+        FirestoreSaleRepository(firestoreService)
+    }
+    val saleFinalizer: SaleFinalizer by lazy { FirestoreSaleFinalizer() }
+    
+    // Income Streams
+    private val incomeStreamService by lazy { FirestoreIncomeStreamService() }
+    val incomeStreamRepository: IncomeStreamRepository by lazy {
+        FirestoreIncomeStreamRepository(incomeStreamService)
+    }
+    
+    // Income Entries
+    private val incomeEntryService by lazy { FirestoreIncomeEntryService() }
+    val incomeEntryRepository: IncomeEntryRepository by lazy {
+        FirestoreIncomeEntryRepository(incomeEntryService)
+    }
+
+    val incomeFinalizer: FirestoreIncomeFinalizer by lazy {
+        FirestoreIncomeFinalizer()
+    }
+    
+    // Customers
+    private val customerFirestoreService by lazy { FirestoreCustomerService() }
+    val customerRepository: CustomerRepository by lazy {
+        FirestoreCustomerRepository(customerFirestoreService)
+    }
+
+    // Credit
+    private val creditService by lazy { FirestoreCreditService() }
+    val creditRepository: CreditRepository by lazy {
+        FirestoreCreditRepository(creditService)
+    }
+    val extendCreditUseCase by lazy { ExtendCreditUseCase(creditRepository) }
+    val recordCreditPaymentUseCase by lazy { RecordCreditPaymentUseCase(creditRepository) }
+    val recordCreditRefundUseCase by lazy { RecordCreditRefundUseCase(creditRepository) }
+    val getCreditTransactionsUseCase by lazy { GetCreditTransactionsUseCase(creditRepository) }
+    val calculateAgingReportUseCase by lazy { CalculateAgingReportUseCase() }
+    
+    // Expenses
+    private val expenseFirestoreService by lazy { FirestoreExpenseService() }
+    val expenseRepository: ExpenseRepository by lazy {
+        FirestoreExpenseRepository(expenseFirestoreService)
+    }
+
+    val expenseFinalizer: FirestoreExpenseFinalizer by lazy {
+        FirestoreExpenseFinalizer()
+    }
+    
+    // Categories
+    private val categoryFirestoreService by lazy { FirestoreCategoryService() }
+    val categoryRepository: CategoryRepository by lazy {
+        FirestoreCategoryRepository(categoryFirestoreService)
+    }
+    
+    // Suppliers
+    private val supplierFirestoreService by lazy { FirestoreSupplierService() }
+    val supplierRepository: SupplierRepository by lazy {
+        FirestoreSupplierRepository(supplierFirestoreService)
+    }
+
+    // Supplier Payables (you owe them)
+    private val supplierCreditService by lazy { FirestoreSupplierCreditService() }
+    val supplierCreditRepository: SupplierCreditRepository by lazy {
+        FirestoreSupplierCreditRepository(supplierCreditService)
+    }
+    val recordSupplierPaymentUseCase by lazy {
+        RecordSupplierPaymentUseCase(supplierCreditRepository)
+    }
+    val recordSupplierRefundReceivedUseCase by lazy {
+        RecordSupplierRefundReceivedUseCase(supplierCreditRepository)
+    }
+    val getSupplierTransactionsUseCase by lazy {
+        GetSupplierTransactionsUseCase(supplierCreditRepository)
+    }
+    
+    // Inventory
+    private val inventoryFirestoreService by lazy { FirestoreInventoryService() }
+    val inventoryRepository: InventoryRepository by lazy {
+        FirestoreInventoryRepository(inventoryFirestoreService)
+    }
+    
+    // Purchase Orders
+    val purchaseOrderRepository: PurchaseOrderRepository by lazy {
+        FirestorePurchaseOrderRepository()
+    }
+    
+    // Purchases
+    val purchaseRepository: PurchaseRepository by lazy {
+        FirestorePurchaseRepository()
+    }
+    val purchaseFinalizer: PurchaseFinalizer by lazy {
+        FirestorePurchaseFinalizer()
+    }
+    
+    // Stock Movements
+    private val stockService by lazy { FirestoreStockService() }
+    val stockRepository: StockRepository by lazy {
+        FirestoreStockRepository(stockService)
+    }
+    
+    // Money Accounts
+    private val moneyService by lazy { FirestoreMoneyService() }
+    val moneyAccountRepository: MoneyAccountRepository by lazy {
+        FirestoreMoneyAccountRepository(moneyService)
+    }
+    
+    // Money Transactions
+    private val moneyTransactionService by lazy { FirestoreMoneyTransactionService() }
+    val moneyTransactionRepository: MoneyTransactionRepository by lazy {
+        FirestoreMoneyTransactionRepository(moneyTransactionService)
+    }
+    
+    // Transfer Money
+    val transferMoneyUseCase by lazy {
+        TransferMoneyUseCase(moneyAccountRepository, moneyTransactionRepository)
+    }
+    
+    // External Transfer
+    val externalTransferUseCase by lazy {
+        ExternalTransferUseCase(moneyAccountRepository, moneyTransactionRepository)
+    }
+    
+    // Profit & Loss (INCLUDES FEES NOW)
+    val calculateProfitUseCase by lazy {
+        CalculateBusinessProfitUseCase(
+            saleRepository,
+            expenseRepository,
+            incomeEntryRepository,
+            moneyTransactionRepository  // ✅ NEW
+        )
+    }
+}
