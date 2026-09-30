@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen -->
+    <string name="debt">Debt</string>
+    <string name="debt_title">Debt</string>
+
+    <!-- Tabs -->
+    <string name="debt_receivables">Receivables</string>
+    <string name="debt_payables">Payables</string>
+
+    <!-- Summary -->
+    <string name="debt_they_owe_me">They owe me</string>
+    <string name="debt_i_owe_them">I owe them</string>
+    <string name="debt_n_customers">%1$d customers</string>
+    <string name="debt_n_suppliers">%1$d suppliers</string>
+
+    <!-- Aging -->
+    <string name="debt_aging_bucket_current">0-30</string>
+    <string name="debt_aging_bucket_30">31-60</string>
+    <string name="debt_aging_bucket_60">61-90</string>
+    <string name="debt_aging_bucket_90">90+</string>
+
+    <!-- Empty / rows -->
+    <string name="debt_no_outstanding">No outstanding debt</string>
+    <string name="debt_oldest_days">Oldest: %1$d days</string>
+
+    <!-- Add-debt dialog -->
+    <string name="debt_add_customer_title">Add customer debt</string>
+    <string name="debt_add_supplier_title">Add supplier debt</string>
+    <string name="debt_select_customer">Select customer</string>
+    <string name="debt_select_supplier">Select supplier</string>
+    <string name="debt_amount">Amount</string>
+    <string name="debt_note_optional">Note (optional)</string>
+    <string name="debt_add">Add</string>
+    <string name="debt_saving">Saving…</string>
+    <string name="debt_cancel">Cancel</string>
+
+    <!-- Errors -->
+    <string name="debt_error_invalid_amount">Enter a valid amount</string>
+    <string name="debt_error_select_customer">Select a customer</string>
+    <string name="debt_error_select_supplier">Select a supplier</string>
+    <string name="debt_error_save_failed">Failed to save</string>
+    <string name="debt_error_load_failed">Failed to load debt</string>
+
+    <!-- Picker dialog -->
+    <string name="debt_pick_supplier_title">Select supplier</string>
+</resources>

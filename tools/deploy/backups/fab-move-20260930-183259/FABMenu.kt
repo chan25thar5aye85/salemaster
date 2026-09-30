@@ -115,7 +115,6 @@ fun FABMenu(
         FABMenuItemData(Icons.Default.Inventory, stringResource(R.string.fab_inventory), "inventory"),
         FABMenuItemData(Icons.Default.People, stringResource(R.string.fab_customers), "customers"),
         FABMenuItemData(Icons.Default.Business, stringResource(R.string.fab_suppliers), "suppliers"),
-        FABMenuItemData(Icons.Default.Schedule, stringResource(R.string.fab_debt), "debt_overview"),
         FABMenuItemData(Icons.Default.ShoppingCart, stringResource(R.string.fab_purchase_orders), "purchase_orders"),
         FABMenuItemData(Icons.Default.History, stringResource(R.string.fab_purchases), "purchases"),
         FABMenuItemData(Icons.Default.Settings, stringResource(R.string.fab_settings), "settings")
@@ -127,7 +126,8 @@ fun FABMenu(
         FABMenuItemData(Icons.Default.Insights, stringResource(R.string.fab_expense_analytics), "expense_analytics"),
         FABMenuItemData(Icons.Default.Insights, stringResource(R.string.fab_income_analytics), "income_analytics"),
         FABMenuItemData(Icons.Default.PieChart, stringResource(R.string.fab_profit_loss), "profit_loss"),
-        FABMenuItemData(Icons.Default.Schedule, stringResource(R.string.fab_aging_report), "aging_report")
+        FABMenuItemData(Icons.Default.Schedule, stringResource(R.string.fab_aging_report), "aging_report"),
+        FABMenuItemData(Icons.Default.Schedule, "Debt Overview", "debt_overview")
     )
 
     // Money submenu

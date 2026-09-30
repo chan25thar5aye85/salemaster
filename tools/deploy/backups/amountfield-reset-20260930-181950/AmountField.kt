@@ -38,18 +38,10 @@ fun AmountField(
     var isFocused by remember { mutableStateOf(false) }
 
     LaunchedEffect(amount, isFocused) {
-        when {
-            // Parent cleared the value (e.g. after save reset).
-            // Clear text even if we're still focused, so the field
-            // visibly empties when the form resets.
-            amount == null || amount <= 0 -> {
-                text = ""
-            }
-            // Not focused: reformat with thousand separators.
-            !isFocused -> {
-                text = MoneyFormatter.formatForInput(amount)
-            }
-            // Focused with a value: leave the user's typing alone.
+        if (!isFocused) {
+            text = amount?.takeIf { it > 0 }?.let {
+                MoneyFormatter.formatForInput(it)
+            } ?: ""
         }
     }
 

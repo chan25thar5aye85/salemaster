@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen -->
+    <string name="debt">အကြွေး</string>
+    <string name="debt_title">အကြွေး</string>
+
+    <!-- Tabs -->
+    <string name="debt_receivables">လက်ခံရန်</string>
+    <string name="debt_payables">ပေးရန်</string>
+
+    <!-- Summary -->
+    <string name="debt_they_owe_me">သူတို့အကြွေး</string>
+    <string name="debt_i_owe_them">ငါပေးရန်</string>
+    <string name="debt_n_customers">ဖောက်သည် %1$d ဦး</string>
+    <string name="debt_n_suppliers">ပေးသွင်းသူ %1$d ဦး</string>
+
+    <!-- Aging -->
+    <string name="debt_aging_bucket_current">၀-၃၀</string>
+    <string name="debt_aging_bucket_30">၃၁-၆၀</string>
+    <string name="debt_aging_bucket_60">၆၁-၉၀</string>
+    <string name="debt_aging_bucket_90">၉၀+</string>
+
+    <!-- Empty / rows -->
+    <string name="debt_no_outstanding">ပေးရန်ကျန်ရှိသောအကြွေးမရှိပါ</string>
+    <string name="debt_oldest_days">အသက်အကြီးဆုံး: %1$d ရက်</string>
+
+    <!-- Add-debt dialog -->
+    <string name="debt_add_customer_title">ဖောက်သည်အကြွေးထည့်ရန်</string>
+    <string name="debt_add_supplier_title">ပေးသွင်းသူအကြွေးထည့်ရန်</string>
+    <string name="debt_select_customer">ဖောက်သည်ရွေးပါ</string>
+    <string name="debt_select_supplier">ပေးသွင်းသူရွေးပါ</string>
+    <string name="debt_amount">ပမာဏ</string>
+    <string name="debt_note_optional">မှတ်ချက် (ထည့်ရန်မလို)</string>
+    <string name="debt_add">ထည့်မည်</string>
+    <string name="debt_saving">သိမ်းနေသည်…</string>
+    <string name="debt_cancel">မလုပ်တော့</string>
+
+    <!-- Errors -->
+    <string name="debt_error_invalid_amount">မှန်ကန်သောပမာဏထည့်ပါ</string>
+    <string name="debt_error_select_customer">ဖောက်သည်ရွေးပါ</string>
+    <string name="debt_error_select_supplier">ပေးသွင်းသူရွေးပါ</string>
+    <string name="debt_error_save_failed">သိမ်းရန်မအောင်မြင်ပါ</string>
+    <string name="debt_error_load_failed">အကြွေးဖွင့်ရန်မအောင်မြင်ပါ</string>
+
+    <!-- Picker dialog -->
+    <string name="debt_pick_supplier_title">ပေးသွင်းသူရွေးပါ</string>
+</resources>

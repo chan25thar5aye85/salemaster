@@ -43,6 +43,7 @@ import com.akari.retailer.features.money.presentation.MoneyTransactionsScreen
 import com.akari.retailer.features.money.presentation.TransferMoneyScreen
 import com.akari.retailer.features.reports.presentation.ProfitLossScreen
 import com.akari.retailer.features.reports.presentation.TrendsScreen
+import com.akari.retailer.features.debt.presentation.DebtOverviewScreen
 import com.akari.retailer.features.sales.presentation.income.IncomeAnalyticsScreen
 import com.akari.retailer.features.sales.presentation.income.IncomeEntryScreen
 import com.akari.retailer.features.sales.presentation.income.IncomeEditScreen
@@ -109,6 +110,13 @@ fun AppNavHost() {
                 // INCOME MODULE
                 composable(Routes.AGING_REPORT) {
                     AgingReportScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable(Routes.DEBT_OVERVIEW) {
+                    DebtOverviewScreen(
                         navController = navController,
                         onBack = { navController.popBackStack() }
                     )
@@ -488,6 +496,7 @@ fun AppNavHost() {
                         "reports" -> navController.navigate(Routes.TRENDS)
                         "profit_loss" -> navController.navigate(Routes.PROFIT_LOSS)
                         "aging_report" -> navController.navigate(Routes.AGING_REPORT)
+                        "debt_overview" -> navController.navigate(Routes.DEBT_OVERVIEW)
                         "customers" -> navController.navigate(Routes.CUSTOMERS)
                         "suppliers" -> navController.navigate(Routes.SUPPLIERS)
                         "purchase_orders" -> navController.navigate(Routes.PURCHASE_ORDERS)
