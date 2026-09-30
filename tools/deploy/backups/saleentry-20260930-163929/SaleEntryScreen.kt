@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -72,29 +71,26 @@ fun SaleEntryScreen(
     val state by viewModel.state.collectAsState()
     val focusManager = LocalFocusManager.current
 
-    // Reactive connectivity — no polling. Updates instantly when the
-    // device joins or leaves a network.
-    val isOnline by NetworkUtils.observeConnectivity(context)
-        .collectAsState(initial = NetworkUtils.isNetworkAvailable(context))
+    var isOnline by remember { mutableStateOf(NetworkUtils.isNetworkAvailable(context)) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            isOnline = NetworkUtils.isNetworkAvailable(context)
+            delay(3000)
+        }
+    }
 
     val focusRequesters = remember { mutableStateMapOf<Long, FocusRequester>() }
 
-    // Cleanup: drop any focus requesters whose row is gone.
-    // Keyed on the count so it doesn't fire on every keystroke.
-    LaunchedEffect(state.rows.size) {
+    LaunchedEffect(state.rows) {
         val currentIds = state.rows.map { it.id }.toSet()
-        focusRequesters.keys
-            .filter { it !in currentIds }
-            .toList()
-            .forEach { focusRequesters.remove(it) }
+        focusRequesters.keys.filter { it !in currentIds }.toList().forEach { focusRequesters.remove(it) }
     }
 
-    // Focus the currently-focused row. Keyed on the ID only, so typing
-    // (which changes state.rows) doesn't restart the effect.
-    val focusedRowId = state.rows.firstOrNull { it.isFocused }?.id
-    LaunchedEffect(focusedRowId) {
-        if (focusedRowId != null) {
-            val requester = focusRequesters.getOrPut(focusedRowId) { FocusRequester() }
+    LaunchedEffect(state.rows) {
+        val focusedRow = state.rows.firstOrNull { it.isFocused }
+        if (focusedRow != null) {
+            val requester = focusRequesters.getOrPut(focusedRow.id) { FocusRequester() }
             delay(100)
             requester.requestFocus()
         }
@@ -579,12 +575,31 @@ private fun RecentSalesCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "📋 ${stringResource(R.string.recent_sales)}",
-                    style = AppTypography.title,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "📋 ${stringResource(R.string.recent_sales)}",
+                        style = AppTypography.title,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (sales.isNotEmpty()) {
+                        Spacer(modifier = Modifier.width(Spacing.small))
+                        Surface(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "${sales.size}",
+                                style = AppTypography.small,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
                 TextButton(onClick = onViewAllClick) {
                     Text(stringResource(R.string.view_all), fontSize = 13.sp)
                 }
