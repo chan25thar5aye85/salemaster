@@ -64,19 +64,79 @@ class FirestoreService {
     fun getSales(): Flow<List<Sale>> = callbackFlow {
         val collection = getCollection()
         if (collection == null) { trySend(emptyList()); close(); return@callbackFlow }
-        
+
         val listener = collection
             .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) {
+                    // Do NOT close the flow on transient errors — the listener
+                    // is still alive and will emit again on recovery. Just log
+                    // and keep the last-known value.
+                    android.util.Log.w("FirestoreService",
+                        "getSales listener error (transient, continuing): \${error.message}")
+                    return@addSnapshotListener
+                }
                 if (snapshot == null) { trySend(emptyList()); return@addSnapshotListener }
-                
+
                 val sales = snapshot.documents.mapNotNull { doc -> mapDocToSale(doc.id, doc.data ?: emptyMap()) }
                 trySend(sales)
             }
         awaitClose { listener.remove() }
     }
     
+    /**
+     * Only the N most recent sales — for the Recent Sales card on Sale Entry.
+     * Small limit keeps the listener cheap even after years of data.
+     */
+    fun getRecentSales(limit: Int = 10): Flow<List<Sale>> = callbackFlow {
+        val collection = getCollection()
+        if (collection == null) { trySend(emptyList()); close(); return@callbackFlow }
+
+        val listener = collection
+            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .limit(limit.toLong())
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    android.util.Log.w("FirestoreService",
+                        "getRecentSales error (transient, continuing): ${error.message}")
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) { trySend(emptyList()); return@addSnapshotListener }
+                val sales = snapshot.documents.mapNotNull { doc ->
+                    mapDocToSale(doc.id, doc.data ?: emptyMap())
+                }
+                trySend(sales)
+            }
+        awaitClose { listener.remove() }
+    }
+
+    /**
+     * Larger window for the Sale History screen. 500 covers ~2-3 days at
+     * 150-300 sales/day. If you need more, build pagination instead of
+     * raising this further.
+     */
+    fun getSalesHistory(limit: Int = 500): Flow<List<Sale>> = callbackFlow {
+        val collection = getCollection()
+        if (collection == null) { trySend(emptyList()); close(); return@callbackFlow }
+
+        val listener = collection
+            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .limit(limit.toLong())
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    android.util.Log.w("FirestoreService",
+                        "getSalesHistory error (transient, continuing): ${error.message}")
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) { trySend(emptyList()); return@addSnapshotListener }
+                val sales = snapshot.documents.mapNotNull { doc ->
+                    mapDocToSale(doc.id, doc.data ?: emptyMap())
+                }
+                trySend(sales)
+            }
+        awaitClose { listener.remove() }
+    }
+
     fun getTodaySales(): Flow<List<Sale>> = callbackFlow {
         val collection = getCollection()
         if (collection == null) { trySend(emptyList()); close(); return@callbackFlow }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings">ပြင်ဆင်ချက်များ</string>
+    <string name="settings_title">ပြင်ဆင်ချက်များ</string>
+    <string name="language">ဘာသာစကား</string>
+    <string name="currency">ငွေကြေး</string>
+    <string name="version">ဗားရှင်း</string>
+    <string name="about">အကြောင်းအရာ</string>
+    <string name="language_updated">ဘာသာစကားပြောင်းပြီး</string>
+    <string name="english">အင်္ဂလိပ်</string>
+    <string name="myanmar">မြန်မာ</string>
+</resources>

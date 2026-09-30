@@ -16,6 +16,14 @@ class FirestoreSaleRepository(
     override fun getSales(): Flow<List<Sale>> {
         return firestoreService.getSales()
     }
+
+    override fun getRecentSales(limit: Int): Flow<List<Sale>> {
+        return firestoreService.getRecentSales(limit)
+    }
+
+    override fun getSalesHistory(limit: Int): Flow<List<Sale>> {
+        return firestoreService.getSalesHistory(limit)
+    }
     
     override fun getTodaySales(): Flow<List<Sale>> {
         return firestoreService.getTodaySales()

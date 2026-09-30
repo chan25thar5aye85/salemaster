@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="suppliers">ပေးသွင်းသူများ</string>
+    <string name="add_supplier">ပေးသွင်းသူထည့်ရန်</string>
+    <string name="supplier_details">ပေးသွင်းသူအသေးစိတ်</string>
+    <string name="edit_supplier">ပေးသွင်းသူပြင်ရန်</string>
+    <string name="delete_supplier">ပေးသွင်းသူဖျက်မည်</string>
+    <string name="delete_supplier_confirmation">ဤပေးသွင်းသူကို ဖျက်ရန် သေချာပါသလား?</string>
+    <string name="no_suppliers_yet">ပေးသွင်းသူမရှိသေးပါ</string>
+    <string name="tap_add_supplier">ပထမဆုံးပေးသွင်းသူထည့်ရန် + ကိုနှိပ်ပါ</string>
+    <string name="no_suppliers_found">တွေ့ရှိသည့်ပေးသွင်းသူမရှိပါ</string>
+    <string name="search_suppliers">အမည် သို့မဟုတ် ဖုန်းဖြင့် ရှာဖွေရန်...</string>
+    <string name="loading_suppliers">ပေးသွင်းသူများဖွင့်နေသည်...</string>
+    <string name="save_supplier">ပေးသွင်းသူသိမ်းမည်</string>
+    <string name="supplier_name_required">ပေးသွင်းသူအမည် လိုအပ်သည်</string>
+    <string name="failed_to_save_supplier">ပေးသွင်းသူသိမ်းရန် မအောင်မြင်ပါ</string>
+    <string name="update_supplier">ပေးသွင်းသူပြင်မည်</string>
+    <string name="supplier_not_found">ပေးသွင်းသူမတွေ့ပါ</string>
+    <string name="failed_to_load_supplier">ပေးသွင်းသူဖွင့်ရန် မအောင်မြင်ပါ</string>
+    <string name="failed_to_update_supplier">ပေးသွင်းသူပြင်ရန် မအောင်မြင်ပါ</string>
+    <string name="total_purchased">စုစုပေါင်းဝယ်ယူမှု</string>
+    <string name="company">ကုမ္ပဏီ</string>
+
+    <string name="payable_balance">ပေးရန်လက်ကျန်</string>
+    <string name="you_owe_supplier">သင်ပေးရန် %1$d</string>
+    <string name="record_supplier_payment">ငွေပေးချေမှုမှတ်တမ်းတင်ရန်</string>
+    <string name="supplier_payment">ပေးသွင်းသူထံ ငွေပေးချေမှု</string>
+    <string name="purchase_on_credit_label">အကြွေးဖြင့်ဝယ်ယူမှု</string>
+    <string name="payment_to_supplier_label">ငွေပေးချေပြီး</string>
+    <string name="payable_history">ပေးရန်မှတ်တမ်း</string>
+    <string name="supplier_payment_recorded">ငွေပေးချေမှု မှတ်တမ်းတင်ပြီး!</string>
+    <string name="amount_owed_to_supplier">ပေးရန်ပမာဏ: %1$d</string>
+
+    <string name="total_payable">စုစုပေါင်းပေးရန်</string>
+    <string name="n_suppliers_owed">ပေးရန်ရှိသည့် ပေးသွင်းသူ %1$d ဦး</string>
+
+    <string name="total_bought_on_credit">အကြွေးဖြင့်ဝယ်ယူခဲ့သည်</string>
+
+    <string name="supplier_owes_you">ပေးသွင်းသူက သင်အား %1$d ပေးရန်ရှိသည်</string>
+    <string name="record_refund_received">ပြန်အမ်းငွေလက်ခံမှုမှတ်တမ်းတင်ရန်</string>
+    <string name="refund_received_recorded">ပြန်အမ်းငွေလက်ခံပြီး!</string>
+    <string name="refund_received_label">ပြန်အမ်းငွေလက်ခံမှု</string>
+    <string name="refund_to_account">လက်ခံသည့်အကောင့်</string>
+</resources>

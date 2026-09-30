@@ -44,7 +44,7 @@ class SaleHistoryViewModel(
         loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                repository.getSales().collect { sales ->
+                repository.getSalesHistory(500).collect { sales ->
                     allSales = sales
                     applyFilters()
                 }

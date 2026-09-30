@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Profit & Loss -->
+    <string name="profit_loss">Profit &amp; Loss</string>
+    <string name="profit_loss_title">Profit &amp; Loss</string>
+    <string name="revenue">Revenue</string>
+    <string name="other_income">Other Income</string>
+    <string name="net_profit">Net Profit</string>
+    <string name="profit_margin">Profit Margin</string>
+    <string name="detailed_breakdown">Detailed Breakdown</string>
+    <string name="sales_revenue">Sales Revenue</string>
+    <string name="business_expenses">Business Expenses</string>
+    <string name="personal_expenses">Personal Expenses</string>
+    <string name="how_is_this_calculated">How is this calculated?</string>
+    <string name="revenue_calculation">• Revenue: Sales + Other Business Income</string>
+    <string name="business_expenses_calculation">• Business Expenses: Business + Mixed (business %) expenses</string>
+    <string name="personal_expenses_calculation">• Personal Expenses: Personal expenses only (not deducted from profit)</string>
+    <string name="profit_margin_calculation">• Profit Margin: (Profit / Revenue) × 100</string>
+    
+    <!-- Reports General -->
+    <string name="reports">Reports</string>
+    <string name="monthly_sales_trend">Monthly Sales Trend</string>
+    <string name="loading_sales_data">Loading sales data...</string>
+    <string name="no_sales_data_for">No sales data for</string>
+    <string name="start_recording_sales">Start recording sales to see trends!</string>
+    <string name="month_year">Month/Year</string>
+    <string name="avg_day">Avg/Day</string>
+    <string name="highest">Highest</string>
+    
+    <!-- Analytics General -->
+    <string name="spending_by_category">Spending by Category</string>
+    <string name="category_comparison">Category Comparison</string>
+    <string name="category_details_title">Category Details</string>
+    <string name="top_category">Top Category</string>
+    <string name="no_expenses_period">No expenses for this period</string>
+    <string name="add_expenses_to_see_analytics">Add some expenses to see analytics</string>
+    <string name="avg_per_day">Avg per day</string>
+    
+    <!-- Common Analytics Filters -->
+    <string name="filter_by_type">Filter by Type</string>
+    <string name="all_types">All</string>
+    <string name="business_type">Business</string>
+    <string name="personal_type">Personal</string>
+    <string name="mixed_type">Mixed</string>
+    <string name="today_range">Today</string>
+    <string name="this_week">This Week</string>
+    <string name="this_month">This Month</string>
+    <string name="last_month">Last Month</string>
+    <string name="calculating">Calculating...</string>
+    <string name="select_range">Select range</string>
+    <string name="showing">Showing</string>
+</resources>

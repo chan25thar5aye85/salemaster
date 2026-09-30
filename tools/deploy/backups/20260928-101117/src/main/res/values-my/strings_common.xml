@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">အရောင်းချခြင်း</string>
+
+    <!-- Form fields -->
+    <string name="name">အမည် *</string>
+    <string name="phone">ဖုန်း</string>
+    <string name="email">အီးမေးလ်</string>
+    <string name="address">လိပ်စာ</string>
+    <string name="notes">မှတ်ချက်</string>
+    <string name="category">အမျိုးအစား</string>
+    <string name="description">အကြောင်းအရာ</string>
+    <string name="amount">ပမာဏ</string>
+    <string name="title">ခေါင်းစဉ်</string>
+    <string name="date">ရက်စွဲ</string>
+
+    <!-- Common actions -->
+    <string name="delete">ဖျက်မည်</string>
+    <string name="cancel">မလုပ်တော့</string>
+    <string name="back">နောက်သို့</string>
+    <string name="ok">အိုကေ</string>
+    <string name="yes">ဟုတ်ကဲ့</string>
+    <string name="no">မဟုတ်ဘူး</string>
+    <string name="retry">ပြန်ကြိုးစားမည်</string>
+    <string name="clear">ရှင်းမည်</string>
+    <string name="coming_soon">မကြာမီရှိမည်</string>
+
+    <!-- Common labels -->
+    <string name="results">ရလဒ်များ</string>
+    <string name="results_for">အတွက် ရလဒ်များ</string>
+    <string name="stats">စာရင်းအင်း</string>
+    <string name="products">ပစ္စည်းများ</string>
+    <string name="loading">ဖွင့်နေသည်...</string>
+    <string name="error">အမှား</string>
+    <string name="updating">ပြင်နေသည်...</string>
+    <string name="view_analytics">ခွဲခြမ်းစိတ်ဖြာချက်ကြည့်ရန်</string>
+    <string name="clear_all">အားလုံးရှင်းမည်</string>
+    <string name="all">အားလုံး</string>
+    <string name="save">သိမ်းမည်</string>
+    <string name="add">ထည့်မည်</string>
+    <string name="search">ရှာဖွေရန်</string>
+    <string name="saving_dots">သိမ်းနေသည်...</string>
+    <string name="name_field">အမည်</string>
+    <string name="amount_field">ပမာဏ</string>
+    <string name="apply_filter_count">စစ်ထုတ်မှုအသုံးပြုရန် (%1$d)</string>
+    <string name="date_range">ကာလအပိုင်းအခြား</string>
+    <string name="specific_day">သတ်မှတ်ရက်</string>
+    <string name="custom_range">စိတ်ကြိုက်ကာလ</string>
+    <string name="today">ယနေ့</string>
+    <string name="select_day">ရက်ရွေးပါ</string>
+    <string name="this_year">ဤနှစ်</string>
+</resources>

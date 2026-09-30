@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- FAB Menu -->
+    <string name="fab_sale_entry">Sale Entry</string>
+    <string name="fab_expenses">Expenses</string>
+    <string name="fab_inventory">Inventory</string>
+    <string name="fab_customers">Customers</string>
+    <string name="fab_reports">Reports</string>
+    <string name="fab_suppliers">Suppliers</string>
+    <string name="fab_purchase_orders">Purchase Orders</string>
+    <string name="fab_purchases">Purchases</string>
+    <string name="fab_settings">Settings</string>
+    
+    <!-- FAB New Items -->
+    <string name="fab_add_income">Add Income</string>
+    <string name="fab_external_transfer">External Transfer</string>
+    <string name="fab_transfer_money">Transfer Money</string>
+    <string name="fab_money_accounts">Money Accounts</string>
+    <string name="fab_transactions">Transactions</string>
+    <string name="fab_money_analytics">Money Analytics</string>
+    <string name="fab_sales_trends">Sales Trends</string>
+    <string name="fab_expense_analytics">Expense Analytics</string>
+    <string name="fab_income_analytics">Income Analytics</string>
+    <string name="fab_profit_loss">Profit &amp; Loss</string>
+    
+    <!-- Submenus -->
+    <string name="fab_submenu_reports">Reports</string>
+    <string name="fab_submenu_money">Money</string>
+    <string name="fab_aging_report">Credit Aging</string>
+</resources>

@@ -1,5 +1,6 @@
 package com.akari.retailer.features.sales.presentation.entry
 
+import kotlinx.coroutines.flow.first
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -111,10 +112,35 @@ class SaleEntryViewModel(
     private fun loadRecentSales() {
         loadRecentSalesJob?.cancel()
         loadRecentSalesJob = viewModelScope.launch {
-            try {
-                repository.getSales().collect { sales ->
-                    _state.value = _state.value.copy(recentSales = sales.take(5))
+            // Auto-reconnect loop: if the underlying flow dies for any reason
+            // (e.g., transient Firestore listener error), re-subscribe after a
+            // short delay. Without this, a single error freezes the Recent
+            // Sales card until the app restarts.
+            while (true) {
+                try {
+                    repository.getRecentSales(10).collect { sales ->
+                        _state.value = _state.value.copy(recentSales = sales.take(5))
+                    }
+                    // Normal completion (rare for a listener) — back off briefly
+                    kotlinx.coroutines.delay(2_000)
+                } catch (e: Exception) {
+                    // Swallow and retry — do NOT terminate the loop
+                    kotlinx.coroutines.delay(2_000)
                 }
+            }
+        }
+    }
+
+    /**
+     * Force an immediate re-read of the sales list. Called after a successful
+     * save so the Recent Sales card reflects the new sale without waiting for
+     * the snapshot listener (which can lag on flaky networks).
+     */
+    private fun refreshRecentSalesOnce() {
+        viewModelScope.launch {
+            try {
+                val sales = repository.getSales().first()
+                _state.value = _state.value.copy(recentSales = sales.take(5))
             } catch (e: Exception) { }
         }
     }
@@ -375,10 +401,16 @@ class SaleEntryViewModel(
                 if (result.isSuccess) {
                     Log.d(TAG, "Sale saved atomically (payments: ${allPaymentEntries.size})")
 
+                    // Use the CURRENT recentSales (fresh from the listener),
+                    // NOT the value captured at the start of executeSaleSave.
+                    // The listener may have already delivered the new sale by
+                    // now, and we don't want to overwrite it with stale data.
+                    val freshRecentSales = _state.value.recentSales
+
                     _state.value = stateManager.resetState().copy(
                         isSaving = false,
                         saveSuccess = true,
-                        recentSales = currentRecentSales,
+                        recentSales = freshRecentSales,
                         accounts = currentState.accounts,
                         customers = currentState.customers,
                         paymentRows = listOf(PaymentRow(1L, lastAccountId, "")),
