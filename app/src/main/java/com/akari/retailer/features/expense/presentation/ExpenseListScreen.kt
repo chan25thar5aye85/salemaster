@@ -1,5 +1,7 @@
 package com.akari.retailer.features.expense.presentation
 
+import com.akari.retailer.core.ui.components.TimeFilterPreset
+import com.akari.retailer.core.ui.components.TimeFilterButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Spacer
@@ -97,8 +99,29 @@ fun ExpenseListScreen(
         onAddClick = { navController.navigate(Routes.EXPENSE_ADD) },
         showAnalyticsButton = true,
         onAnalyticsClick = { navController.navigate(Routes.EXPENSE_ANALYTICS) },
-        showFilterButton = true,
-        onFilterClick = { showFilterDialog = true }
+        filterButtonContent = {
+
+            TimeFilterButton(
+
+                filter = state.timeFilter,
+
+                onPresetChange = { viewModel.handleEvent(ExpenseListEvent.TimeFilterChanged(it)) },
+
+                onPickSpecificDay = { timestamp ->
+
+                    viewModel.handleEvent(ExpenseListEvent.TimeFilterChanged(state.timeFilter.copy(preset = TimeFilterPreset.SPECIFIC_DAY, specificDayMillis = timestamp)))
+
+                },
+
+                onPickCustomRange = { start, end ->
+
+                    viewModel.handleEvent(ExpenseListEvent.TimeFilterChanged(state.timeFilter.copy(preset = TimeFilterPreset.CUSTOM_RANGE, customStartMillis = start, customEndMillis = end)))
+
+                }
+
+                )
+
+        },
     ) {
         Column(
             modifier = Modifier.fillMaxSize()

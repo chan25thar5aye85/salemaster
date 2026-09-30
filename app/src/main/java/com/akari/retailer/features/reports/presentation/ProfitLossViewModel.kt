@@ -16,7 +16,7 @@ data class ProfitLossState(
     val profitData: ProfitData? = null,
     val isLoading: Boolean = true,
     val error: String? = null,
-    val timeFilter: TimeFilter = TimeFilter(preset = TimeFilterPreset.THIS_MONTH)
+    val timeFilter: TimeFilter = TimeFilter(preset = TimeFilterPreset.TODAY)
 )
 
 class ProfitLossViewModel(

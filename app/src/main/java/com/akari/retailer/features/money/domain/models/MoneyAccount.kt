@@ -25,7 +25,19 @@ data class MoneyAccount(
     val updatedAt: Long = System.currentTimeMillis()
 ) {
     fun getDisplayName(): String = "$icon $name"
-    fun getColorInt(): Int = Color.parseColor(color)
+
+    /**
+     * Parse `color` as a hex ARGB int.
+     * Returns a neutral gray if the stored value is malformed, so a bad
+     * value can't crash the whole screen on render.
+     */
+    fun getColorInt(): Int {
+        return try {
+            Color.parseColor(color)
+        } catch (e: Exception) {
+            Color.parseColor("#4CAF50")
+        }
+    }
 }
 
 /**

@@ -82,7 +82,8 @@ class FirestoreStockService {
                 .whereEqualTo("productId", productId)
                 .addSnapshotListener { querySnapshot, error ->
                     if (error != null) {
-                        close(error)
+                        android.util.Log.w("FirestoreStockService",
+                            "listener error (transient, continuing): ${error.message}")
                         return@addSnapshotListener
                     }
                     
@@ -134,7 +135,8 @@ class FirestoreStockService {
             val listener = collection
                 .addSnapshotListener { querySnapshot, error ->
                     if (error != null) {
-                        close(error)
+                        android.util.Log.w("FirestoreStockService",
+                            "listener error (transient, continuing): ${error.message}")
                         return@addSnapshotListener
                     }
                     

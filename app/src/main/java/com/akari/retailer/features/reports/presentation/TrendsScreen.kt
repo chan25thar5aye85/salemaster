@@ -1,5 +1,6 @@
 package com.akari.retailer.features.reports.presentation
 
+import com.akari.retailer.core.ui.components.TimeFilterButton
 import android.graphics.Color
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -73,8 +74,29 @@ fun TrendsScreen(
         title = stringResource(R.string.monthly_sales_trend),
         showBackButton = true,
         onBackClick = onBack,
-        showFilterButton = true,
-        onFilterClick = { showTimeFilterDialog = true }
+        filterButtonContent = {
+
+            TimeFilterButton(
+
+                filter = state.timeFilter,
+
+                onPresetChange = { viewModel.setTimeFilter(it) },
+
+                onPickSpecificDay = { timestamp ->
+
+                    viewModel.setTimeFilter(state.timeFilter.copy(preset = TimeFilterPreset.SPECIFIC_DAY, specificDayMillis = timestamp))
+
+                },
+
+                onPickCustomRange = { start, end ->
+
+                    viewModel.setTimeFilter(state.timeFilter.copy(preset = TimeFilterPreset.CUSTOM_RANGE, customStartMillis = start, customEndMillis = end))
+
+                }
+
+                )
+
+        },
     ) {
         Column(
             modifier = Modifier

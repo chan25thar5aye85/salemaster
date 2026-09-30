@@ -383,9 +383,14 @@ fun CustomerDetailScreen(
                             modifier = Modifier.padding(Spacing.medium)
                         )
                     }
-                    LaunchedEffect(Unit) {
-                        kotlinx.coroutines.delay(2000)
-                        viewModel.handleEvent(CustomerDetailEvent.ClearPaymentSuccess)
+                    // Keyed on the flag itself so a navigation-away-then-back
+                    // won't leave a stale toast, and the effect fires once
+                    // per true → false → true transition.
+                    LaunchedEffect(state.paymentSuccess) {
+                        if (state.paymentSuccess) {
+                            kotlinx.coroutines.delay(2000)
+                            viewModel.handleEvent(CustomerDetailEvent.ClearPaymentSuccess)
+                        }
                     }
                 }
 
@@ -404,9 +409,11 @@ fun CustomerDetailScreen(
                             modifier = Modifier.padding(Spacing.medium)
                         )
                     }
-                    LaunchedEffect(Unit) {
-                        kotlinx.coroutines.delay(2000)
-                        viewModel.handleEvent(CustomerDetailEvent.ClearRefundSuccess)
+                    LaunchedEffect(state.refundSuccess) {
+                        if (state.refundSuccess) {
+                            kotlinx.coroutines.delay(2000)
+                            viewModel.handleEvent(CustomerDetailEvent.ClearRefundSuccess)
+                        }
                     }
                 }
 

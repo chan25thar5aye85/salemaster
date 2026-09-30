@@ -1,12 +1,12 @@
 package com.akari.retailer.features.sales.presentation.entry
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -14,8 +14,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -36,14 +38,13 @@ import com.akari.retailer.core.ui.components.*
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.core.utils.NetworkUtils
+import com.akari.retailer.features.money.domain.models.CreditAccount
 import com.akari.retailer.navigation.Routes
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ExtendedFloatingActionButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,6 +101,31 @@ fun SaleEntryScreen(
             delay(2000)
             viewModel.handleEvent(SaleEntryEvent.ResetSaveSuccess)
         }
+    }
+
+    // ── Payment dialog ──
+    if (state.showPaymentDialog) {
+        PaymentDialog(
+            state = state,
+            viewModel = viewModel,
+            onDismiss = {
+                viewModel.handleEvent(SaleEntryEvent.ClosePaymentDialog)
+            }
+        )
+    }
+
+    // ── Notes dialog ──
+    if (state.showNotesDialog) {
+        NotesDialog(
+            initialText = state.notes,
+            onApply = { text ->
+                viewModel.handleEvent(SaleEntryEvent.NotesChanged(text))
+                viewModel.handleEvent(SaleEntryEvent.CloseNotesDialog)
+            },
+            onDismiss = {
+                viewModel.handleEvent(SaleEntryEvent.CloseNotesDialog)
+            }
+        )
     }
 
     // ── Overpayment attribution dialog ──
@@ -218,308 +244,276 @@ fun SaleEntryScreen(
         }
     }
 
-
     AppScreen(
         title = stringResource(R.string.sale_entry),
         showBackButton = false,
         showTopBar = true,
-        floatingActionButton = {
-            AnimatedVisibility(
-                visible = state.canSave || state.isSaving,
-                enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
-                exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
-            ) {
-                ExtendedFloatingActionButton(
-                    onClick = {
-                        if (!state.isSaving) {
-                            focusManager.clearFocus()
-                            viewModel.handleEvent(SaleEntryEvent.SaveSale)
-                        }
-                    },
-                    icon = {
-                        if (state.isSaving) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        } else {
-                            Icon(
-                                Icons.Default.Check,
-                                contentDescription = null
-                            )
-                        }
-                    },
-                    text = {
-                        Text(
-                            text = if (state.saveSuccess)
-                                stringResource(R.string.saved)
-                            else
-                                stringResource(R.string.save_sale),
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    expanded = true,
-                    modifier = Modifier
-                        .imePadding()
-                        .navigationBarsPadding()
-                )
-        
-            }
-        }
-    ) {
-            Column(
+        bottomBar = {
+            Surface(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .imePadding()
-                                ) {
-
-                if (!isOnline) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = Spacing.medium),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(Spacing.medium),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Default.Warning,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(Spacing.small))
-                            Text(
-                                text = stringResource(R.string.offline_banner_sale),
-                                style = AppTypography.small,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                }
-
-                SectionCard(
-                    title = "🛒 ${stringResource(R.string.items)}",
-                    trailing = {
-                        Surface(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text(
-                                text = "${state.rows.size}",
-                                style = AppTypography.small,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
+                    .fillMaxWidth()
+                    .padding(start = 80.dp)
+                    .imePadding(),
+                color = MaterialTheme.colorScheme.primary,
+                shadowElevation = 8.dp,
+                shape = RoundedCornerShape(
+                    topStart = 12.dp,
+                    topEnd = 12.dp
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    state.rows.forEachIndexed { index, row ->
-                        key(row.id) {
-                            val requester = focusRequesters.getOrPut(row.id) { FocusRequester() }
-                            ItemRow(
-                                index = index,
-                                amount = row.amount,
-                                onAmountChange = {
-                                    viewModel.handleEvent(SaleEntryEvent.AmountChanged(row.id, it))
-                                },
-                                onFocus = { viewModel.handleEvent(SaleEntryEvent.RowFocused(row.id)) },
-                                onNext = { viewModel.handleEvent(SaleEntryEvent.NextPressed(row.id)) },
-                                onDelete = { viewModel.handleEvent(SaleEntryEvent.RowDeleted(row.id)) },
-                                focusRequester = requester,
-                                showDelete = state.rows.size > 1
-                            )
-                            if (index < state.rows.size - 1) {
-                                Spacer(modifier = Modifier.height(Spacing.small))
+                    // ── Payment button ──
+                    val primaryPayment = state.paymentRows.firstOrNull()
+                    val primaryAccount = state.accounts.find {
+                        it.id == primaryPayment?.accountId
+                    }
+                    val extraCount = (state.paymentRows.size - 1).coerceAtLeast(0)
+                    val isCredit = primaryPayment?.accountId == CreditAccount.ID
+                    val paymentLabel = when {
+                        isCredit -> "💳 Credit"
+                        primaryAccount != null -> "${primaryAccount.icon} ${primaryAccount.name}"
+                        else -> "💰 Payment"
+                    } + if (extraCount > 0) " +$extraCount" else ""
+
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.handleEvent(SaleEntryEvent.OpenPaymentDialog)
+                        },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                        ),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = paymentLabel,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp
+                        )
+                    }
+
+                    // ── Notes icon ──
+                    Box {
+                        IconButton(
+                            onClick = {
+                                viewModel.handleEvent(SaleEntryEvent.OpenNotesDialog)
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Box {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Notes",
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                if (state.notes.isNotBlank()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .size(10.dp)
+                                            .background(
+                                                color = androidx.compose.ui.graphics.Color(0xFFFFC107),
+                                                shape = androidx.compose.foundation.shape.CircleShape
+                                            )
+                                            .border(
+                                                width = 1.5.dp,
+                                                color = MaterialTheme.colorScheme.onPrimary,
+                                                shape = androidx.compose.foundation.shape.CircleShape
+                                            )
+                                    )
+                                }
                             }
                         }
                     }
+
+                    // ── Total ──
+                    Text(
+                        text = viewModel.getFormattedTotal(),
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.End,
+                        style = AppTypography.title.copy(fontSize = 17.sp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
+
+                    // ── Save ──
+                    Button(
+                        onClick = {
+                            if (!state.isSaving) {
+                                focusManager.clearFocus()
+                                viewModel.handleEvent(SaleEntryEvent.SaveSale)
+                            }
+                        },
+                        enabled = (state.canSave || state.isSaving) && !state.isSaving,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.onPrimary,
+                            contentColor = MaterialTheme.colorScheme.primary,
+                            disabledContainerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.35f),
+                            disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                        ),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        if (state.isSaving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(14.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Save,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
+                        Text(
+                            text = if (state.saveSuccess) "Saved" else "Save",
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp
+                        )
+                    }
                 }
+            }
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .imePadding()
+        ) {
 
+            if (!isOnline) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Spacing.medium),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.small))
+                        Text(
+                            text = stringResource(R.string.offline_banner_sale),
+                            style = AppTypography.small,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+
+            // ── Items ──
+            SectionCard(
+                title = "🛒 ${stringResource(R.string.items)}",
+                trailing = {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "${state.rows.size}",
+                            style = AppTypography.small,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            ) {
+                state.rows.forEachIndexed { index, row ->
+                    key(row.id) {
+                        val requester = focusRequesters.getOrPut(row.id) { FocusRequester() }
+                        ItemRow(
+                            index = index,
+                            amount = row.amount,
+                            onAmountChange = {
+                                viewModel.handleEvent(SaleEntryEvent.AmountChanged(row.id, it))
+                            },
+                            onFocus = { viewModel.handleEvent(SaleEntryEvent.RowFocused(row.id)) },
+                            onNext = { viewModel.handleEvent(SaleEntryEvent.NextPressed(row.id)) },
+                            onDelete = { viewModel.handleEvent(SaleEntryEvent.RowDeleted(row.id)) },
+                            focusRequester = requester,
+                            showDelete = state.rows.size > 1,
+                            verticalPadding = 14.dp,
+                            fieldMinHeight = 64.dp
+                        )
+                        if (index < state.rows.size - 1) {
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.medium))
+
+            state.error?.let { error ->
                 Spacer(modifier = Modifier.height(Spacing.medium))
-
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primary
+                        containerColor = MaterialTheme.colorScheme.errorContainer
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = Spacing.large, vertical = Spacing.medium),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                            .padding(Spacing.medium),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Icon(
+                            Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.small))
                         Text(
-                            text = "💰 ${stringResource(R.string.total)}",
-                            style = AppTypography.title,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
-                        )
-                        Text(
-                            text = viewModel.getFormattedTotal(),
-                            style = AppTypography.total.copy(fontSize = 28.sp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.Bold
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = AppTypography.body
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(Spacing.medium))
-
-                SectionCard(
-                    title = "💳 ${stringResource(R.string.payment)}",
-                    trailing = {
-                        TextButton(
-                            onClick = { viewModel.handleEvent(SaleEntryEvent.AddPaymentRow) }
-                        ) {
-                            Icon(
-                                Icons.Default.Add,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Add", fontSize = 13.sp)
-                        }
-                    }
-                ) {
-                    PaymentListComponent(
-                            paymentRows = state.paymentRows,
-                            accounts = state.accounts,
-                            customers = state.customers,
-                            totalAmount = viewModel.getTotal(),
-                            showAddButton = false,
-                            onAccountSelected = { rowId, account ->
-                                viewModel.handleEvent(SaleEntryEvent.PaymentAccountChanged(rowId, account))
-                            },
-                            onCreditSelected = { rowId ->
-                                viewModel.handleEvent(SaleEntryEvent.PaymentCreditSelected(rowId))
-                            },
-                            onCustomerSelected = { rowId, customer ->
-                                viewModel.handleEvent(SaleEntryEvent.PaymentCustomerSelected(rowId, customer))
-                            },
-                            onAmountChanged = { rowId, amount ->
-                                viewModel.handleEvent(SaleEntryEvent.PaymentAmountChanged(rowId, amount))
-                            },
-                            onAddRow = { viewModel.handleEvent(SaleEntryEvent.AddPaymentRow) },
-                            onRemoveRow = { rowId ->
-                                viewModel.handleEvent(SaleEntryEvent.RemovePaymentRow(rowId))
-                            }
-                        )
-
-                    // Overpayment indicator (only when overpaid)
-                        val totalPaid = state.paymentRows.sumOf { it.amount.toIntOrNull() ?: 0 }
-                        val total = viewModel.getTotal()
-                        val excess = totalPaid - total
-                        if (excess > 0) {
-                            Spacer(modifier = Modifier.height(Spacing.small))
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                                )
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(Spacing.medium)
-                                ) {
-                                    Text(
-                                        text = "💸 ${stringResource(R.string.overpayment)}",
-                                        style = AppTypography.title,
-                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = stringResource(R.string.overpaid_amount, excess),
-                                        style = AppTypography.body
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.select_customer_via_credit_toggle),
-                                        style = AppTypography.small,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                                    )
-                                }
-                            }
-                        }
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.medium))
-
-                SectionCard(
-                    title = "📝 ${stringResource(R.string.notes_optional)}"
-                ) {
-                    OutlinedTextField(
-                        value = state.notes,
-                        onValueChange = {
-                            viewModel.handleEvent(SaleEntryEvent.NotesChanged(it))
-                        },
-                        placeholder = {
-                            Text(
-                                stringResource(R.string.sale_notes_hint),
-                                style = AppTypography.small,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 3
-                    )
-                }
-
-                state.error?.let { error ->
-                    Spacer(modifier = Modifier.height(Spacing.medium))
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(Spacing.medium),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Default.Warning,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(Spacing.small))
-                            Text(
-                                text = error,
-                                color = MaterialTheme.colorScheme.error,
-                                style = AppTypography.body
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.medium))
-
-                RecentSalesCard(
-                    sales = state.recentSales,
-                    onViewAllClick = { navController?.navigate(Routes.HISTORY) }
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.xxlarge))
             }
+
+            Spacer(modifier = Modifier.height(Spacing.medium))
+
+            RecentSalesCard(
+                sales = state.recentSales,
+                onViewAllClick = { navController?.navigate(Routes.HISTORY) }
+            )
+
+            Spacer(modifier = Modifier.height(Spacing.xxlarge))
         }
     }
+}
 
 @Composable
 private fun SectionCard(
@@ -574,7 +568,6 @@ private fun RecentSalesCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            // ── Header ──
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -614,7 +607,6 @@ private fun RecentSalesCard(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
 
-            // ── List — always visible, up to 5 ──
             if (sales.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -644,7 +636,6 @@ private fun RecentSalesCard(
     }
 }
 
-
 @Composable
 private fun CompactSaleRow(sale: com.akari.retailer.features.sales.domain.models.Sale) {
     val dateFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
@@ -673,4 +664,106 @@ private fun CompactSaleRow(sale: com.akari.retailer.features.sales.domain.models
             fontWeight = FontWeight.Medium
         )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PaymentDialog(
+    state: SaleEntryState,
+    viewModel: SaleEntryViewModel,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "💳 ${stringResource(R.string.payment)}",
+                style = AppTypography.title
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 500.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                PaymentListComponent(
+                    paymentRows = state.paymentRows,
+                    accounts = state.accounts,
+                    customers = state.customers,
+                    totalAmount = viewModel.getTotal(),
+                    showAddButton = true,
+                    onAccountSelected = { rowId, account ->
+                        viewModel.handleEvent(SaleEntryEvent.PaymentAccountChanged(rowId, account))
+                    },
+                    onCreditSelected = { rowId ->
+                        viewModel.handleEvent(SaleEntryEvent.PaymentCreditSelected(rowId))
+                    },
+                    onCustomerSelected = { rowId, customer ->
+                        viewModel.handleEvent(SaleEntryEvent.PaymentCustomerSelected(rowId, customer))
+                    },
+                    onAmountChanged = { rowId, amount ->
+                        viewModel.handleEvent(SaleEntryEvent.PaymentAmountChanged(rowId, amount))
+                    },
+                    onAddRow = { viewModel.handleEvent(SaleEntryEvent.AddPaymentRow) },
+                    onRemoveRow = { rowId ->
+                        viewModel.handleEvent(SaleEntryEvent.RemovePaymentRow(rowId))
+                    }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.ok))
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NotesDialog(
+    initialText: String,
+    onApply: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var text by remember { mutableStateOf(initialText) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "📝 " + stringResource(R.string.notes_optional),
+                style = AppTypography.title
+            )
+        },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                placeholder = {
+                    Text(
+                        stringResource(R.string.sale_notes_hint),
+                        style = AppTypography.small,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 100.dp, max = 200.dp),
+                maxLines = 6
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onApply(text) }) {
+                Text(stringResource(R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }

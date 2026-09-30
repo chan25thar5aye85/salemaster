@@ -1,5 +1,6 @@
 package com.akari.retailer
 
+import kotlinx.coroutines.tasks.await
 import android.app.Application
 import android.util.Log
 import com.akari.retailer.di.AppContainer
@@ -54,6 +55,7 @@ class RetailApplication : Application() {
                 container.moneyAccountRepository.seedDefaultAccounts()
             }.onFailure { Log.e("RetailApplication", "Seeding failed", it) }
         }
+
 
         // 5. Apply saved language (AppCompat handles activity recreation automatically)
         LanguageManager.syncOnAppStart(this)

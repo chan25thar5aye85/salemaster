@@ -20,7 +20,7 @@ data class ExternalTransferHistoryState(
     val error: String? = null,
 
     // Filters
-    val timeFilter: TimeFilter = TimeFilter(preset = TimeFilterPreset.THIS_WEEK),
+    val timeFilter: TimeFilter = TimeFilter(preset = TimeFilterPreset.TODAY),
     val accounts: List<MoneyAccount> = emptyList(),
     val selectedAccountId: String = "",     // "" = All
     val externalAccountNames: List<String> = emptyList(),

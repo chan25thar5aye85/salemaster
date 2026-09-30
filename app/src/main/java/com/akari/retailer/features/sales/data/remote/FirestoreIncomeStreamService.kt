@@ -98,7 +98,8 @@ class FirestoreIncomeStreamService {
             .orderBy("name")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestoreIncomeStreamService",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
                 
@@ -140,7 +141,8 @@ class FirestoreIncomeStreamService {
         val listener = collection.document(streamId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestoreIncomeStreamService",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
                 

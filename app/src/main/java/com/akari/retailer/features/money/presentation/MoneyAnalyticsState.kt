@@ -1,6 +1,7 @@
 package com.akari.retailer.features.money.presentation
 
 import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.core.ui.components.TimeFilterPreset
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 
 data class AccountBalance(
@@ -29,7 +30,7 @@ data class MoneyAnalyticsState(
     val totalBalance: Int = 0,
     val feeSummary: FeeSummary = FeeSummary(),
     val moneyFlow: MoneyFlow = MoneyFlow(),
-    val timeFilter: TimeFilter = TimeFilter(),
+    val timeFilter: TimeFilter = TimeFilter(preset = TimeFilterPreset.TODAY),
     val isLoading: Boolean = true,
     val error: String? = null
 )

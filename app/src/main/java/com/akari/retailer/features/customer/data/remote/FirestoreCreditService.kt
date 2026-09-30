@@ -256,7 +256,9 @@ class FirestoreCreditService {
             .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error); return@addSnapshotListener
+                    android.util.Log.w("FirestoreCreditService",
+                        "listener error (transient, continuing): ${error.message}")
+                    return@addSnapshotListener
                 }
                 if (snapshot == null) {
                     trySend(emptyList()); return@addSnapshotListener
@@ -270,8 +272,14 @@ class FirestoreCreditService {
      * All credit transactions for one customer, sorted newest-first.
      */
     fun getTransactionsForCustomer(customerId: String): Flow<List<CreditTransaction>> = callbackFlow {
+        // Limit to the 10 most recent. Firestore requires a composite
+        // index (customerId ASC, date DESC) for this — see
+        // firestore.indexes.json. If the index isn't deployed, the query
+        // throws FAILED_PRECONDITION and the flow returns nothing.
         val listener = txnsCollection
             .whereEqualTo("customerId", customerId)
+            .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .limit(10)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error); return@addSnapshotListener

@@ -6,6 +6,7 @@ import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.data.repository.MoneyTransactionRepository
 import com.akari.retailer.features.money.domain.models.FeeType
 import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.core.ui.components.TimeFilterPreset
 import com.akari.retailer.features.money.domain.models.MoneyTransactionType
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,7 +55,7 @@ class MoneyTransactionsViewModel(
                 _state.value = _state.value.copy(
                     selectedAccountId = "",
                     selectedType = null,
-                    timeFilter = TimeFilter(),
+                    timeFilter = TimeFilter(preset = TimeFilterPreset.TODAY),
                     searchQuery = ""
                 )
                 applyFilters()

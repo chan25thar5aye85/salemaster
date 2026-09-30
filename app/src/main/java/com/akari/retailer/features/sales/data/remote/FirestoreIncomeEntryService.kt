@@ -102,7 +102,11 @@ class FirestoreIncomeEntryService {
         val listener = collection
             .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) {
+                    android.util.Log.w("FirestoreIncomeEntryService",
+                        "listener error (transient, continuing): ${error.message}")
+                    return@addSnapshotListener
+                }
                 if (snapshot == null) { trySend(emptyList()); return@addSnapshotListener }
                 
                 val entries = snapshot.documents.mapNotNull { doc ->
@@ -147,7 +151,11 @@ class FirestoreIncomeEntryService {
         
         val listener = collection.document(entryId)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) {
+                    android.util.Log.w("FirestoreIncomeEntryService",
+                        "listener error (transient, continuing): ${error.message}")
+                    return@addSnapshotListener
+                }
                 if (snapshot == null || !snapshot.exists()) { trySend(null); return@addSnapshotListener }
                 
                 val data = snapshot.data ?: run { trySend(null); return@addSnapshotListener }

@@ -20,6 +20,11 @@ data class CustomerEditState(
     val notes: String = "",
     val totalSpent: Int = 0,
     val totalOrders: Int = 0,
+    /**
+     * Preserved verbatim across edits. Editing name/phone/etc. must NOT
+     * silently wipe the customer's credit balance.
+     */
+    val creditBalance: Int = 0,
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
@@ -84,6 +89,7 @@ class CustomerEditViewModel(
                         notes = customer.notes,
                         totalSpent = customer.totalSpent,
                         totalOrders = customer.totalOrders,
+                        creditBalance = customer.creditBalance,
                         isLoading = false,
                         error = null
                     )
@@ -118,7 +124,8 @@ class CustomerEditViewModel(
                 address = currentState.address.trim(),
                 notes = currentState.notes.trim(),
                 totalSpent = currentState.totalSpent,
-                totalOrders = currentState.totalOrders
+                totalOrders = currentState.totalOrders,
+                creditBalance = currentState.creditBalance
             )
             val result = repository.updateCustomer(customer)
             if (result.isSuccess) {

@@ -194,17 +194,19 @@ class FirestoreSupplierCreditService {
                     throw IllegalStateException("Account not found")
                 }
 
-                // Supplier balance goes UP (toward zero from negative, or positive)
-                txn.update(supplierRef, "payableBalance", FieldValue.increment(amount.toLong()))
+                // Supplier balance goes DOWN (we owe them less; may go negative
+                // if we're now net-owed by them).
+                txn.update(supplierRef, "payableBalance", FieldValue.increment(-amount.toLong()))
 
                 // Money account goes UP (money comes back to us)
                 txn.update(accountRef, "currentBalance", FieldValue.increment(amount.toLong()))
 
-                // Log supplier-side transaction
+                // Log supplier-side transaction (amount is negative, matching
+                // the PAYMENT convention — both reduce what we owe).
                 txn.set(txnRef, mapOf(
                     "supplierId" to supplierId,
                     "type" to SupplierTransactionType.REFUND_RECEIVED.name,
-                    "amount" to amount,
+                    "amount" to -amount,
                     "purchaseId" to "",
                     "paymentAccountId" to paymentAccountId,
                     "description" to description,
@@ -212,9 +214,11 @@ class FirestoreSupplierCreditService {
                     "createdAt" to now
                 ))
 
-                // Log money-side transaction (inflow)
+                // Log money-side transaction.
+                // NOTE: This is a REVERSAL of a prior expense, not income —
+                // using ADJUSTMENT keeps it out of the P&L "Other Income" line.
                 txn.set(moneyTxnsCollection.document(), mapOf(
-                    "type" to "INCOME_IN",
+                    "type" to "ADJUSTMENT",
                     "fromAccountId" to "",
                     "toAccountId" to paymentAccountId,
                     "amount" to amount,
@@ -245,7 +249,11 @@ class FirestoreSupplierCreditService {
         val listener = txnsCollection
             .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) {
+                    android.util.Log.w("FirestoreSupplierCreditService",
+                        "listener error (transient, continuing): ${error.message}")
+                    return@addSnapshotListener
+                }
                 if (snapshot == null) { trySend(emptyList()); return@addSnapshotListener }
                 trySend(snapshot.documents.mapNotNull { mapDoc(it) })
             }
@@ -259,7 +267,11 @@ class FirestoreSupplierCreditService {
         val listener = txnsCollection
             .whereEqualTo("supplierId", supplierId)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) {
+                    android.util.Log.w("FirestoreSupplierCreditService",
+                        "listener error (transient, continuing): ${error.message}")
+                    return@addSnapshotListener
+                }
                 if (snapshot == null) { trySend(emptyList()); return@addSnapshotListener }
                 val list = snapshot.documents
                     .mapNotNull { mapDoc(it) }

@@ -68,7 +68,8 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
         val listener = collection.document(orderId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestorePurchaseOrderRepository",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
 
@@ -107,7 +108,8 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             .orderBy("orderDate", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestorePurchaseOrderRepository",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
 
@@ -139,7 +141,8 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             .orderBy("orderDate", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestorePurchaseOrderRepository",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
 
@@ -171,7 +174,8 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             .orderBy("orderDate", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestorePurchaseOrderRepository",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
 
@@ -217,19 +221,18 @@ class FirestorePurchaseOrderRepository : PurchaseOrderRepository {
             updates["status"] = newStatus.name
             updates["updatedAt"] = currentTime
 
-            val order = getOrderSync(orderId)
-            if (order != null) {
-                when (newStatus) {
-                    PurchaseOrderStatus.RECEIVED -> {
-                        updates["receivedItems"] = order.orderItems.map { itemToMap(it) }
-                        updates["receivedTotal"] = order.orderTotal
-                        updates["receivedDate"] = currentTime
-                    }
-                    PurchaseOrderStatus.COMPLETED -> {
-                        updates["completedDate"] = currentTime
-                    }
-                    else -> {}
+            // NOTE: We do NOT touch receivedItems/receivedTotal here.
+            // Those are written explicitly by receiveSelectedItems(), which
+            // allows the user to receive a SUBSET of the ordered items.
+            // Blindly copying orderItems here would clobber that choice.
+            when (newStatus) {
+                PurchaseOrderStatus.RECEIVED -> {
+                    updates["receivedDate"] = currentTime
                 }
+                PurchaseOrderStatus.COMPLETED -> {
+                    updates["completedDate"] = currentTime
+                }
+                else -> {}
             }
 
             collection.document(orderId).update(updates).await()

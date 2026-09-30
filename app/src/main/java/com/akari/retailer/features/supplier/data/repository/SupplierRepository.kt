@@ -9,5 +9,4 @@ interface SupplierRepository {
     suspend fun deleteSupplier(supplierId: String): Result<Unit>
     fun getSuppliers(): Flow<List<Supplier>>
     fun getSupplierById(supplierId: String): Flow<Supplier?>
-    suspend fun incrementTotalPurchased(supplierId: String, amount: Int): Result<Unit>
 }

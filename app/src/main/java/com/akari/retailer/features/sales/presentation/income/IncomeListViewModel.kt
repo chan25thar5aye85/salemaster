@@ -1,5 +1,6 @@
 package com.akari.retailer.features.sales.presentation.income
 
+import com.akari.retailer.core.ui.components.TimeFilterPreset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.sales.data.repository.IncomeEntryRepository
@@ -17,7 +18,7 @@ data class IncomeListState(
     val allEntries: List<com.akari.retailer.features.sales.domain.models.IncomeEntry> = emptyList(),
     val streams: List<com.akari.retailer.features.sales.domain.models.IncomeStream> = emptyList(),
     val selectedStreamIds: Set<String> = emptySet(),
-    val timeFilter: com.akari.retailer.core.ui.components.TimeFilter = com.akari.retailer.core.ui.components.TimeFilter(),
+    val timeFilter: com.akari.retailer.core.ui.components.TimeFilter = com.akari.retailer.core.ui.components.TimeFilter(preset = com.akari.retailer.core.ui.components.TimeFilterPreset.TODAY),
     val isLoading: Boolean = true,
     val error: String? = null,
     val searchQuery: String = "",

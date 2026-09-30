@@ -285,10 +285,14 @@ val lastAccountId = "default_cash"
         return repository.deleteOrder(orderId)
     }
 
+    /**
+     * Collision-free receipt number: timestamp (HHmmss) + 5 random digits.
+     */
     private fun generateReceiptNumber(): String {
         val date = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
-        val random = (1000..9999).random()
-        return "RCP-$date-$random"
+        val time = SimpleDateFormat("HHmmss", Locale.getDefault()).format(Date())
+        val suffix = (10_000..99_999).random()
+        return "RCP-$date-$time-$suffix"
     }
 }
 

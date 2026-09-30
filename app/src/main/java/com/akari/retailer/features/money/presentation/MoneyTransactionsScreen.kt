@@ -1,5 +1,6 @@
 package com.akari.retailer.features.money.presentation
 
+import com.akari.retailer.core.ui.components.TimeFilterButton
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -172,8 +173,29 @@ fun MoneyTransactionsScreen(
         onBackClick = onBack,
         showSearchButton = true,
         onSearchClick = { showSearch = !showSearch },
-        showFilterButton = true,
-        onFilterClick = { showFilterDialog = true }
+        filterButtonContent = {
+
+            TimeFilterButton(
+
+                filter = state.timeFilter,
+
+                onPresetChange = { viewModel.handleEvent(MoneyTransactionsEvent.TimeFilterChanged(it)) },
+
+                onPickSpecificDay = { timestamp ->
+
+                    viewModel.handleEvent(MoneyTransactionsEvent.TimeFilterChanged(state.timeFilter.copy(preset = TimeFilterPreset.SPECIFIC_DAY, specificDayMillis = timestamp)))
+
+                },
+
+                onPickCustomRange = { start, end ->
+
+                    viewModel.handleEvent(MoneyTransactionsEvent.TimeFilterChanged(state.timeFilter.copy(preset = TimeFilterPreset.CUSTOM_RANGE, customStartMillis = start, customEndMillis = end)))
+
+                }
+
+                )
+
+        },
     ) {
         Column(
             modifier = Modifier.fillMaxSize()

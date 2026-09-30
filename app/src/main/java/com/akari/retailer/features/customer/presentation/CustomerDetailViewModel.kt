@@ -262,7 +262,9 @@ class CustomerDetailViewModel(
         loadCreditJob = viewModelScope.launch {
             try {
                 getCreditTransactionsUseCase.forCustomer(customerId).collect { txns ->
-                    _state.value = _state.value.copy(creditTransactions = txns.take(10))
+                    // The query itself is limited to 10; take() is no longer
+                    // needed. Kept defensive in case the query changes.
+                    _state.value = _state.value.copy(creditTransactions = txns)
                 }
             } catch (e: Exception) { }
         }

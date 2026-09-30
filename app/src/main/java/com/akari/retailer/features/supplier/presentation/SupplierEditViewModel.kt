@@ -20,6 +20,11 @@ data class SupplierEditState(
     val address: String = "",
     val notes: String = "",
     val totalPurchased: Int = 0,
+    /**
+     * Preserved verbatim across edits. Editing name/phone/etc. must NOT
+     * silently wipe the payable balance.
+     */
+    val payableBalance: Int = 0,
     val products: List<String> = emptyList(),
     val lastOrderDate: Long = 0L,
     val isLoading: Boolean = true,
@@ -86,6 +91,7 @@ class SupplierEditViewModel(
                         address = supplier.address,
                         notes = supplier.notes,
                         totalPurchased = supplier.totalPurchased,
+                        payableBalance = supplier.payableBalance,
                         products = supplier.products,
                         lastOrderDate = supplier.lastOrderDate,
                         isLoading = false,
@@ -128,6 +134,7 @@ class SupplierEditViewModel(
                 address = currentState.address.trim(),
                 notes = currentState.notes.trim(),
                 totalPurchased = currentState.totalPurchased,
+                payableBalance = currentState.payableBalance,
                 products = currentState.products,
                 lastOrderDate = currentState.lastOrderDate
             )

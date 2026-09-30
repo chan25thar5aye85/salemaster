@@ -134,7 +134,8 @@ class FirestoreInventoryService {
             .orderBy("name")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestoreInventoryService",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
                 
@@ -176,7 +177,8 @@ class FirestoreInventoryService {
         val listener = collection.document(productId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestoreInventoryService",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
                 

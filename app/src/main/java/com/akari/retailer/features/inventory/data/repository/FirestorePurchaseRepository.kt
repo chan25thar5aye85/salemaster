@@ -23,21 +23,7 @@ class FirestorePurchaseRepository : PurchaseRepository {
 
     private fun getCollection() = db?.collection("purchases")
 
-    override suspend fun createPurchase(purchase: Purchase): Result<String> {
-        return try {
-            val collection = getCollection()
-                ?: return Result.failure(Exception("Firestore not available"))
-
-            val docRef = collection.document()
-            val purchaseWithId = purchase.copy(id = docRef.id)
-            docRef.set(purchaseToMap(purchaseWithId)).await()
-            Log.d(TAG, "Purchase created: ${docRef.id}")
-            Result.success(docRef.id)
-        } catch (e: Exception) {
-            Log.e(TAG, "Create error: ${e.message}")
-            Result.failure(e)
-        }
-    }
+    // REMOVED: createPurchase — use PurchaseFinalizer.finalizePurchase()
 
     override fun getPurchases(): Flow<List<Purchase>> = callbackFlow {
         val collection = getCollection()
@@ -48,7 +34,11 @@ class FirestorePurchaseRepository : PurchaseRepository {
         val listener = collection
             .orderBy("purchaseDate", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) {
+                    android.util.Log.w("FirestorePurchaseRepository",
+                        "listener error (transient, continuing): ${error.message}")
+                    return@addSnapshotListener
+                }
                 if (snapshot == null) { trySend(emptyList()); return@addSnapshotListener }
 
                 val purchases = snapshot.documents.mapNotNull { doc ->
@@ -66,7 +56,11 @@ class FirestorePurchaseRepository : PurchaseRepository {
 
         val listener = collection.document(purchaseId)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) {
+                    android.util.Log.w("FirestorePurchaseRepository",
+                        "listener error (transient, continuing): ${error.message}")
+                    return@addSnapshotListener
+                }
                 if (snapshot == null || !snapshot.exists()) {
                     trySend(null); return@addSnapshotListener
                 }

@@ -2,6 +2,7 @@
 
 package com.akari.retailer.features.money.presentation
 
+import com.akari.retailer.core.ui.components.TimeFilterButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.filled.Delete
@@ -184,8 +185,29 @@ fun ExternalTransferHistoryScreen(
         title = stringResource(R.string.external_transfer_history),
         showBackButton = true,
         onBackClick = onBack,
-        showFilterButton = true,
-        onFilterClick = { showFilterDialog = true }
+        filterButtonContent = {
+
+            TimeFilterButton(
+
+                filter = state.timeFilter,
+
+                onPresetChange = { viewModel.handleEvent(ExternalTransferHistoryEvent.TimeFilterChanged(it)) },
+
+                onPickSpecificDay = { timestamp ->
+
+                    viewModel.handleEvent(ExternalTransferHistoryEvent.TimeFilterChanged(state.timeFilter.copy(preset = TimeFilterPreset.SPECIFIC_DAY, specificDayMillis = timestamp)))
+
+                },
+
+                onPickCustomRange = { start, end ->
+
+                    viewModel.handleEvent(ExternalTransferHistoryEvent.TimeFilterChanged(state.timeFilter.copy(preset = TimeFilterPreset.CUSTOM_RANGE, customStartMillis = start, customEndMillis = end)))
+
+                }
+
+                )
+
+        },
     ) {
         Column(
             modifier = Modifier
@@ -424,10 +446,22 @@ fun ExternalTransferHistoryScreen(
                 modifier = Modifier.padding(bottom = Spacing.small)
             )
 
-            // Flat list, newest first
-            state.filteredTransfers
-                .sortedByDescending { it.date }
-                .forEach { txn ->
+            // Use a non-scrolling LazyColumn inside the outer Column. The
+            // outer verticalScroll handles the whole screen; the LazyColumn
+            // is height-unbounded because it's inside a scroll container,
+            // so we give it a fixed height (only the transfers list scrolls
+            // internally on large datasets, which is what we want).
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 4000.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.small),
+                contentPadding = PaddingValues(bottom = Spacing.xxlarge)
+            ) {
+                items(
+                    items = state.filteredTransfers.sortedByDescending { it.date },
+                    key = { it.id }
+                ) { txn ->
                     TransferRow(
                         txn = txn,
                         onDelete = {
@@ -436,10 +470,8 @@ fun ExternalTransferHistoryScreen(
                             )
                         }
                     )
-                    Spacer(modifier = Modifier.height(Spacing.small))
                 }
-
-            Spacer(modifier = Modifier.height(Spacing.xxlarge))
+            }
         }
     }
 

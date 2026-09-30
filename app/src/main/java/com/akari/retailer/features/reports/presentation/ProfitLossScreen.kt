@@ -1,5 +1,6 @@
 package com.akari.retailer.features.reports.presentation
 
+import com.akari.retailer.core.ui.components.TimeFilterButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -68,8 +69,29 @@ fun ProfitLossScreen(
         title = stringResource(R.string.profit_loss_title),
         showBackButton = true,
         onBackClick = onBack,
-        showFilterButton = true,
-        onFilterClick = { showTimeFilterDialog = true }
+        filterButtonContent = {
+
+            TimeFilterButton(
+
+                filter = state.timeFilter,
+
+                onPresetChange = { viewModel.setTimeFilter(it) },
+
+                onPickSpecificDay = { timestamp ->
+
+                    viewModel.setTimeFilter(state.timeFilter.copy(preset = TimeFilterPreset.SPECIFIC_DAY, specificDayMillis = timestamp))
+
+                },
+
+                onPickCustomRange = { start, end ->
+
+                    viewModel.setTimeFilter(state.timeFilter.copy(preset = TimeFilterPreset.CUSTOM_RANGE, customStartMillis = start, customEndMillis = end))
+
+                }
+
+                )
+
+        },
     ) {
         Column(
             modifier = Modifier
@@ -149,7 +171,10 @@ fun ProfitLossScreen(
                     }
                 }
 
-                // Three Summary Cards
+                // Three Summary Cards.
+                // NOTE: `data.revenue` is the TOTAL (sales + income + fees).
+                // Showing it here would double-count with the "Other Income"
+                // card. So the first card shows SALES REVENUE specifically.
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
@@ -157,12 +182,12 @@ fun ProfitLossScreen(
                     AppCard(modifier = Modifier.weight(1f)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "${data.revenue}",
+                                text = "${data.salesRevenue}",
                                 style = AppTypography.header,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                text = stringResource(R.string.revenue),
+                                text = stringResource(R.string.sales_revenue),
                                 style = AppTypography.small,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )

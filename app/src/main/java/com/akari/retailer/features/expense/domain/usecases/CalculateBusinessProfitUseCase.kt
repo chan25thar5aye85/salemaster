@@ -1,6 +1,6 @@
 package com.akari.retailer.features.expense.domain.usecases
 
-import com.akari.retailer.data.repository.SaleRepository
+import com.akari.retailer.features.sales.data.repository.SaleRepository
 import com.akari.retailer.features.expense.data.repository.ExpenseRepository
 import com.akari.retailer.features.expense.domain.models.ExpenseType
 import com.akari.retailer.features.money.data.repository.MoneyTransactionRepository

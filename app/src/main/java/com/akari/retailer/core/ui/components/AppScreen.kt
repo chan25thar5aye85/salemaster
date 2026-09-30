@@ -23,8 +23,9 @@ import com.akari.retailer.core.ui.theme.Spacing
 @Composable
 fun AppScreen(
     title: String,
-    subtitle: String? = null,
     modifier: Modifier = Modifier,
+    /** When provided, replaces the filter icon with this content. */
+    filterButtonContent: (@Composable () -> Unit)? = null,
     showBackButton: Boolean = false,
     onBackClick: (() -> Unit)? = null,
     showSearchButton: Boolean = false,
@@ -56,13 +57,6 @@ fun AppScreen(
                                 title,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            if (!subtitle.isNullOrBlank()) {
-                                Text(
-                                    subtitle,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                    style = AppTypography.small
-                                )
-                            }
                         }
                     },
                     navigationIcon = {
@@ -77,7 +71,9 @@ fun AppScreen(
                         }
                     },
                     actions = {
-                        if (showFilterButton) {
+                        if (filterButtonContent != null) {
+                            filterButtonContent()
+                        } else if (showFilterButton) {
                             IconButton(onClick = { onFilterClick?.invoke() }) {
                                 Icon(
                                     Icons.Default.FilterList,

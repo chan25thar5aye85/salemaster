@@ -23,6 +23,8 @@ data class SaleEntryState(
     val notes: String = "",
 
     // Overpayment dialog
+    val showNotesDialog: Boolean = false,
+    val showPaymentDialog: Boolean = false,
     val showOverpaymentDialog: Boolean = false,
     val pendingOverpaymentAmount: Int = 0,
     val overpaymentMode: OverpaymentMode = OverpaymentMode.NONE,

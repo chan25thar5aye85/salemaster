@@ -2,6 +2,7 @@
 
 package com.akari.retailer.features.sales.presentation.history
 
+import com.akari.retailer.core.ui.components.TimeFilterButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -119,18 +120,34 @@ fun SaleHistoryScreen(
         )
     }
 
-    val headerSubtitle = state.timeFilter.label
-        .ifBlank { state.timeFilter.preset.name.replace('_', ' ').lowercase()
-            .replaceFirstChar { it.titlecase() } }
-
     AppScreen(
         title = stringResource(R.string.history),
-        subtitle = headerSubtitle,
         showBackButton = true,
         onBackClick = onBack,
         showSearchButton = false,
-        showFilterButton = true,
-        onFilterClick = { showTimeFilterDialog = true },
+        filterButtonContent = {
+
+            TimeFilterButton(
+
+                filter = state.timeFilter,
+
+                onPresetChange = { viewModel.handleEvent(SaleHistoryEvent.TimeFilterChanged(it)) },
+
+                onPickSpecificDay = { timestamp ->
+
+                    viewModel.handleEvent(SaleHistoryEvent.TimeFilterChanged(state.timeFilter.copy(preset = TimeFilterPreset.SPECIFIC_DAY, specificDayMillis = timestamp)))
+
+                },
+
+                onPickCustomRange = { start, end ->
+
+                    viewModel.handleEvent(SaleHistoryEvent.TimeFilterChanged(state.timeFilter.copy(preset = TimeFilterPreset.CUSTOM_RANGE, customStartMillis = start, customEndMillis = end)))
+
+                }
+
+                )
+
+        },
         showHistoryButton = false
     ) {
         Column(

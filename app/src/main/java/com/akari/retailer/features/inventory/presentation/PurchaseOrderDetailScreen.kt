@@ -87,8 +87,10 @@ fun PurchaseOrderDetailScreen(
         viewModel.loadOrder(orderId)
     }
     
-    // When order loads, reset selection
-    LaunchedEffect(state.editableOrderItems) {
+    // Reset the checkbox selection ONLY when the order itself changes,
+    // not every time the editable items list re-emits (which happens on
+    // every Firestore snapshot, wiping the user's in-progress selection).
+    LaunchedEffect(orderId) {
         selectedIndices = emptySet()
     }
 

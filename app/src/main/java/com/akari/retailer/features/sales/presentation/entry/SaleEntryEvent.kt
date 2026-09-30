@@ -27,6 +27,11 @@ sealed class SaleEntryEvent {
 
     data class NotesChanged(val value: String) : SaleEntryEvent()
 
+    data object OpenNotesDialog : SaleEntryEvent()
+    data object CloseNotesDialog : SaleEntryEvent()
+    data object OpenPaymentDialog : SaleEntryEvent()
+    data object ClosePaymentDialog : SaleEntryEvent()
+
     data object SaveSale : SaleEntryEvent()
     data object ClearError : SaleEntryEvent()
     data object ResetSaveSuccess : SaleEntryEvent()

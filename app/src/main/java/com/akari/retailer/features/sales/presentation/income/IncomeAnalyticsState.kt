@@ -1,6 +1,7 @@
 package com.akari.retailer.features.sales.presentation.income
 
 import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.core.ui.components.TimeFilterPreset
 import com.akari.retailer.features.sales.domain.models.IncomeStream
 
 enum class IncomeTypeFilter {
@@ -24,6 +25,6 @@ data class IncomeAnalyticsState(
     val topStream: IncomeStreamSpending? = null,
     val isLoading: Boolean = true,
     val error: String? = null,
-    val timeFilter: TimeFilter = TimeFilter(),
+    val timeFilter: TimeFilter = TimeFilter(preset = TimeFilterPreset.TODAY),
     val typeFilter: IncomeTypeFilter = IncomeTypeFilter.ALL
 )

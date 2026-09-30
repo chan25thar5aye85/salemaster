@@ -91,13 +91,26 @@ class FirestoreMoneyService {
             if (collection == null) {
                 return Result.failure(Exception("Firestore not available"))
             }
-            
+
             // Refuse to delete the last account
             val snapshot = collection.limit(2).get().await()
             if (snapshot.size() <= 1) {
                 return Result.failure(Exception("You must have at least one account"))
             }
-            
+
+            // Refuse to delete an account that still holds money —
+            // otherwise the balance vanishes with no transaction trail.
+            val targetSnap = collection.document(accountId).get().await()
+            if (targetSnap.exists()) {
+                val balance = (targetSnap.getLong("currentBalance") ?: 0L).toInt()
+                if (balance != 0) {
+                    return Result.failure(Exception(
+                        "Cannot delete: account still holds $balance. " +
+                        "Move the balance to another account first."
+                    ))
+                }
+            }
+
             collection.document(accountId).delete().await()
             Log.d(TAG, "✅ Account deleted: $accountId")
             Result.success(Unit)
@@ -119,7 +132,8 @@ class FirestoreMoneyService {
             .orderBy("name")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestoreMoneyService",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
                 
@@ -166,7 +180,8 @@ class FirestoreMoneyService {
         val listener = collection.document(accountId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestoreMoneyService",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
                 

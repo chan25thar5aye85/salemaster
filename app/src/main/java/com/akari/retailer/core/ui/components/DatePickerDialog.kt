@@ -1,5 +1,10 @@
 package com.akari.retailer.core.ui.components
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
@@ -16,7 +21,8 @@ import com.akari.retailer.R
 @Composable
 fun DatePickerDialog(
     onDateSelected: (Long) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    title: String? = null
 ) {
     val datePickerState = rememberDatePickerState()
 
@@ -40,7 +46,21 @@ fun DatePickerDialog(
             }
         }
     ) {
-        DatePicker(state = datePickerState)
+        Column(modifier = Modifier.fillMaxWidth()) {
+            if (!title.isNullOrBlank()) {
+                Text(
+                    text = title,
+                    style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(
+                        start = 24.dp,
+                        end = 24.dp,
+                        top = 16.dp,
+                        bottom = 4.dp
+                    )
+                )
+            }
+            DatePicker(state = datePickerState)
+        }
     }
 }
 

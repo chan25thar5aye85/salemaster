@@ -4,9 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.inventory.data.repository.InventoryRepository
 import com.akari.retailer.features.inventory.data.repository.StockRepository
-import com.akari.retailer.features.inventory.domain.models.MovementType
 import com.akari.retailer.features.inventory.domain.models.Product
-import com.akari.retailer.features.inventory.domain.models.StockMovement
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,7 +37,8 @@ sealed class StockAdjustmentEvent {
 
 class StockAdjustmentViewModel(
     private val inventoryRepository: InventoryRepository,
-    private val stockRepository: StockRepository
+    private val stockRepository: StockRepository,
+    private val stockAdjustmentFinalizer: com.akari.retailer.features.inventory.data.repository.StockAdjustmentFinalizer
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(StockAdjustmentState())
@@ -122,32 +121,19 @@ class StockAdjustmentViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true, error = null)
             try {
-                val updatedProduct = product.copy(
-                    stockQuantity = newStockInt,
-                    updatedAt = System.currentTimeMillis()
-                )
-                val updateResult = inventoryRepository.updateProduct(updatedProduct)
-                if (updateResult.isFailure) {
-                    _state.value = _state.value.copy(
-                        isSaving = false,
-                        error = updateResult.exceptionOrNull()?.message ?: "Failed to update product"
-                    )
-                    return@launch
-                }
-                val movement = StockMovement(
+                // Single atomic write: product stock + movement doc.
+                // No partial state possible if the network drops mid-write.
+                val result = stockAdjustmentFinalizer.adjustStock(
                     productId = product.id,
-                    type = MovementType.ADJUSTMENT,
-                    quantity = newStockInt - product.stockQuantity,
-                    previousStock = product.stockQuantity,
                     newStock = newStockInt,
                     reason = currentState.reason,
+                    notes = currentState.notes,
                     userId = "default"
                 )
-                val movementResult = stockRepository.addMovement(movement)
-                if (movementResult.isFailure) {
+                if (result.isFailure) {
                     _state.value = _state.value.copy(
                         isSaving = false,
-                        error = movementResult.exceptionOrNull()?.message ?: "Failed to record movement"
+                        error = result.exceptionOrNull()?.message ?: "Failed to save adjustment"
                     )
                     return@launch
                 }
@@ -174,12 +160,17 @@ class StockAdjustmentViewModel(
 
 class StockAdjustmentViewModelFactory(
     private val inventoryRepository: InventoryRepository,
-    private val stockRepository: StockRepository
+    private val stockRepository: StockRepository,
+    private val stockAdjustmentFinalizer: com.akari.retailer.features.inventory.data.repository.StockAdjustmentFinalizer
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(StockAdjustmentViewModel::class.java)) {
-            return StockAdjustmentViewModel(inventoryRepository, stockRepository) as T
+            return StockAdjustmentViewModel(
+                inventoryRepository,
+                stockRepository,
+                stockAdjustmentFinalizer
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

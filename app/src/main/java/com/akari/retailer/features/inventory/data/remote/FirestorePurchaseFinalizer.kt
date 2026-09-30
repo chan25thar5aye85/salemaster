@@ -228,11 +228,21 @@ class FirestorePurchaseFinalizer(
                 val creditAmount = (purchase["creditAmount"] as? Number)?.toInt() ?: 0
 
                 // ── 2. READ products ──
+                // Verify in advance that every decrement will keep stock >= 0.
+                // If a purchase is deleted after the goods have been sold,
+                // refusing is safer than silently going negative.
                 val productStocks = mutableMapOf<String, Pair<DocumentReference, Int>>()
                 for (item in items) {
                     val pRef = productsCol.document(item.productId)
                     val pSnap = txn.get(pRef)
                     val stock = (pSnap.getLong("stockQuantity") ?: 0L).toInt()
+                    if (stock < item.quantity) {
+                        throw IllegalStateException(
+                            "Cannot delete purchase: product ${item.productId} " +
+                            "has only $stock in stock, but the purchase removed " +
+                            "${item.quantity}. Sell-off has already consumed the stock."
+                        )
+                    }
                     productStocks[item.productId] = pRef to stock
                 }
 

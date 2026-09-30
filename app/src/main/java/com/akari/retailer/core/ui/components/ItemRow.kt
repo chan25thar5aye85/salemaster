@@ -35,12 +35,15 @@ fun ItemRow(
     focusRequester: FocusRequester = FocusRequester(),
     showDelete: Boolean = true,
     label: String = stringResource(R.string.item_number, index + 1),
-    placeholder: String = "0"
+    placeholder: String = "0",
+    verticalPadding: androidx.compose.ui.unit.Dp = 10.dp,
+    fieldMinHeight: androidx.compose.ui.unit.Dp = 56.dp,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 14.dp),
+            .padding(vertical = verticalPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -58,7 +61,7 @@ fun ItemRow(
             onAmountChange = onAmountChange,
             modifier = Modifier
                 .weight(1f)
-                .heightIn(min = 62.dp),
+                .heightIn(min = fieldMinHeight),
             focusRequester = focusRequester,
             imeAction = androidx.compose.ui.text.input.ImeAction.Next,
             onNext = onNext,
@@ -71,7 +74,7 @@ fun ItemRow(
                 onClick = onDelete,
                 modifier = Modifier
                     .padding(start = Spacing.medium)
-                    .size(62.dp)
+                    .size(fieldMinHeight)
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
@@ -80,7 +83,7 @@ fun ItemRow(
                 )
             }
         } else {
-            Spacer(modifier = Modifier.width(62.dp)) // ✅ Increased from 48dp to 56dp
+            Spacer(modifier = Modifier.width(fieldMinHeight)) // ✅ Increased from 48dp to 56dp
         }
     }
 }

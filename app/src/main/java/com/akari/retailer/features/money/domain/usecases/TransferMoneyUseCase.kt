@@ -2,15 +2,14 @@ package com.akari.retailer.features.money.domain.usecases
 
 import android.util.Log
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
-import com.akari.retailer.features.money.data.repository.MoneyTransactionRepository
 import com.akari.retailer.features.money.domain.models.FeeType
 import com.akari.retailer.features.money.domain.models.MoneyTransactionType
 import com.google.firebase.firestore.FieldValue
 import kotlinx.coroutines.tasks.await
 
 class TransferMoneyUseCase(
-    private val accountRepository: MoneyAccountRepository,
-    private val transactionRepository: MoneyTransactionRepository
+    private val accountRepository: MoneyAccountRepository
+    // transactionRepository was unused — writes go through accountRepository.firestore
 ) {
     private val TAG = "TransferMoneyUseCase"
 

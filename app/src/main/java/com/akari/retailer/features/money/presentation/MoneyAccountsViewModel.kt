@@ -12,7 +12,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class MoneyAccountsViewModel(
-    private val repository: MoneyAccountRepository
+    private val repository: MoneyAccountRepository,
+    private val transactionRepository: com.akari.retailer.features.money.data.repository.MoneyTransactionRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MoneyAccountsState())
@@ -198,11 +199,34 @@ class MoneyAccountsViewModel(
                         notes = _state.value.dialogNotes,
                     )
                     val result = repository.addAccount(newAccount)
-                    if (result.isSuccess) dismissDialog()
-                    else _state.value = _state.value.copy(
-                        isSaving = false,
-                        error = result.exceptionOrNull()?.message ?: "Failed to add account"
-                    )
+                    if (result.isSuccess) {
+                        // Record the opening balance as a transaction so the
+                        // money doesn't "appear from nowhere" in analytics.
+                        val newId = result.getOrNull()
+                        if (openingBalance != 0 && !newId.isNullOrEmpty()) {
+                            runCatching {
+                                val tx = com.akari.retailer.features.money.domain.models.MoneyTransaction(
+                                    type = com.akari.retailer.features.money.domain.models.MoneyTransactionType.OPENING_BALANCE,
+                                    fromAccountId = "",
+                                    toAccountId = newId,
+                                    amount = openingBalance,
+                                    fee = 0,
+                                    feeType = com.akari.retailer.features.money.domain.models.FeeType.NONE,
+                                    netAmount = openingBalance,
+                                    description = "Opening balance",
+                                    referenceId = newId,
+                                    referenceType = "OPENING_BALANCE"
+                                )
+                                transactionRepository.addTransaction(tx)
+                            }
+                        }
+                        dismissDialog()
+                    } else {
+                        _state.value = _state.value.copy(
+                            isSaving = false,
+                            error = result.exceptionOrNull()?.message ?: "Failed to add account"
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
@@ -258,12 +282,13 @@ class MoneyAccountsViewModel(
 }
 
 class MoneyAccountsViewModelFactory(
-    private val repository: MoneyAccountRepository
+    private val repository: MoneyAccountRepository,
+    private val transactionRepository: com.akari.retailer.features.money.data.repository.MoneyTransactionRepository
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MoneyAccountsViewModel::class.java)) {
-            return MoneyAccountsViewModel(repository) as T
+            return MoneyAccountsViewModel(repository, transactionRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

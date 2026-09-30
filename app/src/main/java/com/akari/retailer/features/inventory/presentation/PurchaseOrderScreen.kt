@@ -149,22 +149,35 @@ fun PurchaseOrderScreen(
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             
-            // Expected Delivery Date
-            OutlinedTextField(
-                value = if (state.expectedDeliveryDate > 0) dateFormat.format(Date(state.expectedDeliveryDate)) else "",
-                onValueChange = {},
-                readOnly = true,
-                label = { Text(stringResource(R.string.expected_delivery_date)) },
-                placeholder = { Text(stringResource(R.string.select_date)) },
+            // Expected Delivery Date.
+            // OutlinedTextField swallows taps on its body, so we wrap it in
+            // a Box that owns the click. The field itself is disabled to
+            // stop it from capturing focus.
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { showDatePicker = true },
-                trailingIcon = {
-                    IconButton(onClick = { showDatePicker = true }) {
+                    .clickable { showDatePicker = true }
+            ) {
+                OutlinedTextField(
+                    value = if (state.expectedDeliveryDate > 0)
+                        dateFormat.format(Date(state.expectedDeliveryDate)) else "",
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = false,
+                    label = { Text(stringResource(R.string.expected_delivery_date)) },
+                    placeholder = { Text(stringResource(R.string.select_date)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        disabledPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    ),
+                    trailingIcon = {
                         Icon(Icons.Default.Event, contentDescription = "Select date")
                     }
-                }
-            )
+                )
+            }
             
             Spacer(modifier = Modifier.height(Spacing.medium))
             

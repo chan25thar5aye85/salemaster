@@ -1,5 +1,6 @@
 package com.akari.retailer.features.money.presentation
 
+import com.akari.retailer.core.ui.components.TimeFilterButton
 import android.graphics.Color
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -85,8 +86,29 @@ fun MoneyAnalyticsScreen(
         title = "📊 " + stringResource(R.string.money_analytics),
         showBackButton = true,
         onBackClick = onBack,
-        showFilterButton = true,
-        onFilterClick = { showTimeFilterDialog = true }
+        filterButtonContent = {
+
+            TimeFilterButton(
+
+                filter = state.timeFilter,
+
+                onPresetChange = { viewModel.handleEvent(MoneyAnalyticsEvent.TimeFilterChanged(it)) },
+
+                onPickSpecificDay = { timestamp ->
+
+                    viewModel.handleEvent(MoneyAnalyticsEvent.TimeFilterChanged(state.timeFilter.copy(preset = TimeFilterPreset.SPECIFIC_DAY, specificDayMillis = timestamp)))
+
+                },
+
+                onPickCustomRange = { start, end ->
+
+                    viewModel.handleEvent(MoneyAnalyticsEvent.TimeFilterChanged(state.timeFilter.copy(preset = TimeFilterPreset.CUSTOM_RANGE, customStartMillis = start, customEndMillis = end)))
+
+                }
+
+                )
+
+        },
     ) {
         Column(
             modifier = Modifier

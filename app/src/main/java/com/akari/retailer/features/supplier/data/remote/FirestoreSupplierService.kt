@@ -104,25 +104,9 @@ class FirestoreSupplierService {
         }
     }
     
-    /**
-     * Atomically add [amount] to the supplier's totalPurchased and update lastOrderDate.
-     * Uses FieldValue.increment — no read-modify-write race.
-     */
-    suspend fun incrementTotalPurchased(supplierId: String, amount: Int): Result<Unit> {
-        return try {
-            val collection = getCollection()
-                ?: return Result.failure(Exception("Firestore not available"))
-            collection.document(supplierId).update(
-                "totalPurchased", FieldValue.increment(amount.toLong()),
-                "lastOrderDate", System.currentTimeMillis(),
-                "updatedAt", System.currentTimeMillis()
-            ).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "incrementTotalPurchased error: ${e.message}")
-            Result.failure(e)
-        }
-    }
+    // REMOVED: incrementTotalPurchased
+    // The purchase finalizer updates totalPurchased inline inside its own
+    // transaction. This standalone method was dead code.
 
     fun getSuppliers(): Flow<List<Supplier>> = callbackFlow {
         val collection = getCollection()
@@ -136,7 +120,8 @@ class FirestoreSupplierService {
             .orderBy("name")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestoreSupplierService",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
                 
@@ -180,7 +165,8 @@ class FirestoreSupplierService {
         val listener = collection.document(supplierId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestoreSupplierService",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
                 

@@ -119,7 +119,8 @@ class FirestoreExpenseService {
             .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestoreExpenseService",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
                 
@@ -183,7 +184,8 @@ class FirestoreExpenseService {
         val listener = collection.document(expenseId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestoreExpenseService",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
                 

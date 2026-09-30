@@ -31,7 +31,11 @@ fun StockAdjustmentScreen(
     
     
     val viewModel: StockAdjustmentViewModel = viewModel(
-        factory = StockAdjustmentViewModelFactory(application.container.inventoryRepository, application.container.stockRepository)
+        factory = StockAdjustmentViewModelFactory(
+            application.container.inventoryRepository,
+            application.container.stockRepository,
+            application.container.stockAdjustmentFinalizer
+        )
     )
     
     val state by viewModel.state.collectAsState()

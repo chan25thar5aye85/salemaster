@@ -1,5 +1,6 @@
 package com.akari.retailer.features.sales.presentation.income
 
+import com.akari.retailer.core.ui.components.TimeFilterButton
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -97,8 +98,29 @@ fun IncomeListScreen(
         onSearchClick = { showSearch = !showSearch },
         showAddButton = true,
         onAddClick = { navController.navigate(Routes.INCOME_ENTRY) },
-        showFilterButton = true,
-        onFilterClick = { showFilterDialog = true },
+        filterButtonContent = {
+
+            TimeFilterButton(
+
+                filter = state.timeFilter,
+
+                onPresetChange = { viewModel.handleEvent(IncomeListEvent.TimeFilterChanged(it)) },
+
+                onPickSpecificDay = { timestamp ->
+
+                    viewModel.handleEvent(IncomeListEvent.TimeFilterChanged(state.timeFilter.copy(preset = TimeFilterPreset.SPECIFIC_DAY, specificDayMillis = timestamp)))
+
+                },
+
+                onPickCustomRange = { start, end ->
+
+                    viewModel.handleEvent(IncomeListEvent.TimeFilterChanged(state.timeFilter.copy(preset = TimeFilterPreset.CUSTOM_RANGE, customStartMillis = start, customEndMillis = end)))
+
+                }
+
+                )
+
+        },
         showAnalyticsButton = true,
         onAnalyticsClick = { navController.navigate(Routes.INCOME_ANALYTICS) }
     ) {

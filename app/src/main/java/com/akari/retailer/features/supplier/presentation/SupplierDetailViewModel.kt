@@ -224,6 +224,11 @@ class SupplierDetailViewModel(
                 getSupplierTransactionsUseCase.forSupplier(supplierId).collect { txns ->
                     _state.value = _state.value.copy(payableTransactions = txns.take(10))
                 }
+                // NOTE: the query itself still returns everything and we
+                // slice client-side. To push this into the query, add an
+                // orderBy("date" DESCENDING).limit(10) in
+                // FirestoreSupplierCreditService.getTransactionsForSupplier
+                // and deploy the composite index (supplierId, date).
             } catch (e: Exception) { }
         }
     }

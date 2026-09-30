@@ -1,9 +1,8 @@
 package com.akari.retailer.di
 
+import com.akari.retailer.features.sales.data.repository.SaleRepository
+import com.akari.retailer.features.sales.data.repository.FirestoreSaleRepository
 import com.akari.retailer.core.utils.PaymentPreferences
-import com.akari.retailer.data.remote.FirestoreService
-import com.akari.retailer.data.repository.FirestoreSaleRepository
-import com.akari.retailer.data.repository.SaleRepository
 import com.akari.retailer.features.customer.data.remote.FirestoreCustomerService
 import com.akari.retailer.features.customer.data.repository.CustomerRepository
 import com.akari.retailer.features.customer.data.repository.FirestoreCustomerRepository
@@ -70,10 +69,7 @@ class AppContainer(private val appContext: android.content.Context) {
     val paymentPreferences: PaymentPreferences by lazy { PaymentPreferences(appContext) }
 
     // Sales
-    private val firestoreService by lazy { FirestoreService() }
-    val saleRepository: SaleRepository by lazy { 
-        FirestoreSaleRepository(firestoreService)
-    }
+    val saleRepository: SaleRepository by lazy { FirestoreSaleRepository() }
     val saleFinalizer: SaleFinalizer by lazy { FirestoreSaleFinalizer() }
     
     // Income Streams
@@ -170,6 +166,11 @@ class AppContainer(private val appContext: android.content.Context) {
     val stockRepository: StockRepository by lazy {
         FirestoreStockRepository(stockService)
     }
+
+    // Atomic stock adjustment (product update + movement in one transaction)
+    val stockAdjustmentFinalizer: com.akari.retailer.features.inventory.data.repository.StockAdjustmentFinalizer by lazy {
+        com.akari.retailer.features.inventory.data.remote.FirestoreStockAdjustmentFinalizer()
+    }
     
     // Money Accounts
     private val moneyService by lazy { FirestoreMoneyService() }
@@ -185,12 +186,12 @@ class AppContainer(private val appContext: android.content.Context) {
     
     // Transfer Money
     val transferMoneyUseCase by lazy {
-        TransferMoneyUseCase(moneyAccountRepository, moneyTransactionRepository)
+        TransferMoneyUseCase(moneyAccountRepository)
     }
     
     // External Transfer
     val externalTransferUseCase by lazy {
-        ExternalTransferUseCase(moneyAccountRepository, moneyTransactionRepository)
+        ExternalTransferUseCase(moneyAccountRepository)
     }
     val externalTransferFinalizer: ExternalTransferFinalizer by lazy {
         FirestoreExternalTransferFinalizer()

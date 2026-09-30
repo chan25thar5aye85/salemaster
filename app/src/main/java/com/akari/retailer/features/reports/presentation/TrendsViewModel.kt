@@ -2,9 +2,10 @@ package com.akari.retailer.features.reports.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.akari.retailer.data.repository.SaleRepository
+import com.akari.retailer.features.sales.data.repository.SaleRepository
 import com.akari.retailer.features.sales.domain.models.Sale
 import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.core.ui.components.TimeFilterPreset
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +23,7 @@ data class TrendsState(
     val salesCount: Int = 0,
     val isLoading: Boolean = true,
     val error: String? = null,
-    val timeFilter: TimeFilter = TimeFilter(),
+    val timeFilter: TimeFilter = TimeFilter(preset = TimeFilterPreset.TODAY),
     val rangeLabel: String = "This Month"
 )
 
@@ -85,6 +86,33 @@ class TrendsViewModel(
         val rangeLabel: String
     )
 
+    /**
+     * Build a compact label like "Sep 2026", "Sep 01 – Sep 15", or
+     * "1 day" depending on the span. Uses the same date formatter as the
+     * rest of the class.
+     */
+    private fun buildRangeLabel(start: Long, end: Long): String {
+        val startDate = Date(start)
+        val endDate = Date(end)
+        val calStart = Calendar.getInstance().apply { timeInMillis = start }
+        val calEnd = Calendar.getInstance().apply { timeInMillis = end }
+
+        val sameDay = calStart.get(Calendar.YEAR) == calEnd.get(Calendar.YEAR) &&
+                      calStart.get(Calendar.DAY_OF_YEAR) == calEnd.get(Calendar.DAY_OF_YEAR)
+        if (sameDay) return SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(startDate)
+
+        val sameMonth = calStart.get(Calendar.YEAR) == calEnd.get(Calendar.YEAR) &&
+                        calStart.get(Calendar.MONTH) == calEnd.get(Calendar.MONTH)
+        if (sameMonth) {
+            val dFmt = SimpleDateFormat("dd", Locale.getDefault())
+            val mFmt = SimpleDateFormat("MMM yyyy", Locale.getDefault())
+            return "${dFmt.format(startDate)} – ${dFmt.format(endDate)} ${mFmt.format(endDate)}"
+        }
+
+        val fmt = SimpleDateFormat("MMM dd", Locale.getDefault())
+        return "${fmt.format(startDate)} – ${fmt.format(endDate)}"
+    }
+
     private fun calculateData(sales: List<Sale>): CalculatedData {
         val rawRange = _state.value.timeFilter.resolveRange()
         // Defensive cap: never iterate more than 1 year of days in the chart.
@@ -92,7 +120,10 @@ class TrendsViewModel(
         val capEnd = System.currentTimeMillis()
         val startDate = maxOf(rawRange.first, minOf(rawRange.last, capEnd) - oneYearMs)
         val endDate = minOf(rawRange.last, capEnd)
-        val label = _state.value.timeFilter.label
+        // Compute a human-readable label from the resolved range.
+        // The TimeFilter.label field is only populated when the caller
+        // opts in via withComputedLabel(); we don't rely on that here.
+        val label = buildRangeLabel(startDate, endDate)
 
         val filteredSales = sales.filter { it.timestamp in startDate..endDate }
 

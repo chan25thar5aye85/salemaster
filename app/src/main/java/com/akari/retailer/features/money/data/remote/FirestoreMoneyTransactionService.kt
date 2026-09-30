@@ -73,7 +73,8 @@ class FirestoreMoneyTransactionService {
             .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestoreMoneyTransactionService",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
                 
@@ -131,7 +132,11 @@ class FirestoreMoneyTransactionService {
         val listener = collection
             .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) {
+                    android.util.Log.w("FirestoreMoneyTransactionService",
+                        "listener error (transient, continuing): ${error.message}")
+                    return@addSnapshotListener
+                }
                 if (snapshot == null) { trySend(emptyList()); return@addSnapshotListener }
 
                 val external = snapshot.documents.mapNotNull { doc ->
@@ -178,7 +183,8 @@ class FirestoreMoneyTransactionService {
         val listener = collection
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestoreMoneyTransactionService",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
                 

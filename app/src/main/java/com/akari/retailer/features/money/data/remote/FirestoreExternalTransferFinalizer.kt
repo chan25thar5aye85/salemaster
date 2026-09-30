@@ -62,10 +62,16 @@ class FirestoreExternalTransferFinalizer(
                     }
                     MoneyTransactionType.EXTERNAL_IN -> {
                         accountId = toAccountId
+                        // To reverse a CREDIT of +X, we DEBIT -X.
+                        // Original IN applied:
+                        //   FEE_EARNED -> +(amount + fee)
+                        //   FEE_PAID   -> +(amount - fee)
+                        //   NONE       -> +amount
+                        // So the reversal delta must be the NEGATIVE of that.
                         reversal = when (feeType) {
-                            FeeType.FEE_EARNED -> amount + fee
-                            FeeType.FEE_PAID -> amount - fee
-                            FeeType.NONE -> amount
+                            FeeType.FEE_EARNED -> -(amount + fee)
+                            FeeType.FEE_PAID -> -(amount - fee)
+                            FeeType.NONE -> -amount
                         }
                     }
                     else -> return@runTransaction

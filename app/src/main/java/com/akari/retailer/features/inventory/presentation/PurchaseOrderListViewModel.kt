@@ -1,5 +1,6 @@
 package com.akari.retailer.features.inventory.presentation
 
+import kotlinx.coroutines.flow.first
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.features.inventory.data.repository.PurchaseOrderRepository
@@ -38,6 +39,7 @@ class PurchaseOrderListViewModel(
     init {
         loadOrders()
     }
+
 
     fun handleEvent(event: PurchaseOrderListEvent) {
         when (event) {

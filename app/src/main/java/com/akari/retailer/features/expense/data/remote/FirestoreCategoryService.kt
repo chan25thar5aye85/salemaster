@@ -165,7 +165,8 @@ class FirestoreCategoryService {
         val listener = collection.document(categoryId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    android.util.Log.w("FirestoreCategoryService",
+                        "listener error (transient, continuing): ${error.message}")
                     return@addSnapshotListener
                 }
                 

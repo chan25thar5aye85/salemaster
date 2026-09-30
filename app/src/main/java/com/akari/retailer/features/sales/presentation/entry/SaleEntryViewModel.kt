@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.core.ui.components.PaymentRow
 import com.akari.retailer.core.utils.PaymentPreferences
-import com.akari.retailer.data.repository.SaleRepository
+import com.akari.retailer.features.sales.data.repository.SaleRepository
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.features.money.domain.models.CreditAccount
@@ -62,7 +62,13 @@ class SaleEntryViewModel(
             is SaleEntryEvent.AmountChanged -> {
                 val previousTotal = getTotal()
                 updateAmount(event.rowId, event.value)
+                val newTotal = getTotal()
+                val rowAmt = _state.value.paymentRows.firstOrNull()?.amount ?: "<none>"
+                android.util.Log.e("SaleEntryVM",
+                    "amount='${event.value}' prevTotal=$previousTotal newTotal=$newTotal rowAmount='$rowAmt'")
                 syncSinglePaymentRow(previousTotal)
+                val afterAmt = _state.value.paymentRows.firstOrNull()?.amount ?: "<none>"
+                android.util.Log.e("SaleEntryVM", "after sync: rowAmount='$afterAmt'")
             }
             is SaleEntryEvent.RowFocused -> focusRow(event.rowId)
             is SaleEntryEvent.NextPressed -> nextRow(event.rowId)
@@ -82,6 +88,14 @@ class SaleEntryViewModel(
             is SaleEntryEvent.RemovePaymentRow -> removePaymentRow(event.rowId)
             is SaleEntryEvent.NotesChanged ->
                 _state.value = _state.value.copy(notes = event.value)
+            SaleEntryEvent.OpenNotesDialog ->
+                _state.value = _state.value.copy(showNotesDialog = true)
+            SaleEntryEvent.CloseNotesDialog ->
+                _state.value = _state.value.copy(showNotesDialog = false)
+            SaleEntryEvent.OpenPaymentDialog ->
+                _state.value = _state.value.copy(showPaymentDialog = true)
+            SaleEntryEvent.ClosePaymentDialog ->
+                _state.value = _state.value.copy(showPaymentDialog = false)
             SaleEntryEvent.SaveSale -> saveSale()
             SaleEntryEvent.ClearError -> clearError()
             SaleEntryEvent.ResetSaveSuccess -> resetSaveSuccess()

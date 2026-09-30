@@ -3,7 +3,7 @@ package com.akari.retailer.features.sales.presentation.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.core.ui.components.TimeFilter
-import com.akari.retailer.data.repository.SaleRepository
+import com.akari.retailer.features.sales.data.repository.SaleRepository
 import com.akari.retailer.features.sales.data.repository.SaleFinalizer
 import com.akari.retailer.features.sales.domain.models.Sale
 import kotlinx.coroutines.Job

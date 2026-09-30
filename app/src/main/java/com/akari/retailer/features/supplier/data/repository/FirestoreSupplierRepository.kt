@@ -27,8 +27,4 @@ class FirestoreSupplierRepository(
     override fun getSupplierById(supplierId: String): Flow<Supplier?> {
         return service.getSupplierById(supplierId)
     }
-    
-    override suspend fun incrementTotalPurchased(supplierId: String, amount: Int): Result<Unit> {
-        return service.incrementTotalPurchased(supplierId, amount)
-    }
 }

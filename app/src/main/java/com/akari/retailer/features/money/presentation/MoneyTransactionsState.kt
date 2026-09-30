@@ -1,6 +1,7 @@
 package com.akari.retailer.features.money.presentation
 
 import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.core.ui.components.TimeFilterPreset
 import com.akari.retailer.features.money.domain.models.MoneyAccount
 import com.akari.retailer.features.money.domain.models.MoneyTransaction
 import com.akari.retailer.features.money.domain.models.MoneyTransactionType
@@ -12,7 +13,7 @@ data class MoneyTransactionsState(
 
     val selectedAccountId: String = "",
     val selectedType: MoneyTransactionType? = null,
-    val timeFilter: TimeFilter = TimeFilter(),
+    val timeFilter: TimeFilter = TimeFilter(preset = TimeFilterPreset.TODAY),
     val searchQuery: String = "",
 
     val totalIn: Int = 0,

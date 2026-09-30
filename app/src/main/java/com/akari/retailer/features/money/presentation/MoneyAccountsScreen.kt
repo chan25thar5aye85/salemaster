@@ -41,7 +41,10 @@ fun MoneyAccountsScreen(
     
     
     val viewModel: MoneyAccountsViewModel = viewModel(
-        factory = MoneyAccountsViewModelFactory(application.container.moneyAccountRepository)
+        factory = MoneyAccountsViewModelFactory(
+            application.container.moneyAccountRepository,
+            application.container.moneyTransactionRepository
+        )
     )
     
     val state by viewModel.state.collectAsState()

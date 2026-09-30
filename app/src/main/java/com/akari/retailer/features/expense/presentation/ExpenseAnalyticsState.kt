@@ -1,6 +1,7 @@
 package com.akari.retailer.features.expense.presentation
 
 import com.akari.retailer.core.ui.components.TimeFilter
+import com.akari.retailer.core.ui.components.TimeFilterPreset
 import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 
 enum class ExpenseTypeFilter {
@@ -24,6 +25,6 @@ data class ExpenseAnalyticsState(
     val monthlyAverage: Int = 0,
     val isLoading: Boolean = true,
     val error: String? = null,
-    val timeFilter: TimeFilter = TimeFilter(),
+    val timeFilter: TimeFilter = TimeFilter(preset = TimeFilterPreset.TODAY),
     val typeFilter: ExpenseTypeFilter = ExpenseTypeFilter.ALL
 )

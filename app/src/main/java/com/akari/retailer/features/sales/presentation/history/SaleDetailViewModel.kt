@@ -2,7 +2,7 @@ package com.akari.retailer.features.sales.presentation.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.akari.retailer.data.repository.SaleRepository
+import com.akari.retailer.features.sales.data.repository.SaleRepository
 import com.akari.retailer.features.customer.data.repository.CustomerRepository
 import com.akari.retailer.features.customer.domain.models.Customer
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
