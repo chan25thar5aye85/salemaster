@@ -401,12 +401,11 @@ fun SaleEntryScreen(
         SaleEntryPill(
             state = state,
             viewModel = viewModel,
+            focusManager = focusManager,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(start = 80.dp, end = 12.dp)
-                .navigationBarsPadding()
+                .padding(start = 80.dp, end = 12.dp, bottom = 12.dp)
                 .imePadding()
-                .padding(bottom = 10.dp)
         )
     }
 }
@@ -415,6 +414,7 @@ fun SaleEntryScreen(
 private fun SaleEntryPill(
     state: SaleEntryState,
     viewModel: SaleEntryViewModel,
+    focusManager: androidx.compose.ui.platform.FocusManager,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -510,35 +510,43 @@ private fun SaleEntryPill(
                 maxLines = 1
             )
 
-            // ── Save — icon only ──
-            FilledIconButton(
+            // ── Save ──
+            Button(
                 onClick = {
                     if (!state.isSaving) {
+                        focusManager.clearFocus()
                         viewModel.handleEvent(SaleEntryEvent.SaveSale)
                     }
                 },
-                enabled = state.canSave && !state.isSaving,
-                modifier = Modifier.size(40.dp),
-                colors = IconButtonDefaults.filledIconButtonColors(
+                enabled = (state.canSave || state.isSaving) && !state.isSaving,
+                colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.onPrimary,
                     contentColor = MaterialTheme.colorScheme.primary,
                     disabledContainerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.35f),
                     disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                )
+                ),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
             ) {
                 if (state.isSaving) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(14.dp),
                         strokeWidth = 2.dp,
                         color = MaterialTheme.colorScheme.primary
                     )
+                    Spacer(modifier = Modifier.width(6.dp))
                 } else {
                     Icon(
                         imageVector = Icons.Default.Save,
-                        contentDescription = "Save",
-                        modifier = Modifier.size(22.dp)
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
                     )
+                    Spacer(modifier = Modifier.width(4.dp))
                 }
+                Text(
+                    text = if (state.saveSuccess) "Saved" else "Save",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp
+                )
             }
         }
     }

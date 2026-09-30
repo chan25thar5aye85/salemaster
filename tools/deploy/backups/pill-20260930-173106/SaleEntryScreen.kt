@@ -263,12 +263,166 @@ fun SaleEntryScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        AppScreen(
-            title = stringResource(R.string.sale_entry),
-            showBackButton = false,
-            showTopBar = true
-        ) {
+    AppScreen(
+        title = stringResource(R.string.sale_entry),
+        showBackButton = false,
+        showTopBar = true,
+        bottomBar = {
+            // Outer Box paints the same blue as the Surface and stretches
+            // to fill the entire bottomBar slot — including the nav-bar
+            // inset that the Scaffold reserves. Without this, the app's
+            // window background (light blue) shows through in the strip
+            // below the Surface, creating a visible "bleed".
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.primary)
+                    .imePadding()
+            ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 80.dp),
+                color = MaterialTheme.colorScheme.primary,
+                shadowElevation = 0.dp,
+                shape = RoundedCornerShape(
+                    topStart = 12.dp,
+                    topEnd = 12.dp
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // ── Payment button ──
+                    val primaryPayment = state.paymentRows.firstOrNull()
+                    val primaryAccount = state.accounts.find {
+                        it.id == primaryPayment?.accountId
+                    }
+                    val extraCount = (state.paymentRows.size - 1).coerceAtLeast(0)
+                    val isCredit = primaryPayment?.accountId == CreditAccount.ID
+                    val paymentLabel = when {
+                        isCredit -> "💳 Credit"
+                        primaryAccount != null -> "${primaryAccount.icon} ${primaryAccount.name}"
+                        else -> "💰 Payment"
+                    } + if (extraCount > 0) " +$extraCount" else ""
+
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.handleEvent(SaleEntryEvent.OpenPaymentDialog)
+                        },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                        ),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = paymentLabel,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp
+                        )
+                    }
+
+                    // ── Notes icon ──
+                    Box {
+                        IconButton(
+                            onClick = {
+                                viewModel.handleEvent(SaleEntryEvent.OpenNotesDialog)
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Box {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Notes",
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                if (state.notes.isNotBlank()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .size(10.dp)
+                                            .background(
+                                                color = androidx.compose.ui.graphics.Color(0xFFFFC107),
+                                                shape = androidx.compose.foundation.shape.CircleShape
+                                            )
+                                            .border(
+                                                width = 1.5.dp,
+                                                color = MaterialTheme.colorScheme.onPrimary,
+                                                shape = androidx.compose.foundation.shape.CircleShape
+                                            )
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // ── Total ──
+                    Text(
+                        text = viewModel.getFormattedTotal(),
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.End,
+                        style = AppTypography.title.copy(fontSize = 17.sp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
+
+                    // ── Save — icon only, no text ──
+                    FilledIconButton(
+                        onClick = {
+                            if (!state.isSaving) {
+                                focusManager.clearFocus()
+                                viewModel.handleEvent(SaleEntryEvent.SaveSale)
+                            }
+                        },
+                        enabled = state.canSave && !state.isSaving,
+                        modifier = Modifier.size(40.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.onPrimary,
+                            contentColor = MaterialTheme.colorScheme.primary,
+                            disabledContainerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.35f),
+                            disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                        )
+                    ) {
+                        when {
+                            state.isSaving -> {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            state.saveSuccess -> {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Saved",
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            else -> {
+                                Icon(
+                                    imageVector = Icons.Default.Save,
+                                    contentDescription = "Save",
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            }
+        }
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -390,156 +544,6 @@ fun SaleEntryScreen(
             )
 
             Spacer(modifier = Modifier.height(Spacing.xxlarge))
-
-            // Extra bottom space so the floating pill doesn't cover the
-            // last item when scrolled to the bottom.
-            Spacer(modifier = Modifier.height(72.dp))
-        }
-    }
-
-        // ── Floating action pill, sits above the keyboard ──
-        SaleEntryPill(
-            state = state,
-            viewModel = viewModel,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(start = 80.dp, end = 12.dp)
-                .navigationBarsPadding()
-                .imePadding()
-                .padding(bottom = 10.dp)
-        )
-    }
-}
-
-@Composable
-private fun SaleEntryPill(
-    state: SaleEntryState,
-    viewModel: SaleEntryViewModel,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.primary,
-        shadowElevation = 6.dp,
-        shape = RoundedCornerShape(28.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            // ── Payment chip ──
-            val primaryPayment = state.paymentRows.firstOrNull()
-            val primaryAccount = state.accounts.find {
-                it.id == primaryPayment?.accountId
-            }
-            val extraCount = (state.paymentRows.size - 1).coerceAtLeast(0)
-            val isCredit = primaryPayment?.accountId == CreditAccount.ID
-            val paymentLabel = when {
-                isCredit -> "💳 Credit"
-                primaryAccount != null -> "${primaryAccount.icon} ${primaryAccount.name}"
-                else -> "💰 Payment"
-            } + if (extraCount > 0) " +$extraCount" else ""
-
-            OutlinedButton(
-                onClick = {
-                    viewModel.handleEvent(SaleEntryEvent.OpenPaymentDialog)
-                },
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
-                ),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = paymentLabel,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 13.sp
-                )
-            }
-
-            // ── Notes icon ──
-            Box {
-                IconButton(
-                    onClick = {
-                        viewModel.handleEvent(SaleEntryEvent.OpenNotesDialog)
-                    },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Box {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Notes",
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        if (state.notes.isNotBlank()) {
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .size(10.dp)
-                                    .background(
-                                        color = androidx.compose.ui.graphics.Color(0xFFFFC107),
-                                        shape = androidx.compose.foundation.shape.CircleShape
-                                    )
-                                    .border(
-                                        width = 1.5.dp,
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        shape = androidx.compose.foundation.shape.CircleShape
-                                    )
-                            )
-                        }
-                    }
-                }
-            }
-
-            // ── Total ──
-            Text(
-                text = viewModel.getFormattedTotal(),
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.End,
-                style = AppTypography.title.copy(fontSize = 17.sp),
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1
-            )
-
-            // ── Save — icon only ──
-            FilledIconButton(
-                onClick = {
-                    if (!state.isSaving) {
-                        viewModel.handleEvent(SaleEntryEvent.SaveSale)
-                    }
-                },
-                enabled = state.canSave && !state.isSaving,
-                modifier = Modifier.size(40.dp),
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.onPrimary,
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    disabledContainerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.35f),
-                    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                )
-            ) {
-                if (state.isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Save,
-                        contentDescription = "Save",
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-            }
         }
     }
 }

@@ -2,7 +2,6 @@ package com.akari.retailer.core.ui.components
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,14 +30,18 @@ fun AmountField(
     onFocus: () -> Unit = {},
     placeholder: String = "0"
 ) {
-    var text by remember {
-        mutableStateOf(amount?.takeIf { it > 0 }?.toString() ?: "")
+    var text by remember(amount) {
+        mutableStateOf(
+            amount?.takeIf { it > 0 }?.toString() ?: ""
+        )
     }
 
     var isFocused by remember { mutableStateOf(false) }
 
-    LaunchedEffect(amount, isFocused) {
-        if (!isFocused) {
+    LaunchedEffect(isFocused, amount) {
+        if (isFocused) {
+            text = amount?.takeIf { it > 0 }?.toString() ?: ""
+        } else {
             text = amount?.takeIf { it > 0 }?.let {
                 MoneyFormatter.formatForInput(it)
             } ?: ""
@@ -70,11 +73,13 @@ fun AmountField(
         ),
         singleLine = true,
         placeholder = {
-            if (!isFocused && text.isEmpty()) {
+            if (!isFocused) {
                 Text(
                     text = placeholder,
                     style = AppTypography.body,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface.copy(
+                        alpha = 0.3f
+                    )
                 )
             }
         }

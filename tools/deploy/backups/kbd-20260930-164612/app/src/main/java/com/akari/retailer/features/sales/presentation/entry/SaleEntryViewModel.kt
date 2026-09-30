@@ -428,10 +428,7 @@ class SaleEntryViewModel(
                         accounts = currentState.accounts,
                         customers = currentState.customers,
                         paymentRows = listOf(PaymentRow(1L, lastAccountId, "")),
-                        notes = "",
-                        // Bump epoch so SaleEntryScreen re-requests focus
-                        // on the fresh row and pops the keyboard back up.
-                        focusEpoch = _state.value.focusEpoch + 1
+                        notes = ""
                     )
                     userTouchedPaymentAmounts = false
                 } else {

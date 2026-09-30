@@ -28,15 +28,7 @@ data class SaleEntryState(
     val showOverpaymentDialog: Boolean = false,
     val pendingOverpaymentAmount: Int = 0,
     val overpaymentMode: OverpaymentMode = OverpaymentMode.NONE,
-    val overpaymentCustomer: Customer? = null,
-
-    /**
-     * Incremented every time the ViewModel resets the form (e.g. after a
-     * successful save). The screen keys its focus LaunchedEffect on
-     * (focusedRowId, focusEpoch) so it re-fires even if the row ID is the
-     * same as before — bringing the keyboard back up for the next sale.
-     */
-    val focusEpoch: Int = 0
+    val overpaymentCustomer: Customer? = null
 )
 
 enum class OverpaymentMode {

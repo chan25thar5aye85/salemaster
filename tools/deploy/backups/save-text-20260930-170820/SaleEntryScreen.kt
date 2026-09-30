@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Warning
@@ -104,9 +103,9 @@ fun SaleEntryScreen(
         }
     }
 
-    // ── Payment sheet ──
+    // ── Payment dialog ──
     if (state.showPaymentDialog) {
-        PaymentSheet(
+        PaymentDialog(
             state = state,
             viewModel = viewModel,
             onDismiss = {
@@ -115,9 +114,9 @@ fun SaleEntryScreen(
         )
     }
 
-    // ── Notes sheet ──
+    // ── Notes dialog ──
     if (state.showNotesDialog) {
-        NotesSheet(
+        NotesDialog(
             initialText = state.notes,
             onApply = { text ->
                 viewModel.handleEvent(SaleEntryEvent.NotesChanged(text))
@@ -129,30 +128,17 @@ fun SaleEntryScreen(
         )
     }
 
-    // ── Overpayment attribution sheet ──
+    // ── Overpayment attribution dialog ──
     if (state.showOverpaymentDialog) {
         var showOverpaymentCustomerPicker by remember { mutableStateOf(false) }
 
-        val overpaymentSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
+        AlertDialog(
             onDismissRequest = {
                 viewModel.handleEvent(SaleEntryEvent.DismissOverpaymentDialog)
             },
-            sheetState = overpaymentSheetState,
-            dragHandle = { BottomSheetDefaults.DragHandle() }
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Spacing.large)
-                    .padding(bottom = Spacing.large)
-            ) {
-                Text(
-                    text = stringResource(R.string.overpayment),
-                    style = AppTypography.title,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = Spacing.small)
-                )
+            title = { Text(stringResource(R.string.overpayment)) },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = stringResource(R.string.overpaid_amount, state.pendingOverpaymentAmount),
                         style = AppTypography.body
@@ -217,39 +203,34 @@ fun SaleEntryScreen(
                         Text(stringResource(R.string.keep_in_account))
                     }
 
-                state.error?.let { err ->
-                    Spacer(modifier = Modifier.height(Spacing.small))
-                    Text(
-                        text = err,
-                        color = MaterialTheme.colorScheme.error,
-                        style = AppTypography.small
-                    )
+                    state.error?.let { err ->
+                        Spacer(modifier = Modifier.height(Spacing.small))
+                        Text(
+                            text = err,
+                            color = MaterialTheme.colorScheme.error,
+                            style = AppTypography.small
+                        )
+                    }
                 }
-
-                Spacer(modifier = Modifier.height(Spacing.medium))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.handleEvent(SaleEntryEvent.ConfirmOverpayment) },
+                    enabled = state.overpaymentMode != OverpaymentMode.NONE &&
+                        (state.overpaymentMode != OverpaymentMode.CREDIT_TO_CUSTOMER ||
+                         state.overpaymentCustomer != null)
                 ) {
-                    OutlinedButton(
-                        onClick = { viewModel.handleEvent(SaleEntryEvent.DismissOverpaymentDialog) },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                    Button(
-                        onClick = { viewModel.handleEvent(SaleEntryEvent.ConfirmOverpayment) },
-                        enabled = state.overpaymentMode != OverpaymentMode.NONE &&
-                            (state.overpaymentMode != OverpaymentMode.CREDIT_TO_CUSTOMER ||
-                             state.overpaymentCustomer != null),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(R.string.confirm))
-                    }
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { viewModel.handleEvent(SaleEntryEvent.DismissOverpaymentDialog) }
+                ) {
+                    Text(stringResource(R.string.cancel))
                 }
             }
-        }
+        )
 
         if (showOverpaymentCustomerPicker) {
             CreditCustomerPickerDialog(
@@ -263,12 +244,152 @@ fun SaleEntryScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        AppScreen(
-            title = stringResource(R.string.sale_entry),
-            showBackButton = false,
-            showTopBar = true
-        ) {
+    AppScreen(
+        title = stringResource(R.string.sale_entry),
+        showBackButton = false,
+        showTopBar = true,
+        bottomBar = {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 80.dp)
+                    .imePadding(),
+                color = MaterialTheme.colorScheme.primary,
+                shadowElevation = 8.dp,
+                shape = RoundedCornerShape(
+                    topStart = 12.dp,
+                    topEnd = 12.dp
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // ── Payment button ──
+                    val primaryPayment = state.paymentRows.firstOrNull()
+                    val primaryAccount = state.accounts.find {
+                        it.id == primaryPayment?.accountId
+                    }
+                    val extraCount = (state.paymentRows.size - 1).coerceAtLeast(0)
+                    val isCredit = primaryPayment?.accountId == CreditAccount.ID
+                    val paymentLabel = when {
+                        isCredit -> "💳 Credit"
+                        primaryAccount != null -> "${primaryAccount.icon} ${primaryAccount.name}"
+                        else -> "💰 Payment"
+                    } + if (extraCount > 0) " +$extraCount" else ""
+
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.handleEvent(SaleEntryEvent.OpenPaymentDialog)
+                        },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                        ),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = paymentLabel,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp
+                        )
+                    }
+
+                    // ── Notes icon ──
+                    Box {
+                        IconButton(
+                            onClick = {
+                                viewModel.handleEvent(SaleEntryEvent.OpenNotesDialog)
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Box {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Notes",
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                if (state.notes.isNotBlank()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .size(10.dp)
+                                            .background(
+                                                color = androidx.compose.ui.graphics.Color(0xFFFFC107),
+                                                shape = androidx.compose.foundation.shape.CircleShape
+                                            )
+                                            .border(
+                                                width = 1.5.dp,
+                                                color = MaterialTheme.colorScheme.onPrimary,
+                                                shape = androidx.compose.foundation.shape.CircleShape
+                                            )
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // ── Total ──
+                    Text(
+                        text = viewModel.getFormattedTotal(),
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.End,
+                        style = AppTypography.title.copy(fontSize = 17.sp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
+
+                    // ── Save ──
+                    Button(
+                        onClick = {
+                            if (!state.isSaving) {
+                                focusManager.clearFocus()
+                                viewModel.handleEvent(SaleEntryEvent.SaveSale)
+                            }
+                        },
+                        enabled = (state.canSave || state.isSaving) && !state.isSaving,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.onPrimary,
+                            contentColor = MaterialTheme.colorScheme.primary,
+                            disabledContainerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.35f),
+                            disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                        ),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        if (state.isSaving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(14.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Save,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
+                        Text(
+                            text = if (state.saveSuccess) "Saved" else "Save",
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
+        }
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -390,156 +511,6 @@ fun SaleEntryScreen(
             )
 
             Spacer(modifier = Modifier.height(Spacing.xxlarge))
-
-            // Extra bottom space so the floating pill doesn't cover the
-            // last item when scrolled to the bottom.
-            Spacer(modifier = Modifier.height(72.dp))
-        }
-    }
-
-        // ── Floating action pill, sits above the keyboard ──
-        SaleEntryPill(
-            state = state,
-            viewModel = viewModel,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(start = 80.dp, end = 12.dp)
-                .navigationBarsPadding()
-                .imePadding()
-                .padding(bottom = 10.dp)
-        )
-    }
-}
-
-@Composable
-private fun SaleEntryPill(
-    state: SaleEntryState,
-    viewModel: SaleEntryViewModel,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.primary,
-        shadowElevation = 6.dp,
-        shape = RoundedCornerShape(28.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            // ── Payment chip ──
-            val primaryPayment = state.paymentRows.firstOrNull()
-            val primaryAccount = state.accounts.find {
-                it.id == primaryPayment?.accountId
-            }
-            val extraCount = (state.paymentRows.size - 1).coerceAtLeast(0)
-            val isCredit = primaryPayment?.accountId == CreditAccount.ID
-            val paymentLabel = when {
-                isCredit -> "💳 Credit"
-                primaryAccount != null -> "${primaryAccount.icon} ${primaryAccount.name}"
-                else -> "💰 Payment"
-            } + if (extraCount > 0) " +$extraCount" else ""
-
-            OutlinedButton(
-                onClick = {
-                    viewModel.handleEvent(SaleEntryEvent.OpenPaymentDialog)
-                },
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
-                ),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = paymentLabel,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 13.sp
-                )
-            }
-
-            // ── Notes icon ──
-            Box {
-                IconButton(
-                    onClick = {
-                        viewModel.handleEvent(SaleEntryEvent.OpenNotesDialog)
-                    },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Box {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Notes",
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        if (state.notes.isNotBlank()) {
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .size(10.dp)
-                                    .background(
-                                        color = androidx.compose.ui.graphics.Color(0xFFFFC107),
-                                        shape = androidx.compose.foundation.shape.CircleShape
-                                    )
-                                    .border(
-                                        width = 1.5.dp,
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        shape = androidx.compose.foundation.shape.CircleShape
-                                    )
-                            )
-                        }
-                    }
-                }
-            }
-
-            // ── Total ──
-            Text(
-                text = viewModel.getFormattedTotal(),
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.End,
-                style = AppTypography.title.copy(fontSize = 17.sp),
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1
-            )
-
-            // ── Save — icon only ──
-            FilledIconButton(
-                onClick = {
-                    if (!state.isSaving) {
-                        viewModel.handleEvent(SaleEntryEvent.SaveSale)
-                    }
-                },
-                enabled = state.canSave && !state.isSaving,
-                modifier = Modifier.size(40.dp),
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.onPrimary,
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    disabledContainerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.35f),
-                    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                )
-            ) {
-                if (state.isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Save,
-                        contentDescription = "Save",
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-            }
         }
     }
 }
@@ -697,95 +668,77 @@ private fun CompactSaleRow(sale: com.akari.retailer.features.sales.domain.models
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PaymentSheet(
+private fun PaymentDialog(
     state: SaleEntryState,
     viewModel: SaleEntryViewModel,
     onDismiss: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    ModalBottomSheet(
+    AlertDialog(
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        dragHandle = { BottomSheetDefaults.DragHandle() }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Spacing.large)
-                .padding(bottom = Spacing.large)
-        ) {
+        title = {
             Text(
                 text = "💳 ${stringResource(R.string.payment)}",
-                style = AppTypography.title,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = Spacing.medium)
+                style = AppTypography.title
             )
-
-            PaymentListComponent(
-                paymentRows = state.paymentRows,
-                accounts = state.accounts,
-                customers = state.customers,
-                totalAmount = viewModel.getTotal(),
-                showAddButton = true,
-                onAccountSelected = { rowId, account ->
-                    viewModel.handleEvent(SaleEntryEvent.PaymentAccountChanged(rowId, account))
-                },
-                onCreditSelected = { rowId ->
-                    viewModel.handleEvent(SaleEntryEvent.PaymentCreditSelected(rowId))
-                },
-                onCustomerSelected = { rowId, customer ->
-                    viewModel.handleEvent(SaleEntryEvent.PaymentCustomerSelected(rowId, customer))
-                },
-                onAmountChanged = { rowId, amount ->
-                    viewModel.handleEvent(SaleEntryEvent.PaymentAmountChanged(rowId, amount))
-                },
-                onAddRow = { viewModel.handleEvent(SaleEntryEvent.AddPaymentRow) },
-                onRemoveRow = { rowId ->
-                    viewModel.handleEvent(SaleEntryEvent.RemovePaymentRow(rowId))
-                }
-            )
-
-            Spacer(modifier = Modifier.height(Spacing.medium))
-
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth()
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 500.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
+                PaymentListComponent(
+                    paymentRows = state.paymentRows,
+                    accounts = state.accounts,
+                    customers = state.customers,
+                    totalAmount = viewModel.getTotal(),
+                    showAddButton = true,
+                    onAccountSelected = { rowId, account ->
+                        viewModel.handleEvent(SaleEntryEvent.PaymentAccountChanged(rowId, account))
+                    },
+                    onCreditSelected = { rowId ->
+                        viewModel.handleEvent(SaleEntryEvent.PaymentCreditSelected(rowId))
+                    },
+                    onCustomerSelected = { rowId, customer ->
+                        viewModel.handleEvent(SaleEntryEvent.PaymentCustomerSelected(rowId, customer))
+                    },
+                    onAmountChanged = { rowId, amount ->
+                        viewModel.handleEvent(SaleEntryEvent.PaymentAmountChanged(rowId, amount))
+                    },
+                    onAddRow = { viewModel.handleEvent(SaleEntryEvent.AddPaymentRow) },
+                    onRemoveRow = { rowId ->
+                        viewModel.handleEvent(SaleEntryEvent.RemovePaymentRow(rowId))
+                    }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.ok))
             }
         }
-    }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun NotesSheet(
+private fun NotesDialog(
     initialText: String,
     onApply: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var text by remember { mutableStateOf(initialText) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    ModalBottomSheet(
+    AlertDialog(
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        dragHandle = { BottomSheetDefaults.DragHandle() }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Spacing.large)
-                .padding(bottom = Spacing.large)
-        ) {
+        title = {
             Text(
                 text = "📝 " + stringResource(R.string.notes_optional),
-                style = AppTypography.title,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = Spacing.medium)
+                style = AppTypography.title
             )
-
+        },
+        text = {
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
@@ -798,29 +751,19 @@ private fun NotesSheet(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 120.dp, max = 260.dp),
-                maxLines = 8
+                    .heightIn(min = 100.dp, max = 200.dp),
+                maxLines = 6
             )
-
-            Spacer(modifier = Modifier.height(Spacing.medium))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-            ) {
-                OutlinedButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
-                Button(
-                    onClick = { onApply(text) },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(R.string.ok))
-                }
+        },
+        confirmButton = {
+            TextButton(onClick = { onApply(text) }) {
+                Text(stringResource(R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
             }
         }
-    }
+    )
 }
