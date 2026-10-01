@@ -147,8 +147,13 @@ class ExternalTransferViewModel(
                 description = currentState.description.trim()
             )
 
-            // Trust Firestore's own retry/backoff. No withTimeout.
-            val result = externalTransferUseCase.invoke(params)
+            val result: Result<Unit> = try {
+                kotlinx.coroutines.withTimeout(20_000L) {
+                    externalTransferUseCase.invoke(params)
+                }
+            } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+                Result.failure(Exception("TIMEOUT: connection too slow"))
+            }
 
             if (result.isSuccess) {
                 _state.value = _state.value.copy(

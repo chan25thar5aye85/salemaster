@@ -23,11 +23,6 @@ data class ExternalTransferState(
     val feeType: FeeType = FeeType.NONE,
     val description: String = "",
     val lastUsedAccountId: String = "",
-    /**
-     * The 5 most recent external transfers, newest first. Drives the
-     * Recent Transfers card below the form.
-     */
-    val recentTransfers: List<com.akari.retailer.features.money.domain.models.MoneyTransaction> = emptyList(),
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
     val error: String? = null

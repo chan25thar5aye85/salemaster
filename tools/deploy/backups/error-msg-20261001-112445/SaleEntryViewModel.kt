@@ -15,7 +15,6 @@ import com.akari.retailer.features.sales.data.repository.SaleFinalizer
 import com.akari.retailer.features.sales.domain.models.Sale
 import com.akari.retailer.features.sales.domain.models.SaleItem
 import com.akari.retailer.core.utils.MoneyFormatter
-import com.akari.retailer.core.utils.FirestoreErrorFormatter
 import com.akari.retailer.features.customer.data.repository.CustomerRepository
 import com.akari.retailer.features.customer.domain.models.Customer
 import com.akari.retailer.features.customer.domain.usecases.ExtendCreditUseCase
@@ -411,9 +410,6 @@ class SaleEntryViewModel(
                     notes = currentState.notes.trim()
                 )
 
-                // Trust Firestore's own retry/backoff. Do NOT wrap in a
-                // withTimeout — cancellation racing with a commit could
-                // leave the transaction half-applied from the caller's POV.
                 val result = saleFinalizer.finalizeSale(sale, overpaymentToApply)
 
                 if (result.isSuccess) {
@@ -441,15 +437,13 @@ class SaleEntryViewModel(
                 } else {
                     _state.value = currentState.copy(
                         isSaving = false,
-                        error = FirestoreErrorFormatter.friendlyMessage(
-                            result.exceptionOrNull()?.message
-                        )
+                        error = result.exceptionOrNull()?.message ?: "Failed"
                     )
                 }
             } catch (e: Exception) {
                 _state.value = currentState.copy(
                     isSaving = false,
-                    error = FirestoreErrorFormatter.friendlyMessage(e.message)
+                    error = e.message ?: "Failed"
                 )
             }
         }

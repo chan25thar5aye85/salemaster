@@ -399,19 +399,6 @@ fun SaleEntryScreen(
     }
 
         // ── Floating action pill, sits above the keyboard ──
-        // Saving status chip — shows above the pill when a save is slow
-        if (state.isSaving) {
-            com.akari.retailer.core.ui.components.SavingStatusChip(
-                isSaving = state.isSaving,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(start = 80.dp, end = 12.dp)
-                    .navigationBarsPadding()
-                    .imePadding()
-                    .padding(bottom = 80.dp)
-            )
-        }
-
         SaleEntryPill(
             state = state,
             viewModel = viewModel,

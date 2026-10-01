@@ -411,10 +411,15 @@ class SaleEntryViewModel(
                     notes = currentState.notes.trim()
                 )
 
-                // Trust Firestore's own retry/backoff. Do NOT wrap in a
-                // withTimeout — cancellation racing with a commit could
-                // leave the transaction half-applied from the caller's POV.
-                val result = saleFinalizer.finalizeSale(sale, overpaymentToApply)
+                // Timeout the transaction so a stuck connection can't spin
+                // forever. 20s is generous; typical commits are <2s.
+                val result: Result<String> = try {
+                    kotlinx.coroutines.withTimeout(20_000L) {
+                        saleFinalizer.finalizeSale(sale, overpaymentToApply)
+                    }
+                } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+                    Result.failure(Exception("TIMEOUT: connection too slow"))
+                }
 
                 if (result.isSuccess) {
                     Log.d(TAG, "Sale saved atomically (payments: ${allPaymentEntries.size})")

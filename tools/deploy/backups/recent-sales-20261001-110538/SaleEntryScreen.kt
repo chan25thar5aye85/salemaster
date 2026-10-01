@@ -386,7 +386,6 @@ fun SaleEntryScreen(
 
             RecentSalesCard(
                 sales = state.recentSales,
-                accounts = state.accounts,
                 onViewAllClick = { navController?.navigate(Routes.HISTORY) }
             )
 
@@ -399,19 +398,6 @@ fun SaleEntryScreen(
     }
 
         // ── Floating action pill, sits above the keyboard ──
-        // Saving status chip — shows above the pill when a save is slow
-        if (state.isSaving) {
-            com.akari.retailer.core.ui.components.SavingStatusChip(
-                isSaving = state.isSaving,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(start = 80.dp, end = 12.dp)
-                    .navigationBarsPadding()
-                    .imePadding()
-                    .padding(bottom = 80.dp)
-            )
-        }
-
         SaleEntryPill(
             state = state,
             viewModel = viewModel,
@@ -600,7 +586,6 @@ private fun SectionCard(
 @Composable
 private fun RecentSalesCard(
     sales: List<com.akari.retailer.features.sales.domain.models.Sale>,
-    accounts: List<com.akari.retailer.features.money.domain.models.MoneyAccount>,
     onViewAllClick: () -> Unit
 ) {
     Card(
@@ -619,12 +604,31 @@ private fun RecentSalesCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "📋 " + stringResource(R.string.recent_sales),
-                    style = AppTypography.title,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "📋 ${stringResource(R.string.recent_sales)}",
+                        style = AppTypography.title,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (sales.isNotEmpty()) {
+                        Spacer(modifier = Modifier.width(Spacing.small))
+                        Surface(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "${sales.size}",
+                                style = AppTypography.small,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
                 TextButton(onClick = onViewAllClick) {
                     Text(stringResource(R.string.view_all), fontSize = 13.sp)
                 }
@@ -648,7 +652,7 @@ private fun RecentSalesCard(
             } else {
                 val visible = sales.take(5)
                 visible.forEachIndexed { index, sale ->
-                    CompactSaleRow(sale = sale, accounts = accounts)
+                    CompactSaleRow(sale = sale)
                     if (index < visible.size - 1) {
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = Spacing.medium),
@@ -662,49 +666,26 @@ private fun RecentSalesCard(
 }
 
 @Composable
-private fun CompactSaleRow(
-    sale: com.akari.retailer.features.sales.domain.models.Sale,
-    accounts: List<com.akari.retailer.features.money.domain.models.MoneyAccount>
-) {
+private fun CompactSaleRow(sale: com.akari.retailer.features.sales.domain.models.Sale) {
     val dateFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
-
-    // Resolve a payment icon for this sale:
-    //   - credit row → 💳
-    //   - else → the icon of the first payment account
-    val primaryPayment = sale.payments.firstOrNull()
-    val isCredit = primaryPayment?.accountId ==
-        com.akari.retailer.features.money.domain.models.CreditAccount.ID
-    val paymentIcon = when {
-        isCredit -> "💳"
-        primaryPayment != null ->
-            accounts.find { it.id == primaryPayment.accountId }?.icon ?: "💵"
-        else -> "💵"
-    }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = Spacing.medium, vertical = Spacing.small),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Time
         Text(
-            text = "🕐 " + dateFormat.format(Date(sale.timestamp)),
+            text = "🕐 ${dateFormat.format(Date(sale.timestamp))}",
             style = AppTypography.small,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
-
-        // Middle: payment icon · item count (weighted so it centers a bit)
         Text(
-            text = "$paymentIcon  ${sale.items.size} item${if (sale.items.size != 1) "s" else ""}",
+            text = "${sale.items.size} item${if (sale.items.size != 1) "s" else ""}",
             style = AppTypography.small,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            maxLines = 1,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.weight(1f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
-
-        // Amount
         Text(
             text = "${sale.total}",
             style = AppTypography.body,

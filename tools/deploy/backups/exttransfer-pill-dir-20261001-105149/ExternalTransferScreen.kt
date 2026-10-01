@@ -100,6 +100,43 @@ fun ExternalTransferScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
             ) {
+                // ── Direction toggle ──
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+                ) {
+                    DirectionToggleButton(
+                        label = "📤 " + stringResource(R.string.send_money),
+                        selected = state.isOutgoing(),
+                        onClick = {
+                            if (!state.isOutgoing()) {
+                                viewModel.handleEvent(
+                                    ExternalTransferEvent.DirectionChanged(
+                                        ExternalTransferDirection.OUTGOING
+                                    )
+                                )
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                    DirectionToggleButton(
+                        label = "📥 " + stringResource(R.string.receive_money),
+                        selected = !state.isOutgoing(),
+                        onClick = {
+                            if (state.isOutgoing()) {
+                                viewModel.handleEvent(
+                                    ExternalTransferEvent.DirectionChanged(
+                                        ExternalTransferDirection.INCOMING
+                                    )
+                                )
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Spacing.medium))
+
                 // ── Account + External Account Name (one row) ──
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -107,69 +144,60 @@ fun ExternalTransferScreen(
                     verticalAlignment = Alignment.Top
                 ) {
                     var accountExpanded by remember { mutableStateOf(false) }
-
-                    // Match the External Account Name field's header layout
-                    // so both sides of the row have the same top alignment.
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = if (state.isOutgoing())
-                                    stringResource(R.string.from_account)
-                                else
-                                    stringResource(R.string.to_account),
-                                style = AppTypography.label,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 12.sp
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        ExposedDropdownMenuBox(
+                    ExposedDropdownMenuBox(
+                        expanded = accountExpanded,
+                        onExpandedChange = { accountExpanded = it },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        OutlinedTextField(
+                            value = state.selectedAccount?.getDisplayName()
+                                ?: stringResource(R.string.select_account),
+                            onValueChange = {},
+                            readOnly = true,
+                            label = {
+                                Text(
+                                    if (state.isOutgoing())
+                                        stringResource(R.string.from_account)
+                                    else
+                                        stringResource(R.string.to_account),
+                                    fontSize = 12.sp
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded)
+                            },
+                            singleLine = true
+                        )
+                        ExposedDropdownMenu(
                             expanded = accountExpanded,
-                            onExpandedChange = { accountExpanded = it },
-                            modifier = Modifier.fillMaxWidth()
+                            onDismissRequest = { accountExpanded = false }
                         ) {
-                            OutlinedTextField(
-                                value = state.selectedAccount?.getDisplayName()
-                                    ?: stringResource(R.string.select_account),
-                                onValueChange = {},
-                                readOnly = true,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .menuAnchor(),
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded)
-                                },
-                                singleLine = true
-                            )
-                            ExposedDropdownMenu(
-                                expanded = accountExpanded,
-                                onDismissRequest = { accountExpanded = false }
-                            ) {
-                                state.accounts.forEach { account ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Text(account.getDisplayName(), fontSize = 13.sp)
-                                                Text(
-                                                    text = MoneyFormatter.format(account.currentBalance),
-                                                    color = MaterialTheme.colorScheme.primary,
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.Medium
-                                                )
-                                            }
-                                        },
-                                        onClick = {
-                                            viewModel.handleEvent(
-                                                ExternalTransferEvent.AccountSelected(account)
+                            state.accounts.forEach { account ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(account.getDisplayName(), fontSize = 13.sp)
+                                            Text(
+                                                text = MoneyFormatter.format(account.currentBalance),
+                                                color = MaterialTheme.colorScheme.primary,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Medium
                                             )
-                                            accountExpanded = false
                                         }
-                                    )
-                                }
+                                    },
+                                    onClick = {
+                                        viewModel.handleEvent(
+                                            ExternalTransferEvent.AccountSelected(account)
+                                        )
+                                        accountExpanded = false
+                                    }
+                                )
                             }
                         }
                     }
@@ -288,6 +316,86 @@ fun ExternalTransferScreen(
 
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
+                // ── Preview card ──
+                if (state.selectedAccount != null && state.amount.isNotEmpty()) {
+                    AppCard {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = stringResource(R.string.transfer_summary),
+                                style = AppTypography.title,
+                                modifier = Modifier.padding(bottom = Spacing.small)
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = state.selectedAccount!!.name,
+                                    style = AppTypography.body
+                                )
+                                Text(
+                                    text = "${state.selectedAccount!!.currentBalance} → ${state.getNewBalance()}",
+                                    style = AppTypography.body,
+                                    color = if (state.getAccountChange() >= 0)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.error,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(Spacing.small))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = if (state.isOutgoing())
+                                        stringResource(R.string.to_account)
+                                    else
+                                        stringResource(R.string.from_account),
+                                    style = AppTypography.body
+                                )
+                                Text(
+                                    text = state.externalAccountName.ifEmpty { "External" },
+                                    style = AppTypography.body,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
+                            }
+
+                            if (state.feeType != FeeType.NONE && state.getFeeInt() > 0) {
+                                Spacer(modifier = Modifier.height(Spacing.small))
+                                HorizontalDivider()
+                                Spacer(modifier = Modifier.height(Spacing.small))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = if (state.feeType == FeeType.FEE_PAID)
+                                            stringResource(R.string.fee_you_pay)
+                                        else
+                                            stringResource(R.string.fee_you_earn),
+                                        style = AppTypography.body
+                                    )
+                                    Text(
+                                        text = MoneyFormatter.format(state.getFeeInt()),
+                                        style = AppTypography.body,
+                                        color = if (state.feeType == FeeType.FEE_PAID)
+                                            MaterialTheme.colorScheme.error
+                                        else
+                                            MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(Spacing.medium))
+                }
+
                 // ── Success card ──
                 if (state.saveSuccess) {
                     Card(
@@ -331,42 +439,14 @@ fun ExternalTransferScreen(
                     Spacer(modifier = Modifier.height(Spacing.medium))
                 }
 
-                // ── Recent Transfers card ──
-                RecentTransfersCard(
-                    transfers = state.recentTransfers,
-                    onViewAllClick = onViewHistory
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.medium))
-
                 // Extra space so the floating pill doesn't cover the last card
                 Spacer(modifier = Modifier.height(96.dp))
             }
         }
 
         // ── Floating pill ──
-        // Saving status chip — shows above the pill when a save is slow
-        if (state.isSaving) {
-            com.akari.retailer.core.ui.components.SavingStatusChip(
-                isSaving = state.isSaving,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(start = 80.dp, end = 12.dp)
-                    .navigationBarsPadding()
-                    .imePadding()
-                    .padding(bottom = 80.dp)
-            )
-        }
-
         ExternalTransferPill(
             state = state,
-            onDirectionToggle = {
-                val next = if (state.isOutgoing())
-                    ExternalTransferDirection.INCOMING
-                else
-                    ExternalTransferDirection.OUTGOING
-                viewModel.handleEvent(ExternalTransferEvent.DirectionChanged(next))
-            },
             onNotesClick = { showNotesSheet = true },
             onConfirmClick = {
                 if (!state.isSaving) {
@@ -390,7 +470,6 @@ fun ExternalTransferScreen(
 @Composable
 private fun ExternalTransferPill(
     state: ExternalTransferState,
-    onDirectionToggle: () -> Unit,
     onNotesClick: () -> Unit,
     onConfirmClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -404,30 +483,10 @@ private fun ExternalTransferPill(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // ── Direction chip (tap to toggle) ──
-            val dirLabel = if (state.isOutgoing()) "Out" else "In"
-            OutlinedButton(
-                onClick = onDirectionToggle,
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
-                ),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = dirLabel,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 13.sp
-                )
-            }
-
             // ── Amount ──
             Text(
                 text = if (state.amount.isNotEmpty())
@@ -507,6 +566,41 @@ private fun ExternalTransferPill(
 
 private val ExternalTransferState.canConfirm: Boolean
     get() = selectedAccount != null && getAmountInt() > 0
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Direction toggle button
+// ═══════════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun DirectionToggleButton(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(44.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (selected)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = if (selected)
+                MaterialTheme.colorScheme.onPrimary
+            else
+                MaterialTheme.colorScheme.onSurface
+        ),
+        shape = MaterialTheme.shapes.small
+    ) {
+        Text(
+            text = label,
+            fontWeight = FontWeight.Medium,
+            fontSize = 13.sp,
+            maxLines = 1
+        )
+    }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // External Account Name field with autocomplete
@@ -717,111 +811,5 @@ private fun NotesSheet(
                 }
             }
         }
-    }
-}
-
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Recent Transfers card
-// ═══════════════════════════════════════════════════════════════════════════
-
-@Composable
-private fun RecentTransfersCard(
-    transfers: List<com.akari.retailer.features.money.domain.models.MoneyTransaction>,
-    onViewAllClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(Spacing.medium),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "📋 " + stringResource(R.string.external_transfer_history),
-                    style = AppTypography.title,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
-                TextButton(onClick = onViewAllClick) {
-                    Text(stringResource(R.string.view_all), fontSize = 13.sp)
-                }
-            }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-
-            if (transfers.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = Spacing.large),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.no_external_transfers),
-                        style = AppTypography.body,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                    )
-                }
-            } else {
-                transfers.forEachIndexed { index, txn ->
-                    CompactTransferRow(txn = txn)
-                    if (index < transfers.size - 1) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = Spacing.medium),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CompactTransferRow(
-    txn: com.akari.retailer.features.money.domain.models.MoneyTransaction
-) {
-    val dateFormat = remember { java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()) }
-    val isOutgoing = txn.type == com.akari.retailer.features.money.domain.models.MoneyTransactionType.EXTERNAL_OUT
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.medium, vertical = Spacing.small),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "🕐 " + dateFormat.format(java.util.Date(txn.date)),
-            style = AppTypography.small,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-        )
-        Text(
-            text = if (isOutgoing) "→ " + txn.externalAccountName else "← " + txn.externalAccountName,
-            style = AppTypography.small,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            maxLines = 1,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center
-        )
-        Text(
-            text = MoneyFormatter.format(txn.amount),
-            style = AppTypography.body,
-            color = if (isOutgoing)
-                MaterialTheme.colorScheme.error
-            else
-                MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Medium
-        )
     }
 }

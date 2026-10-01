@@ -3,7 +3,6 @@ package com.akari.retailer.features.money.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akari.retailer.core.utils.PaymentPreferences
-import com.akari.retailer.core.utils.FirestoreErrorFormatter
 import com.akari.retailer.features.money.data.repository.MoneyAccountRepository
 import com.akari.retailer.features.money.data.repository.MoneyTransactionRepository
 import com.akari.retailer.features.money.domain.models.FeeType
@@ -147,7 +146,6 @@ class ExternalTransferViewModel(
                 description = currentState.description.trim()
             )
 
-            // Trust Firestore's own retry/backoff. No withTimeout.
             val result = externalTransferUseCase.invoke(params)
 
             if (result.isSuccess) {
@@ -164,9 +162,7 @@ class ExternalTransferViewModel(
             } else {
                 _state.value = _state.value.copy(
                     isSaving = false,
-                    error = FirestoreErrorFormatter.friendlyMessage(
-                        result.exceptionOrNull()?.message
-                    )
+                    error = result.exceptionOrNull()?.message ?: "Transfer failed"
                 )
             }
         }
