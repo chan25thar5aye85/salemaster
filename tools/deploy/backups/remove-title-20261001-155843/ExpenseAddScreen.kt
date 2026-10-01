@@ -48,7 +48,6 @@ fun ExpenseAddScreen(
             application.container.expenseRepository,
             application.container.categoryRepository,
             application.container.moneyAccountRepository,
-            application.container.supplierRepository,
             application.container.expenseFinalizer,
             application.container.paymentPreferences
         )
@@ -56,8 +55,7 @@ fun ExpenseAddScreen(
 
     val state by viewModel.state.collectAsState()
 
-    var categoryExpanded by remember { mutableStateOf(false) }
-    var supplierExpanded by remember { mutableStateOf(false) }
+    var showCategorySheet by remember { mutableStateOf(false) }
     var showNotesSheet by remember { mutableStateOf(false) }
     var typeExpanded by remember { mutableStateOf(false) }
 
@@ -66,6 +64,18 @@ fun ExpenseAddScreen(
     }
 
     // ── Sheets ──
+    if (showCategorySheet) {
+        CategoryPickerSheet(
+            categories = state.categories,
+            selectedCategory = state.selectedCategory,
+            onSelect = { cat ->
+                viewModel.handleEvent(ExpenseAddEvent.CategorySelected(cat))
+                showCategorySheet = false
+            },
+            onDismiss = { showCategorySheet = false }
+        )
+    }
+
     if (showNotesSheet) {
         NotesSheet(
             initialText = state.description,
@@ -89,7 +99,20 @@ fun ExpenseAddScreen(
                     .verticalScroll(rememberScrollState())
                     .imePadding()
             ) {
-                // ── Row 1: Amount + Type ──
+                // ── Title ──
+                OutlinedTextField(
+                    value = state.title,
+                    onValueChange = {
+                        viewModel.handleEvent(ExpenseAddEvent.TitleChanged(it))
+                    },
+                    label = { Text(stringResource(R.string.title)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.medium))
+
+                // ── Amount + Type (one row) ──
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
@@ -159,113 +182,6 @@ fun ExpenseAddScreen(
                                     typeExpanded = false
                                 }
                             )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.small))
-
-                // ── Row 2: Category + Supplier ──
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    // Category dropdown
-                    ExposedDropdownMenuBox(
-                        expanded = categoryExpanded,
-                        onExpandedChange = { categoryExpanded = it },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        OutlinedTextField(
-                            value = state.selectedCategory?.name ?: "Category",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text(stringResource(R.string.category), fontSize = 12.sp) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(),
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
-                            },
-                            singleLine = true
-                        )
-                        ExposedDropdownMenu(
-                            expanded = categoryExpanded,
-                            onDismissRequest = { categoryExpanded = false }
-                        ) {
-                            if (state.categories.isEmpty()) {
-                                DropdownMenuItem(
-                                    text = { Text("No categories", fontSize = 13.sp) },
-                                    onClick = { categoryExpanded = false }
-                                )
-                            } else {
-                                state.categories.forEach { cat ->
-                                    DropdownMenuItem(
-                                        text = { Text("${cat.icon} ${cat.name}", fontSize = 13.sp) },
-                                        onClick = {
-                                            viewModel.handleEvent(
-                                                ExpenseAddEvent.CategorySelected(cat)
-                                            )
-                                            categoryExpanded = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Supplier dropdown (optional)
-                    ExposedDropdownMenuBox(
-                        expanded = supplierExpanded,
-                        onExpandedChange = { supplierExpanded = it },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        OutlinedTextField(
-                            value = state.selectedSupplier?.name ?: "Supplier (optional)",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Supplier", fontSize = 12.sp) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(),
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = supplierExpanded)
-                            },
-                            singleLine = true
-                        )
-                        ExposedDropdownMenu(
-                            expanded = supplierExpanded,
-                            onDismissRequest = { supplierExpanded = false }
-                        ) {
-                            // "None" option
-                            DropdownMenuItem(
-                                text = { Text("— None —", fontSize = 13.sp) },
-                                onClick = {
-                                    viewModel.handleEvent(
-                                        ExpenseAddEvent.SupplierSelected(null)
-                                    )
-                                    supplierExpanded = false
-                                }
-                            )
-                            if (state.suppliers.isEmpty()) {
-                                DropdownMenuItem(
-                                    text = { Text("No suppliers yet", fontSize = 13.sp) },
-                                    onClick = { supplierExpanded = false }
-                                )
-                            } else {
-                                state.suppliers.forEach { sup ->
-                                    DropdownMenuItem(
-                                        text = { Text(sup.name, fontSize = 13.sp) },
-                                        onClick = {
-                                            viewModel.handleEvent(
-                                                ExpenseAddEvent.SupplierSelected(sup)
-                                            )
-                                            supplierExpanded = false
-                                        }
-                                    )
-                                }
-                            }
                         }
                     }
                 }
@@ -347,6 +263,7 @@ fun ExpenseAddScreen(
         // ── Floating pill ──
         ExpenseAddPill(
             state = state,
+            onCategoryClick = { showCategorySheet = true },
             onNotesClick = { showNotesSheet = true },
             onSaveClick = {
                 if (!state.isSaving) {
@@ -370,6 +287,7 @@ fun ExpenseAddScreen(
 @Composable
 private fun ExpenseAddPill(
     state: ExpenseAddState,
+    onCategoryClick: () -> Unit,
     onNotesClick: () -> Unit,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -387,6 +305,30 @@ private fun ExpenseAddPill(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
+            // ── Category chip ──
+            val categoryLabel = state.selectedCategory?.let {
+                "${it.icon} ${it.name}"
+            } ?: "📌 Category"
+
+            OutlinedButton(
+                onClick = onCategoryClick,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                ),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = categoryLabel,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp,
+                    maxLines = 1
+                )
+            }
+
             // ── Amount ──
             Text(
                 text = if (state.amount.isNotEmpty())
@@ -465,7 +407,8 @@ private fun ExpenseAddPill(
 }
 
 private val ExpenseAddState.canSave: Boolean
-    get() = amount.isNotBlank()
+    get() = title.isNotBlank()
+            && amount.isNotBlank()
             && (amount.toIntOrNull() ?: 0) > 0
             && selectedCategory != null
             && isFullyPaid()

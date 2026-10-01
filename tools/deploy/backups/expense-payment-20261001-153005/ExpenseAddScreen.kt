@@ -32,6 +32,7 @@ import com.akari.retailer.core.ui.components.SavingStatusChip
 import com.akari.retailer.core.ui.theme.AppTypography
 import com.akari.retailer.core.ui.theme.Spacing
 import com.akari.retailer.core.utils.MoneyFormatter
+import com.akari.retailer.features.expense.domain.models.ExpenseCategory
 import com.akari.retailer.features.expense.domain.models.ExpenseType
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,7 +49,6 @@ fun ExpenseAddScreen(
             application.container.expenseRepository,
             application.container.categoryRepository,
             application.container.moneyAccountRepository,
-            application.container.supplierRepository,
             application.container.expenseFinalizer,
             application.container.paymentPreferences
         )
@@ -56,16 +56,33 @@ fun ExpenseAddScreen(
 
     val state by viewModel.state.collectAsState()
 
-    var categoryExpanded by remember { mutableStateOf(false) }
-    var supplierExpanded by remember { mutableStateOf(false) }
+    var showPaymentSheet by remember { mutableStateOf(false) }
+    var showCategorySheet by remember { mutableStateOf(false) }
+    var showTypeSheet by remember { mutableStateOf(false) }
     var showNotesSheet by remember { mutableStateOf(false) }
-    var typeExpanded by remember { mutableStateOf(false) }
 
+    // Navigate away on success
     LaunchedEffect(state.saveSuccess) {
-        if (state.saveSuccess) onExpenseAdded()
+        if (state.saveSuccess) {
+            onExpenseAdded()
+        }
     }
 
     // ── Sheets ──
+    if (showTypeSheet) {
+        TypeSheet(
+            type = state.expenseType,
+            businessPercentage = state.businessPercentage,
+            onTypeChange = {
+                viewModel.handleEvent(ExpenseAddEvent.ExpenseTypeChanged(it))
+            },
+            onPercentageChange = {
+                viewModel.handleEvent(ExpenseAddEvent.BusinessPercentageChanged(it))
+            },
+            onDismiss = { showTypeSheet = false }
+        )
+    }
+
     if (showNotesSheet) {
         NotesSheet(
             initialText = state.description,
@@ -89,223 +106,75 @@ fun ExpenseAddScreen(
                     .verticalScroll(rememberScrollState())
                     .imePadding()
             ) {
-                // ── Row 1: Amount + Type ──
-                Row(
+                // ── Title ──
+                OutlinedTextField(
+                    value = state.title,
+                    onValueChange = {
+                        viewModel.handleEvent(ExpenseAddEvent.TitleChanged(it))
+                    },
+                    label = { Text(stringResource(R.string.title)) },
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    OutlinedTextField(
-                        value = state.amount,
-                        onValueChange = {
-                            viewModel.handleEvent(ExpenseAddEvent.AmountChanged(it))
-                        },
-                        label = { Text(stringResource(R.string.amount), fontSize = 12.sp) },
-                        modifier = Modifier.weight(1.2f),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
-
-                    ExposedDropdownMenuBox(
-                        expanded = typeExpanded,
-                        onExpandedChange = { typeExpanded = it },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        OutlinedTextField(
-                            value = when (state.expenseType) {
-                                ExpenseType.BUSINESS -> "💼 Business"
-                                ExpenseType.PERSONAL -> "👤 Personal"
-                                ExpenseType.MIXED -> "🔄 Mixed"
-                            },
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Type", fontSize = 12.sp) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(),
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded)
-                            },
-                            singleLine = true
-                        )
-                        ExposedDropdownMenu(
-                            expanded = typeExpanded,
-                            onDismissRequest = { typeExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("💼 Business", fontSize = 13.sp) },
-                                onClick = {
-                                    viewModel.handleEvent(
-                                        ExpenseAddEvent.ExpenseTypeChanged(ExpenseType.BUSINESS)
-                                    )
-                                    typeExpanded = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("👤 Personal", fontSize = 13.sp) },
-                                onClick = {
-                                    viewModel.handleEvent(
-                                        ExpenseAddEvent.ExpenseTypeChanged(ExpenseType.PERSONAL)
-                                    )
-                                    typeExpanded = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("🔄 Mixed", fontSize = 13.sp) },
-                                onClick = {
-                                    viewModel.handleEvent(
-                                        ExpenseAddEvent.ExpenseTypeChanged(ExpenseType.MIXED)
-                                    )
-                                    typeExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.small))
-
-                // ── Row 2: Category + Supplier ──
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    // Category dropdown
-                    ExposedDropdownMenuBox(
-                        expanded = categoryExpanded,
-                        onExpandedChange = { categoryExpanded = it },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        OutlinedTextField(
-                            value = state.selectedCategory?.name ?: "Category",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text(stringResource(R.string.category), fontSize = 12.sp) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(),
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
-                            },
-                            singleLine = true
-                        )
-                        ExposedDropdownMenu(
-                            expanded = categoryExpanded,
-                            onDismissRequest = { categoryExpanded = false }
-                        ) {
-                            if (state.categories.isEmpty()) {
-                                DropdownMenuItem(
-                                    text = { Text("No categories", fontSize = 13.sp) },
-                                    onClick = { categoryExpanded = false }
-                                )
-                            } else {
-                                state.categories.forEach { cat ->
-                                    DropdownMenuItem(
-                                        text = { Text("${cat.icon} ${cat.name}", fontSize = 13.sp) },
-                                        onClick = {
-                                            viewModel.handleEvent(
-                                                ExpenseAddEvent.CategorySelected(cat)
-                                            )
-                                            categoryExpanded = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Supplier dropdown (optional)
-                    ExposedDropdownMenuBox(
-                        expanded = supplierExpanded,
-                        onExpandedChange = { supplierExpanded = it },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        OutlinedTextField(
-                            value = state.selectedSupplier?.name ?: "Supplier (optional)",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Supplier", fontSize = 12.sp) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(),
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = supplierExpanded)
-                            },
-                            singleLine = true
-                        )
-                        ExposedDropdownMenu(
-                            expanded = supplierExpanded,
-                            onDismissRequest = { supplierExpanded = false }
-                        ) {
-                            // "None" option
-                            DropdownMenuItem(
-                                text = { Text("— None —", fontSize = 13.sp) },
-                                onClick = {
-                                    viewModel.handleEvent(
-                                        ExpenseAddEvent.SupplierSelected(null)
-                                    )
-                                    supplierExpanded = false
-                                }
-                            )
-                            if (state.suppliers.isEmpty()) {
-                                DropdownMenuItem(
-                                    text = { Text("No suppliers yet", fontSize = 13.sp) },
-                                    onClick = { supplierExpanded = false }
-                                )
-                            } else {
-                                state.suppliers.forEach { sup ->
-                                    DropdownMenuItem(
-                                        text = { Text(sup.name, fontSize = 13.sp) },
-                                        onClick = {
-                                            viewModel.handleEvent(
-                                                ExpenseAddEvent.SupplierSelected(sup)
-                                            )
-                                            supplierExpanded = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // ── Business % (only when Mixed) ──
-                if (state.expenseType == ExpenseType.MIXED) {
-                    Spacer(modifier = Modifier.height(Spacing.small))
-                    OutlinedTextField(
-                        value = state.businessPercentage,
-                        onValueChange = {
-                            if (it.isEmpty() || it.toIntOrNull()?.let { n -> n in 0..100 } == true) {
-                                viewModel.handleEvent(ExpenseAddEvent.BusinessPercentageChanged(it))
-                            }
-                        },
-                        label = { Text(stringResource(R.string.business_percentage_hint)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
-                }
+                    singleLine = true
+                )
 
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
-                // ── Payments (existing component) ──
-                PaymentListComponent(
-                    paymentRows = state.paymentRows,
-                    accounts = state.accounts,
-                    totalAmount = state.getTotalAmount(),
-                    showCreditOption = false,
-                    onAccountSelected = { rowId, account ->
-                        viewModel.handleEvent(ExpenseAddEvent.PaymentAccountChanged(rowId, account))
+                // ── Amount ──
+                OutlinedTextField(
+                    value = state.amount,
+                    onValueChange = {
+                        viewModel.handleEvent(ExpenseAddEvent.AmountChanged(it))
                     },
-                    onAmountChanged = { rowId, amount ->
-                        viewModel.handleEvent(ExpenseAddEvent.PaymentAmountChanged(rowId, amount))
-                    },
-                    onAddRow = { viewModel.handleEvent(ExpenseAddEvent.AddPaymentRow) },
-                    onRemoveRow = { rowId ->
-                        viewModel.handleEvent(ExpenseAddEvent.RemovePaymentRow(rowId))
-                    }
+                    label = { Text(stringResource(R.string.amount)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
+
+                Spacer(modifier = Modifier.height(Spacing.medium))
+
+                // ── Category (moved back to content) ──
+                var categoryExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = categoryExpanded,
+                    onExpandedChange = { categoryExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = state.selectedCategory?.let { "${it.icon} ${it.name}" }
+                            ?: stringResource(R.string.category),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.category)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
+                        }
+                    )
+                    ExposedDropdownMenu(
+                        expanded = categoryExpanded,
+                        onDismissRequest = { categoryExpanded = false }
+                    ) {
+                        if (state.categories.isEmpty()) {
+                            DropdownMenuItem(
+                                text = { Text("No categories", fontSize = 13.sp) },
+                                onClick = { categoryExpanded = false },
+                                enabled = false
+                            )
+                        } else {
+                            state.categories.forEach { category ->
+                                DropdownMenuItem(
+                                    text = { Text("${category.icon} ${category.name}", fontSize = 14.sp) },
+                                    onClick = {
+                                        viewModel.handleEvent(ExpenseAddEvent.CategorySelected(category))
+                                        categoryExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
@@ -327,6 +196,7 @@ fun ExpenseAddScreen(
                     Spacer(modifier = Modifier.height(Spacing.medium))
                 }
 
+                // Extra space so the floating pill doesn't cover the last card
                 Spacer(modifier = Modifier.height(96.dp))
             }
         }
@@ -347,6 +217,7 @@ fun ExpenseAddScreen(
         // ── Floating pill ──
         ExpenseAddPill(
             state = state,
+            onTypeClick = { showTypeSheet = true },
             onNotesClick = { showNotesSheet = true },
             onSaveClick = {
                 if (!state.isSaving) {
@@ -370,6 +241,7 @@ fun ExpenseAddScreen(
 @Composable
 private fun ExpenseAddPill(
     state: ExpenseAddState,
+    onTypeClick: () -> Unit,
     onNotesClick: () -> Unit,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -387,6 +259,31 @@ private fun ExpenseAddPill(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
+            // ── Type chip ──
+            val typeLabel = when (state.expenseType) {
+                ExpenseType.BUSINESS -> "💼"
+                ExpenseType.PERSONAL -> "👤"
+                ExpenseType.MIXED -> "🔄"
+            }
+
+            OutlinedButton(
+                onClick = onTypeClick,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                ),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = typeLabel,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp
+                )
+            }
+
             // ── Amount ──
             Text(
                 text = if (state.amount.isNotEmpty())
@@ -401,7 +298,7 @@ private fun ExpenseAddPill(
                 maxLines = 1
             )
 
-            // ── Notes ──
+            // ── Notes icon ──
             Box {
                 IconButton(
                     onClick = onNotesClick,
@@ -464,21 +361,26 @@ private fun ExpenseAddPill(
     }
 }
 
+// Computed: whether the pill's save button is enabled
 private val ExpenseAddState.canSave: Boolean
-    get() = amount.isNotBlank()
+    get() = title.isNotBlank()
+            && amount.isNotBlank()
             && (amount.toIntOrNull() ?: 0) > 0
             && selectedCategory != null
             && isFullyPaid()
 
+
 // ═══════════════════════════════════════════════════════════════════════════
-// Payment sheet
+// Type sheet (Business / Personal / Mixed + % field)
 // ═══════════════════════════════════════════════════════════════════════════
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PaymentSheet(
-    state: ExpenseAddState,
-    viewModel: ExpenseAddViewModel,
+private fun TypeSheet(
+    type: ExpenseType,
+    businessPercentage: String,
+    onTypeChange: (ExpenseType) -> Unit,
+    onPercentageChange: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -495,28 +397,48 @@ private fun PaymentSheet(
                 .padding(bottom = Spacing.large)
         ) {
             Text(
-                text = "💰 " + stringResource(R.string.payment),
+                text = "🏷 " + stringResource(R.string.expense_details),
                 style = AppTypography.title,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = Spacing.medium)
             )
 
-            PaymentListComponent(
-                paymentRows = state.paymentRows,
-                accounts = state.accounts,
-                totalAmount = state.getTotalAmount(),
-                showCreditOption = false,
-                onAccountSelected = { rowId, account ->
-                    viewModel.handleEvent(ExpenseAddEvent.PaymentAccountChanged(rowId, account))
-                },
-                onAmountChanged = { rowId, amount ->
-                    viewModel.handleEvent(ExpenseAddEvent.PaymentAmountChanged(rowId, amount))
-                },
-                onAddRow = { viewModel.handleEvent(ExpenseAddEvent.AddPaymentRow) },
-                onRemoveRow = { rowId ->
-                    viewModel.handleEvent(ExpenseAddEvent.RemovePaymentRow(rowId))
+            listOf(
+                ExpenseType.BUSINESS to "💼 " + stringResource(R.string.business_type),
+                ExpenseType.PERSONAL to "👤 " + stringResource(R.string.personal_type),
+                ExpenseType.MIXED to "🔄 " + stringResource(R.string.mixed_type)
+            ).forEach { (optionType, label) ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onTypeChange(optionType) }
+                        .padding(vertical = Spacing.small),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = type == optionType,
+                        onClick = { onTypeChange(optionType) }
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.small))
+                    Text(text = label, style = AppTypography.body)
                 }
-            )
+            }
+
+            if (type == ExpenseType.MIXED) {
+                Spacer(modifier = Modifier.height(Spacing.medium))
+                OutlinedTextField(
+                    value = businessPercentage,
+                    onValueChange = {
+                        if (it.isEmpty() || it.toIntOrNull()?.let { n -> n in 0..100 } == true) {
+                            onPercentageChange(it)
+                        }
+                    },
+                    label = { Text(stringResource(R.string.business_percentage_hint)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+            }
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
@@ -596,15 +518,14 @@ private fun NotesSheet(
 
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Category picker sheet
+// Payment sheet
 // ═══════════════════════════════════════════════════════════════════════════
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CategoryPickerSheet(
-    categories: List<com.akari.retailer.features.expense.domain.models.ExpenseCategory>,
-    selectedCategory: com.akari.retailer.features.expense.domain.models.ExpenseCategory?,
-    onSelect: (com.akari.retailer.features.expense.domain.models.ExpenseCategory) -> Unit,
+private fun PaymentSheet(
+    state: ExpenseAddState,
+    viewModel: ExpenseAddViewModel,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -621,42 +542,28 @@ private fun CategoryPickerSheet(
                 .padding(bottom = Spacing.large)
         ) {
             Text(
-                text = "📌 " + stringResource(R.string.category),
+                text = "💰 " + stringResource(R.string.payment),
                 style = AppTypography.title,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = Spacing.medium)
             )
 
-            if (categories.isEmpty()) {
-                Text(
-                    text = "No categories yet. Add one from the Expense list.",
-                    style = AppTypography.body,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-            } else {
-                categories.forEach { cat ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSelect(cat) }
-                            .padding(vertical = Spacing.small),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "${cat.icon} ${cat.name}",
-                            style = AppTypography.body,
-                            modifier = Modifier.weight(1f)
-                        )
-                        if (cat.id == selectedCategory?.id) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
+            PaymentListComponent(
+                paymentRows = state.paymentRows,
+                accounts = state.accounts,
+                totalAmount = state.getTotalAmount(),
+                showCreditOption = false,
+                onAccountSelected = { rowId, account ->
+                    viewModel.handleEvent(ExpenseAddEvent.PaymentAccountChanged(rowId, account))
+                },
+                onAmountChanged = { rowId, amount ->
+                    viewModel.handleEvent(ExpenseAddEvent.PaymentAmountChanged(rowId, amount))
+                },
+                onAddRow = { viewModel.handleEvent(ExpenseAddEvent.AddPaymentRow) },
+                onRemoveRow = { rowId ->
+                    viewModel.handleEvent(ExpenseAddEvent.RemovePaymentRow(rowId))
                 }
-            }
+            )
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
@@ -664,7 +571,7 @@ private fun CategoryPickerSheet(
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(R.string.ok))
             }
         }
     }

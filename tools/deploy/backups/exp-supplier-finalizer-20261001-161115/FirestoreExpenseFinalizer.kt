@@ -219,7 +219,6 @@ class FirestoreExpenseFinalizer(
             "title" to expense.title,
             "amount" to expense.amount,
             "categoryId" to expense.categoryId,
-            "supplierId" to expense.supplierId,
             "type" to expense.type.name,
             "businessPercentage" to expense.businessPercentage,
             "payments" to expense.payments.map { p ->

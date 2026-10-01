@@ -16,7 +16,6 @@ import kotlinx.coroutines.launch
 class ExpenseListViewModel(
     private val expenseRepository: ExpenseRepository,
     private val categoryRepository: CategoryRepository,
-    private val supplierRepository: com.akari.retailer.features.supplier.data.repository.SupplierRepository,
     private val expenseFinalizer: FirestoreExpenseFinalizer
 ) : ViewModel() {
 
@@ -29,7 +28,6 @@ class ExpenseListViewModel(
     init {
         loadExpenses()
         loadCategories()
-        loadSuppliers()
     }
 
     fun handleEvent(event: ExpenseListEvent) {
@@ -52,19 +50,6 @@ class ExpenseListViewModel(
             try {
                 categoryRepository.getCategories().collect { categories ->
                     _state.value = _state.value.copy(categories = categories)
-                }
-            } catch (e: Exception) { }
-        }
-    }
-
-    private var loadSuppliersJob: kotlinx.coroutines.Job? = null
-
-    private fun loadSuppliers() {
-        loadSuppliersJob?.cancel()
-        loadSuppliersJob = viewModelScope.launch {
-            try {
-                supplierRepository.getSuppliers().collect { suppliers ->
-                    _state.value = _state.value.copy(suppliers = suppliers)
                 }
             } catch (e: Exception) { }
         }
@@ -207,18 +192,12 @@ class ExpenseListViewModel(
 class ExpenseListViewModelFactory(
     private val expenseRepository: ExpenseRepository,
     private val categoryRepository: CategoryRepository,
-    private val supplierRepository: com.akari.retailer.features.supplier.data.repository.SupplierRepository,
     private val expenseFinalizer: FirestoreExpenseFinalizer
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ExpenseListViewModel::class.java)) {
-            return ExpenseListViewModel(
-                expenseRepository,
-                categoryRepository,
-                supplierRepository,
-                expenseFinalizer
-            ) as T
+            return ExpenseListViewModel(expenseRepository, categoryRepository, expenseFinalizer) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

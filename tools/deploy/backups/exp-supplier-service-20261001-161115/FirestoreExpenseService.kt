@@ -43,7 +43,6 @@ class FirestoreExpenseService {
                 "title" to expense.title,
                 "amount" to expense.amount,
                 "categoryId" to expense.categoryId,
-                "supplierId" to expense.supplierId,
                 "type" to expense.type.name,
                 "businessPercentage" to expense.businessPercentage,
                 "payments" to expense.payments.map { payment ->
@@ -77,7 +76,6 @@ class FirestoreExpenseService {
                 "title" to expense.title,
                 "amount" to expense.amount,
                 "categoryId" to expense.categoryId,
-                "supplierId" to expense.supplierId,
                 "type" to expense.type.name,
                 "businessPercentage" to expense.businessPercentage,
                 "payments" to expense.payments.map { payment ->
@@ -158,7 +156,6 @@ class FirestoreExpenseService {
                         title = data["title"] as? String ?: "",
                         amount = (data["amount"] as? Number)?.toInt() ?: 0,
                         categoryId = data["categoryId"] as? String ?: "",
-                        supplierId = data["supplierId"] as? String ?: "",
                         type = try {
                             ExpenseType.valueOf(data["type"] as? String ?: "BUSINESS")
                         } catch (e: Exception) { ExpenseType.BUSINESS },

@@ -9,7 +9,6 @@ data class ExpenseListState(
     val expenses: List<Expense> = emptyList(),
     val allExpenses: List<Expense> = emptyList(),
     val categories: List<ExpenseCategory> = emptyList(),
-    val suppliers: List<com.akari.retailer.features.supplier.domain.models.Supplier> = emptyList(),
     val selectedCategoryIds: Set<String> = emptySet(),
     val timeFilter: TimeFilter = TimeFilter(preset = TimeFilterPreset.TODAY),
     val isLoading: Boolean = true,

@@ -347,6 +347,7 @@ fun ExpenseAddScreen(
         // ── Floating pill ──
         ExpenseAddPill(
             state = state,
+            onCategoryClick = { showCategorySheet = true },
             onNotesClick = { showNotesSheet = true },
             onSaveClick = {
                 if (!state.isSaving) {
@@ -370,6 +371,7 @@ fun ExpenseAddScreen(
 @Composable
 private fun ExpenseAddPill(
     state: ExpenseAddState,
+    onCategoryClick: () -> Unit,
     onNotesClick: () -> Unit,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -387,6 +389,30 @@ private fun ExpenseAddPill(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
+            // ── Category chip ──
+            val categoryLabel = state.selectedCategory?.let {
+                "${it.icon} ${it.name}"
+            } ?: "📌 Category"
+
+            OutlinedButton(
+                onClick = onCategoryClick,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                ),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = categoryLabel,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp,
+                    maxLines = 1
+                )
+            }
+
             // ── Amount ──
             Text(
                 text = if (state.amount.isNotEmpty())

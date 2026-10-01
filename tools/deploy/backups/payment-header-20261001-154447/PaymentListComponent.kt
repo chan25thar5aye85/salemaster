@@ -57,36 +57,13 @@ fun PaymentListComponent(
     showAddButton: Boolean = true
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        // Header with inline "Add" button
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Payments",
-                style = AppTypography.title,
-                fontWeight = FontWeight.Bold
-            )
-            if (showAddButton) {
-                TextButton(
-                    onClick = onAddRow,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "Add",
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Add Another Payment",
-                        fontSize = 12.sp
-                    )
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(Spacing.small))
+        // Header
+        Text(
+            text = "Payments",
+            style = AppTypography.title,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = Spacing.small)
+        )
 
         // Payment rows
         paymentRows.forEach { row ->
@@ -103,6 +80,18 @@ fun PaymentListComponent(
                 onRemove = { onRemoveRow(row.id) }
             )
             Spacer(modifier = Modifier.height(Spacing.small))
+        }
+
+        // Add Payment button
+        if (showAddButton) {
+            OutlinedButton(
+                onClick = onAddRow,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Add Another Payment")
+            }
         }
 
         // Summary card

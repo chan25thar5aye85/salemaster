@@ -546,74 +546,108 @@ fun ExpenseCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.medium, vertical = 10.dp),
+                .padding(Spacing.medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                // Row 1: category name (left) + amount (right)
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                // Title
+                Text(
+                    text = expense.title,
+                    style = AppTypography.title
+                )
+                
+                Spacer(modifier = Modifier.height(2.dp))
+                
+                // Category and Type badges
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text(
-                        text = categoryName,
-                        style = AppTypography.title,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        text = "${expense.amount}",
-                        style = AppTypography.title,
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1
-                    )
-                }
+                    // Category badge
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            text = categoryName,
+                            style = AppTypography.small,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                    
+                    // ✅ Type badge
+                    Surface(
+                        color = when (expense.type) {
+                            ExpenseType.BUSINESS -> MaterialTheme.colorScheme.primaryContainer
+                            ExpenseType.PERSONAL -> MaterialTheme.colorScheme.secondaryContainer
+                            ExpenseType.MIXED -> MaterialTheme.colorScheme.tertiaryContainer
+                        },
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            text = when (expense.type) {
+                                ExpenseType.BUSINESS -> "💼 Business"
+                                ExpenseType.PERSONAL -> "👤 Personal"
+                                ExpenseType.MIXED -> "🔄 ${expense.businessPercentage}%"
+                            },
+                            style = AppTypography.small,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
 
-                Spacer(modifier = Modifier.height(2.dp))
-
-                // Row 2: supplier · date · type (compact, muted)
-                val metaParts = buildList {
-                    if (supplierName != null) add("🏢 $supplierName")
-                    add("📅 " + dateFormat.format(expense.date))
-                    add(
-                        when (expense.type) {
-                            ExpenseType.BUSINESS -> "💼"
-                            ExpenseType.PERSONAL -> "👤"
-                            ExpenseType.MIXED -> "🔄 ${expense.businessPercentage}%"
+                    // Supplier badge (only if a supplier was set)
+                    if (supplierName != null) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            shape = MaterialTheme.shapes.small
+                        ) {
+                            Text(
+                                text = "🏢 $supplierName",
+                                style = AppTypography.small,
+                                maxLines = 1,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
                         }
-                    )
+                    }
                 }
-
+                
+                Spacer(modifier = Modifier.height(2.dp))
+                
+                // Date
                 Text(
-                    text = metaParts.joinToString("  ·  "),
+                    text = dateFormat.format(expense.date),
                     style = AppTypography.small,
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-                    maxLines = 1
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
-
+            }
+            
+            // Amount
+            Column(
+                horizontalAlignment = Alignment.End
+            ) {
+                Text(
+                    text = "${expense.amount}",
+                    style = AppTypography.header,
+                    color = MaterialTheme.colorScheme.error
+                )
+                
+                // Show business amount if different
                 if (expense.type == ExpenseType.MIXED) {
-                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Business portion: ${expense.getBusinessAmount()}",
+                        text = "Business: ${expense.getBusinessAmount()}",
                         style = AppTypography.small,
-                        fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
-
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier.size(36.dp)
-            ) {
+            
+            IconButton(onClick = onDelete) {
                 Icon(
                     Icons.Default.Delete,
                     contentDescription = stringResource(R.string.delete),
-                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f),
-                    modifier = Modifier.size(18.dp)
+                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
                 )
             }
         }

@@ -13,8 +13,6 @@ data class Expense(
     val title: String = "",
     val amount: Int = 0,
     val categoryId: String = "",
-    /** Optional — set when this expense is a purchase from a specific supplier. */
-    val supplierId: String = "",
     val type: ExpenseType = ExpenseType.BUSINESS,
     val businessPercentage: Int = 100,
     val payments: List<PaymentEntry> = emptyList(),  // ✅ NEW - Multiple payments

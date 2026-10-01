@@ -25,8 +25,6 @@ data class ExpenseAddState(
     val amount: String = "",
     val selectedCategory: ExpenseCategory? = null,
     val categories: List<ExpenseCategory> = emptyList(),
-    val suppliers: List<com.akari.retailer.features.supplier.domain.models.Supplier> = emptyList(),
-    val selectedSupplier: com.akari.retailer.features.supplier.domain.models.Supplier? = null,
     val expenseType: ExpenseType = ExpenseType.BUSINESS,
     val businessPercentage: String = "100",
     val accounts: List<MoneyAccount> = emptyList(),
@@ -62,9 +60,6 @@ sealed class ExpenseAddEvent {
     data class TitleChanged(val value: String) : ExpenseAddEvent()
     data class AmountChanged(val value: String) : ExpenseAddEvent()
     data class CategorySelected(val category: ExpenseCategory) : ExpenseAddEvent()
-    data class SupplierSelected(
-        val supplier: com.akari.retailer.features.supplier.domain.models.Supplier?
-    ) : ExpenseAddEvent()
     data class ExpenseTypeChanged(val type: ExpenseType) : ExpenseAddEvent()
     data class BusinessPercentageChanged(val value: String) : ExpenseAddEvent()
     data class DescriptionChanged(val value: String) : ExpenseAddEvent()
@@ -83,7 +78,6 @@ class ExpenseAddViewModel(
     private val expenseRepository: ExpenseRepository,
     private val categoryRepository: CategoryRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
-    private val supplierRepository: com.akari.retailer.features.supplier.data.repository.SupplierRepository,
     private val expenseFinalizer: FirestoreExpenseFinalizer,
     private val paymentPreferences: PaymentPreferences
 ) : ViewModel() {
@@ -107,7 +101,6 @@ val lastAccountId = "default_cash"
         )
         loadCategories()
         loadAccounts()
-        loadSuppliers()
     }
 
     fun handleEvent(event: ExpenseAddEvent) {
@@ -115,7 +108,6 @@ val lastAccountId = "default_cash"
             is ExpenseAddEvent.TitleChanged -> _state.value = _state.value.copy(title = event.value)
             is ExpenseAddEvent.AmountChanged -> handleAmountChanged(event.value)
             is ExpenseAddEvent.CategorySelected -> _state.value = _state.value.copy(selectedCategory = event.category)
-            is ExpenseAddEvent.SupplierSelected -> _state.value = _state.value.copy(selectedSupplier = event.supplier)
             is ExpenseAddEvent.ExpenseTypeChanged -> _state.value = _state.value.copy(expenseType = event.type)
             is ExpenseAddEvent.BusinessPercentageChanged -> _state.value = _state.value.copy(businessPercentage = event.value)
             is ExpenseAddEvent.DescriptionChanged -> _state.value = _state.value.copy(description = event.value)
@@ -135,19 +127,6 @@ val lastAccountId = "default_cash"
             try {
                 categoryRepository.getCategories().collect { categories ->
                     _state.value = _state.value.copy(categories = categories)
-                }
-            } catch (e: Exception) { }
-        }
-    }
-
-    private var loadSuppliersJob: kotlinx.coroutines.Job? = null
-
-    private fun loadSuppliers() {
-        loadSuppliersJob?.cancel()
-        loadSuppliersJob = viewModelScope.launch {
-            try {
-                supplierRepository.getSuppliers().collect { suppliers ->
-                    _state.value = _state.value.copy(suppliers = suppliers)
                 }
             } catch (e: Exception) { }
         }
@@ -237,6 +216,11 @@ val lastAccountId = "default_cash"
     private fun saveExpense() {
         val currentState = _state.value
 
+        if (currentState.title.isBlank()) {
+            _state.value = _state.value.copy(error = "Title is required")
+            return
+        }
+
         val amountInt = currentState.amount.toIntOrNull()
         if (amountInt == null || amountInt <= 0) {
             _state.value = _state.value.copy(error = "Enter a valid amount")
@@ -275,9 +259,7 @@ val lastAccountId = "default_cash"
             val percentage = currentState.businessPercentage.toIntOrNull() ?: 100
 
             val expense = Expense(
-                // Title is derived from the category — free-form detail goes in description.
-                title = currentState.selectedCategory?.name ?: "Expense",
-                supplierId = currentState.selectedSupplier?.id ?: "",
+                title = currentState.title.trim(),
                 amount = amountInt,
                 categoryId = currentState.selectedCategory.id,
                 type = currentState.expenseType,
@@ -312,7 +294,6 @@ class ExpenseAddViewModelFactory(
     private val expenseRepository: ExpenseRepository,
     private val categoryRepository: CategoryRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
-    private val supplierRepository: com.akari.retailer.features.supplier.data.repository.SupplierRepository,
     private val expenseFinalizer: FirestoreExpenseFinalizer,
     private val paymentPreferences: PaymentPreferences
 ) : androidx.lifecycle.ViewModelProvider.Factory {
@@ -323,7 +304,6 @@ class ExpenseAddViewModelFactory(
                 expenseRepository,
                 categoryRepository,
                 moneyAccountRepository,
-                supplierRepository,
                 expenseFinalizer,
                 paymentPreferences
             ) as T
