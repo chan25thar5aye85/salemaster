@@ -26,9 +26,6 @@ class DebtOverviewViewModel(
     private val creditRepository: CreditRepository,
     private val supplierRepository: SupplierRepository,
     private val supplierCreditRepository: SupplierCreditRepository,
-    private val moneyAccountRepository: com.akari.retailer.features.money.data.repository.MoneyAccountRepository,
-    private val recordCreditPaymentUseCase: com.akari.retailer.features.customer.domain.usecases.RecordCreditPaymentUseCase,
-    private val recordSupplierPaymentUseCase: com.akari.retailer.features.supplier.domain.usecases.RecordSupplierPaymentUseCase,
     private val calculateAgingReport: CalculateAgingReportUseCase,
     private val extendCreditUseCase: ExtendCreditUseCase
 ) : ViewModel() {
@@ -42,29 +39,6 @@ class DebtOverviewViewModel(
         // transactions re-triggers the aging computation and updates the
         // UI. No need for the screen to be closed and reopened.
         observeSources()
-        loadPayAccounts()
-    }
-
-    private var loadPayAccountsJob: kotlinx.coroutines.Job? = null
-
-    private fun loadPayAccounts() {
-        loadPayAccountsJob?.cancel()
-        loadPayAccountsJob = viewModelScope.launch {
-            try {
-                moneyAccountRepository.getAccounts().collect { accounts ->
-                    val active = accounts.filter { it.isActive }
-                    val current = _state.value.paySelectedAccount
-                    val fresh = when {
-                        current != null -> active.find { it.id == current.id }
-                        else -> active.firstOrNull()
-                    }
-                    _state.value = _state.value.copy(
-                        payAccounts = active,
-                        paySelectedAccount = fresh
-                    )
-                }
-            } catch (e: Exception) { }
-        }
     }
 
     fun setTab(tab: DebtTab) {
@@ -180,8 +154,6 @@ class DebtOverviewViewModel(
     fun openAddDialog(customerId: String = "", customerName: String = "",
                       supplierId: String = "", supplierName: String = "") {
         _state.value = _state.value.copy(
-            addPartyType = if (_state.value.tab == DebtTab.RECEIVABLES)
-                PartyType.CUSTOMER else PartyType.SUPPLIER,
             showAddDialog = true,
             addAmount = "",
             addNote = "",
@@ -204,14 +176,6 @@ class DebtOverviewViewModel(
     }
 
     fun updateAmount(v: String) { _state.value = _state.value.copy(addAmount = v.filter { it.isDigit() }) }
-
-    fun setAddPartyType(type: PartyType) {
-        _state.value = _state.value.copy(addPartyType = type)
-    }
-
-    fun setPayPartyType(type: PartyType) {
-        _state.value = _state.value.copy(payPartyType = type)
-    }
     fun updateNote(v: String)   { _state.value = _state.value.copy(addNote = v) }
     fun selectCustomer(id: String, name: String) {
         _state.value = _state.value.copy(selectedCustomerId = id, selectedCustomerName = name)
@@ -226,16 +190,16 @@ class DebtOverviewViewModel(
         if (amount <= 0) {
             _state.value = s.copy(addError = "Enter a valid amount"); return
         }
-        val isCustomer = s.addPartyType == PartyType.CUSTOMER
-        if (isCustomer && s.selectedCustomerId.isEmpty()) {
+        val isReceivable = s.tab == DebtTab.RECEIVABLES
+        if (isReceivable && s.selectedCustomerId.isEmpty()) {
             _state.value = s.copy(addError = "Select a customer"); return
         }
-        if (!isCustomer && s.selectedSupplierId.isEmpty()) {
+        if (!isReceivable && s.selectedSupplierId.isEmpty()) {
             _state.value = s.copy(addError = "Select a supplier"); return
         }
         _state.value = s.copy(isSaving = true, addError = null)
         viewModelScope.launch {
-            val result = if (isCustomer) {
+            val result = if (isReceivable) {
                 extendCreditUseCase.invoke(
                     customerId = s.selectedCustomerId,
                     amount = amount,
@@ -268,117 +232,6 @@ class DebtOverviewViewModel(
     }
 
     fun clearAddSuccess() { _state.value = _state.value.copy(addSuccess = false) }
-
-    // ═════════════════════════════════════════════════════════════════
-    // Pay dialog
-    // ═════════════════════════════════════════════════════════════════
-
-    fun openPayDialog(
-        customerId: String = "", customerName: String = "",
-        supplierId: String = "", supplierName: String = ""
-    ) {
-        _state.value = _state.value.copy(
-            payPartyType = if (_state.value.tab == DebtTab.RECEIVABLES)
-                PartyType.CUSTOMER else PartyType.SUPPLIER,
-            showPayDialog = true,
-            payAmount = "",
-            payNote = "",
-            paySelectedCustomerId = customerId,
-            paySelectedCustomerName = customerName,
-            paySelectedSupplierId = supplierId,
-            paySelectedSupplierName = supplierName,
-            paySelectedAccount = _state.value.payAccounts.firstOrNull(),
-            payError = null,
-            paySuccess = false
-        )
-    }
-
-    fun closePayDialog() {
-        _state.value = _state.value.copy(
-            showPayDialog = false,
-            payAmount = "",
-            payNote = "",
-            payError = null
-        )
-    }
-
-    fun updatePayAmount(v: String) {
-        _state.value = _state.value.copy(payAmount = v.filter { it.isDigit() })
-    }
-
-    fun updatePayNote(v: String) {
-        _state.value = _state.value.copy(payNote = v)
-    }
-
-    fun selectPayCustomer(id: String, name: String) {
-        _state.value = _state.value.copy(
-            paySelectedCustomerId = id,
-            paySelectedCustomerName = name
-        )
-    }
-
-    fun selectPaySupplier(id: String, name: String) {
-        _state.value = _state.value.copy(
-            paySelectedSupplierId = id,
-            paySelectedSupplierName = name
-        )
-    }
-
-    fun selectPayAccount(account: com.akari.retailer.features.money.domain.models.MoneyAccount) {
-        _state.value = _state.value.copy(paySelectedAccount = account)
-    }
-
-    fun savePay() {
-        val s = _state.value
-        val amount = s.payAmount.toIntOrNull() ?: 0
-        if (amount <= 0) {
-            _state.value = s.copy(payError = "Enter a valid amount"); return
-        }
-        val isCustomer = s.payPartyType == PartyType.CUSTOMER
-        if (isCustomer && s.paySelectedCustomerId.isEmpty()) {
-            _state.value = s.copy(payError = "Select a customer"); return
-        }
-        if (!isCustomer && s.paySelectedSupplierId.isEmpty()) {
-            _state.value = s.copy(payError = "Select a supplier"); return
-        }
-        val account = s.paySelectedAccount
-        if (account == null) {
-            _state.value = s.copy(payError = "Select a money account"); return
-        }
-
-        _state.value = s.copy(isPaying = true, payError = null)
-        viewModelScope.launch {
-            val result = if (isCustomer) {
-                recordCreditPaymentUseCase.invoke(
-                    customerId = s.paySelectedCustomerId,
-                    amount = amount,
-                    paymentAccountId = account.id,
-                    description = s.payNote.trim().ifEmpty { "Payment" }
-                )
-            } else {
-                recordSupplierPaymentUseCase.invoke(
-                    supplierId = s.paySelectedSupplierId,
-                    amount = amount,
-                    paymentAccountId = account.id,
-                    description = s.payNote.trim().ifEmpty { "Payment" }
-                )
-            }
-            if (result.isSuccess) {
-                _state.value = _state.value.copy(
-                    isPaying = false,
-                    paySuccess = true,
-                    showPayDialog = false
-                )
-            } else {
-                _state.value = _state.value.copy(
-                    isPaying = false,
-                    payError = result.exceptionOrNull()?.message ?: "Failed to save payment"
-                )
-            }
-        }
-    }
-
-    fun clearPaySuccess() { _state.value = _state.value.copy(paySuccess = false) }
 }
 
 class DebtOverviewViewModelFactory(
@@ -386,9 +239,6 @@ class DebtOverviewViewModelFactory(
     private val creditRepository: CreditRepository,
     private val supplierRepository: SupplierRepository,
     private val supplierCreditRepository: SupplierCreditRepository,
-    private val moneyAccountRepository: com.akari.retailer.features.money.data.repository.MoneyAccountRepository,
-    private val recordCreditPaymentUseCase: com.akari.retailer.features.customer.domain.usecases.RecordCreditPaymentUseCase,
-    private val recordSupplierPaymentUseCase: com.akari.retailer.features.supplier.domain.usecases.RecordSupplierPaymentUseCase,
     private val calculateAgingReport: CalculateAgingReportUseCase,
     private val extendCreditUseCase: ExtendCreditUseCase
 ) : androidx.lifecycle.ViewModelProvider.Factory {
@@ -398,8 +248,6 @@ class DebtOverviewViewModelFactory(
             return DebtOverviewViewModel(
                 customerRepository, creditRepository,
                 supplierRepository, supplierCreditRepository,
-                moneyAccountRepository,
-                recordCreditPaymentUseCase, recordSupplierPaymentUseCase,
                 calculateAgingReport, extendCreditUseCase
             ) as T
         }

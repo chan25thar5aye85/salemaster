@@ -319,6 +319,15 @@ fun CustomerDetailScreen(
                             ) {
                                 Text("− Pay", fontSize = 13.sp)
                             }
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.handleEvent(CustomerDetailEvent.OpenRefundDialog)
+                                },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                            ) {
+                                Text("Refund", fontSize = 13.sp)
+                            }
                         }
                     }
                 }

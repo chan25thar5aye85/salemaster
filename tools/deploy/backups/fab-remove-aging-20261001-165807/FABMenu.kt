@@ -126,7 +126,8 @@ fun FABMenu(
         FABMenuItemData(Icons.Default.BarChart, stringResource(R.string.fab_sales_trends), "reports"),
         FABMenuItemData(Icons.Default.Insights, stringResource(R.string.fab_expense_analytics), "expense_analytics"),
         FABMenuItemData(Icons.Default.Insights, stringResource(R.string.fab_income_analytics), "income_analytics"),
-        FABMenuItemData(Icons.Default.PieChart, stringResource(R.string.fab_profit_loss), "profit_loss")
+        FABMenuItemData(Icons.Default.PieChart, stringResource(R.string.fab_profit_loss), "profit_loss"),
+        FABMenuItemData(Icons.Default.Schedule, stringResource(R.string.fab_aging_report), "aging_report")
     )
 
     // Money submenu

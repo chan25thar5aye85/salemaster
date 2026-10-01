@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -49,9 +48,6 @@ fun DebtOverviewScreen(
             application.container.creditRepository,
             application.container.supplierRepository,
             application.container.supplierCreditRepository,
-            application.container.moneyAccountRepository,
-            application.container.recordCreditPaymentUseCase,
-            application.container.recordSupplierPaymentUseCase,
             application.container.calculateAgingReportUseCase,
             application.container.extendCreditUseCase
         )
@@ -59,36 +55,17 @@ fun DebtOverviewScreen(
 
     val state by viewModel.state.collectAsState()
 
-    // Add-debt pickers
+    // Customer picker (for Add Debt on receivables)
     var showCustomerPicker by remember { mutableStateOf(false) }
+    // Supplier picker (for Add Debt on payables)
     var showSupplierPicker by remember { mutableStateOf(false) }
-    // Pay-dialog pickers
-    var showPayCustomerPicker by remember { mutableStateOf(false) }
-    var showPaySupplierPicker by remember { mutableStateOf(false) }
-    var showPayAccountPicker by remember { mutableStateOf(false) }
 
     AppScreen(
         title = "💰 " + stringResource(R.string.debt_title),
         showBackButton = true,
         onBackClick = onBack,
-        filterButtonContent = {
-            Row {
-                IconButton(onClick = { viewModel.openAddDialog() }) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add Debt",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                IconButton(onClick = { viewModel.openPayDialog() }) {
-                    Icon(
-                        imageVector = Icons.Default.Remove,
-                        contentDescription = "Record Payment",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-        }
+        showAddButton = true,
+        onAddClick = { viewModel.openAddDialog() }
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
 
@@ -242,31 +219,17 @@ fun DebtOverviewScreen(
     if (state.showAddDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.closeAddDialog() },
-            title = { Text("Add Debt") },
+            title = {
+                Text(
+                    if (state.tab == DebtTab.RECEIVABLES)
+                        stringResource(R.string.debt_add_customer_title)
+                    else
+                        stringResource(R.string.debt_add_supplier_title)
+                )
+            },
             text = {
                 Column(Modifier.fillMaxWidth()) {
-                    // Party type toggle
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-                    ) {
-                        FilterChip(
-                            selected = state.addPartyType == PartyType.CUSTOMER,
-                            onClick = { viewModel.setAddPartyType(PartyType.CUSTOMER) },
-                            label = { Text("Customer", fontSize = 13.sp) },
-                            modifier = Modifier.weight(1f)
-                        )
-                        FilterChip(
-                            selected = state.addPartyType == PartyType.SUPPLIER,
-                            onClick = { viewModel.setAddPartyType(PartyType.SUPPLIER) },
-                            label = { Text("Supplier", fontSize = 13.sp) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Spacer(Modifier.height(Spacing.small))
-
-                    // Party picker — depends on the toggle
-                    if (state.addPartyType == PartyType.CUSTOMER) {
+                    if (state.tab == DebtTab.RECEIVABLES) {
                         OutlinedButton(
                             onClick = { showCustomerPicker = true },
                             modifier = Modifier.fillMaxWidth()
@@ -321,107 +284,7 @@ fun DebtOverviewScreen(
         )
     }
 
-    // ── Pay dialog ──
-    if (state.showPayDialog) {
-        AlertDialog(
-            onDismissRequest = { viewModel.closePayDialog() },
-            title = {
-                Text(
-                    if (state.tab == DebtTab.RECEIVABLES)
-                        "Record Payment In"
-                    else
-                        "Record Payment Out"
-                )
-            },
-            text = {
-                Column(Modifier.fillMaxWidth()) {
-                    // Party type toggle
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-                    ) {
-                        FilterChip(
-                            selected = state.payPartyType == PartyType.CUSTOMER,
-                            onClick = { viewModel.setPayPartyType(PartyType.CUSTOMER) },
-                            label = { Text("Customer", fontSize = 13.sp) },
-                            modifier = Modifier.weight(1f)
-                        )
-                        FilterChip(
-                            selected = state.payPartyType == PartyType.SUPPLIER,
-                            onClick = { viewModel.setPayPartyType(PartyType.SUPPLIER) },
-                            label = { Text("Supplier", fontSize = 13.sp) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Spacer(Modifier.height(Spacing.small))
-
-                    // Party picker — depends on the toggle
-                    if (state.payPartyType == PartyType.CUSTOMER) {
-                        OutlinedButton(
-                            onClick = { showPayCustomerPicker = true },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(state.paySelectedCustomerName.ifEmpty { stringResource(R.string.debt_select_customer) })
-                        }
-                    } else {
-                        OutlinedButton(
-                            onClick = { showPaySupplierPicker = true },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(state.paySelectedSupplierName.ifEmpty { stringResource(R.string.debt_select_supplier) })
-                        }
-                    }
-                    Spacer(Modifier.height(Spacing.small))
-                    OutlinedTextField(
-                        value = state.payAmount,
-                        onValueChange = { viewModel.updatePayAmount(it) },
-                        label = { Text(stringResource(R.string.debt_amount)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                        )
-                    )
-                    Spacer(Modifier.height(Spacing.small))
-                    OutlinedTextField(
-                        value = state.payNote,
-                        onValueChange = { viewModel.updatePayNote(it) },
-                        label = { Text(stringResource(R.string.debt_note_optional)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 2
-                    )
-                    Spacer(Modifier.height(Spacing.small))
-                    OutlinedButton(
-                        onClick = { showPayAccountPicker = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            state.paySelectedAccount?.getDisplayName()
-                                ?: "Select Account"
-                        )
-                    }
-                    state.payError?.let {
-                        Spacer(Modifier.height(Spacing.small))
-                        Text(it, color = MaterialTheme.colorScheme.error, style = AppTypography.small)
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = { viewModel.savePay() },
-                    enabled = !state.isPaying
-                ) {
-                    if (state.isPaying) Text(stringResource(R.string.debt_saving))
-                    else Text(stringResource(R.string.debt_add))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.closePayDialog() }) { Text(stringResource(R.string.debt_cancel)) }
-            }
-        )
-    }
-
-    // Customer picker (Add Debt)
+    // Customer picker
     if (showCustomerPicker) {
         val customers by application.container.customerRepository.getCustomers()
             .collectAsState(initial = emptyList())
@@ -432,90 +295,6 @@ fun DebtOverviewScreen(
                 showCustomerPicker = false
             },
             onDismiss = { showCustomerPicker = false }
-        )
-    }
-
-    // Customer picker (Pay)
-    if (showPayCustomerPicker) {
-        val customers by application.container.customerRepository.getCustomers()
-            .collectAsState(initial = emptyList())
-        CreditCustomerPickerDialog(
-            customers = customers,
-            onCustomerSelected = {
-                viewModel.selectPayCustomer(it.id, it.name)
-                showPayCustomerPicker = false
-            },
-            onDismiss = { showPayCustomerPicker = false }
-        )
-    }
-
-    // Supplier picker (Pay)
-    if (showPaySupplierPicker) {
-        val suppliers by application.container.supplierRepository.getSuppliers()
-            .collectAsState(initial = emptyList())
-        AlertDialog(
-            onDismissRequest = { showPaySupplierPicker = false },
-            title = { Text(stringResource(R.string.debt_pick_supplier_title)) },
-            text = {
-                LazyColumn(Modifier.heightIn(max = 400.dp)) {
-                    items(suppliers, key = { it.id }) { s ->
-                        Surface(
-                            Modifier.fillMaxWidth().clickable {
-                                viewModel.selectPaySupplier(s.id, s.name)
-                                showPaySupplierPicker = false
-                            },
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                            shape = RoundedCornerShape(6.dp)
-                        ) {
-                            Text(s.name, modifier = Modifier.padding(12.dp), style = AppTypography.body)
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showPaySupplierPicker = false }) {
-                    Text(stringResource(R.string.debt_cancel))
-                }
-            }
-        )
-    }
-
-    // Account picker
-    if (showPayAccountPicker) {
-        AlertDialog(
-            onDismissRequest = { showPayAccountPicker = false },
-            title = { Text("Select Account") },
-            text = {
-                LazyColumn(Modifier.heightIn(max = 400.dp)) {
-                    items(state.payAccounts, key = { it.id }) { acc ->
-                        Surface(
-                            Modifier.fillMaxWidth().clickable {
-                                viewModel.selectPayAccount(acc)
-                                showPayAccountPicker = false
-                            },
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                            shape = RoundedCornerShape(6.dp)
-                        ) {
-                            Row(
-                                Modifier.fillMaxWidth().padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(acc.getDisplayName(), style = AppTypography.body)
-                                Text(
-                                    "${acc.currentBalance}",
-                                    style = AppTypography.body,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showPayAccountPicker = false }) {
-                    Text(stringResource(R.string.debt_cancel))
-                }
-            }
         )
     }
     // Supplier picker

@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.akari.retailer.core.ui.components.FABMenu
 import com.akari.retailer.features.customer.presentation.CustomerAddScreen
+import com.akari.retailer.features.customer.presentation.AgingReportScreen
 import com.akari.retailer.features.customer.presentation.CreditHistoryScreen
 import com.akari.retailer.features.customer.presentation.CustomerDetailScreen
 import com.akari.retailer.features.customer.presentation.CustomerEditScreen
@@ -107,6 +108,12 @@ fun AppNavHost() {
                 }
                 
                 // INCOME MODULE
+                composable(Routes.AGING_REPORT) {
+                    AgingReportScreen(
+                        navController = navController,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
 
                 composable(Routes.DEBT_OVERVIEW) {
                     DebtOverviewScreen(
@@ -488,6 +495,7 @@ fun AppNavHost() {
                         "history" -> navController.navigate(Routes.HISTORY)
                         "reports" -> navController.navigate(Routes.TRENDS)
                         "profit_loss" -> navController.navigate(Routes.PROFIT_LOSS)
+                        "aging_report" -> navController.navigate(Routes.AGING_REPORT)
                         "debt_overview" -> navController.navigate(Routes.DEBT_OVERVIEW)
                         "customers" -> navController.navigate(Routes.CUSTOMERS)
                         "suppliers" -> navController.navigate(Routes.SUPPLIERS)

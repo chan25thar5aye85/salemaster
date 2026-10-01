@@ -242,31 +242,17 @@ fun DebtOverviewScreen(
     if (state.showAddDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.closeAddDialog() },
-            title = { Text("Add Debt") },
+            title = {
+                Text(
+                    if (state.tab == DebtTab.RECEIVABLES)
+                        stringResource(R.string.debt_add_customer_title)
+                    else
+                        stringResource(R.string.debt_add_supplier_title)
+                )
+            },
             text = {
                 Column(Modifier.fillMaxWidth()) {
-                    // Party type toggle
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-                    ) {
-                        FilterChip(
-                            selected = state.addPartyType == PartyType.CUSTOMER,
-                            onClick = { viewModel.setAddPartyType(PartyType.CUSTOMER) },
-                            label = { Text("Customer", fontSize = 13.sp) },
-                            modifier = Modifier.weight(1f)
-                        )
-                        FilterChip(
-                            selected = state.addPartyType == PartyType.SUPPLIER,
-                            onClick = { viewModel.setAddPartyType(PartyType.SUPPLIER) },
-                            label = { Text("Supplier", fontSize = 13.sp) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Spacer(Modifier.height(Spacing.small))
-
-                    // Party picker — depends on the toggle
-                    if (state.addPartyType == PartyType.CUSTOMER) {
+                    if (state.tab == DebtTab.RECEIVABLES) {
                         OutlinedButton(
                             onClick = { showCustomerPicker = true },
                             modifier = Modifier.fillMaxWidth()
@@ -335,28 +321,7 @@ fun DebtOverviewScreen(
             },
             text = {
                 Column(Modifier.fillMaxWidth()) {
-                    // Party type toggle
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-                    ) {
-                        FilterChip(
-                            selected = state.payPartyType == PartyType.CUSTOMER,
-                            onClick = { viewModel.setPayPartyType(PartyType.CUSTOMER) },
-                            label = { Text("Customer", fontSize = 13.sp) },
-                            modifier = Modifier.weight(1f)
-                        )
-                        FilterChip(
-                            selected = state.payPartyType == PartyType.SUPPLIER,
-                            onClick = { viewModel.setPayPartyType(PartyType.SUPPLIER) },
-                            label = { Text("Supplier", fontSize = 13.sp) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Spacer(Modifier.height(Spacing.small))
-
-                    // Party picker — depends on the toggle
-                    if (state.payPartyType == PartyType.CUSTOMER) {
+                    if (state.tab == DebtTab.RECEIVABLES) {
                         OutlinedButton(
                             onClick = { showPayCustomerPicker = true },
                             modifier = Modifier.fillMaxWidth()

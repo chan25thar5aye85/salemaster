@@ -5,11 +5,11 @@
     <string name="debt_title">အကြွေး</string>
 
     <!-- Tabs -->
-    <string name="debt_receivables">သူတို့ပေးရန်</string>
-    <string name="debt_payables">ငါပေးရန်</string>
+    <string name="debt_receivables">လက်ခံရန်</string>
+    <string name="debt_payables">ပေးရန်</string>
 
     <!-- Summary -->
-    <string name="debt_they_owe_me">သူတို့ပေးရန်</string>
+    <string name="debt_they_owe_me">သူတို့အကြွေး</string>
     <string name="debt_i_owe_them">ငါပေးရန်</string>
     <string name="debt_n_customers">ဖောက်သည် %1$d ဦး</string>
     <string name="debt_n_suppliers">ပေးသွင်းသူ %1$d ဦး</string>

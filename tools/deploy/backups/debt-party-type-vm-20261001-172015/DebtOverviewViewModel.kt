@@ -180,8 +180,6 @@ class DebtOverviewViewModel(
     fun openAddDialog(customerId: String = "", customerName: String = "",
                       supplierId: String = "", supplierName: String = "") {
         _state.value = _state.value.copy(
-            addPartyType = if (_state.value.tab == DebtTab.RECEIVABLES)
-                PartyType.CUSTOMER else PartyType.SUPPLIER,
             showAddDialog = true,
             addAmount = "",
             addNote = "",
@@ -204,14 +202,6 @@ class DebtOverviewViewModel(
     }
 
     fun updateAmount(v: String) { _state.value = _state.value.copy(addAmount = v.filter { it.isDigit() }) }
-
-    fun setAddPartyType(type: PartyType) {
-        _state.value = _state.value.copy(addPartyType = type)
-    }
-
-    fun setPayPartyType(type: PartyType) {
-        _state.value = _state.value.copy(payPartyType = type)
-    }
     fun updateNote(v: String)   { _state.value = _state.value.copy(addNote = v) }
     fun selectCustomer(id: String, name: String) {
         _state.value = _state.value.copy(selectedCustomerId = id, selectedCustomerName = name)
@@ -226,16 +216,16 @@ class DebtOverviewViewModel(
         if (amount <= 0) {
             _state.value = s.copy(addError = "Enter a valid amount"); return
         }
-        val isCustomer = s.addPartyType == PartyType.CUSTOMER
-        if (isCustomer && s.selectedCustomerId.isEmpty()) {
+        val isReceivable = s.tab == DebtTab.RECEIVABLES
+        if (isReceivable && s.selectedCustomerId.isEmpty()) {
             _state.value = s.copy(addError = "Select a customer"); return
         }
-        if (!isCustomer && s.selectedSupplierId.isEmpty()) {
+        if (!isReceivable && s.selectedSupplierId.isEmpty()) {
             _state.value = s.copy(addError = "Select a supplier"); return
         }
         _state.value = s.copy(isSaving = true, addError = null)
         viewModelScope.launch {
-            val result = if (isCustomer) {
+            val result = if (isReceivable) {
                 extendCreditUseCase.invoke(
                     customerId = s.selectedCustomerId,
                     amount = amount,
@@ -278,8 +268,6 @@ class DebtOverviewViewModel(
         supplierId: String = "", supplierName: String = ""
     ) {
         _state.value = _state.value.copy(
-            payPartyType = if (_state.value.tab == DebtTab.RECEIVABLES)
-                PartyType.CUSTOMER else PartyType.SUPPLIER,
             showPayDialog = true,
             payAmount = "",
             payNote = "",
@@ -334,11 +322,11 @@ class DebtOverviewViewModel(
         if (amount <= 0) {
             _state.value = s.copy(payError = "Enter a valid amount"); return
         }
-        val isCustomer = s.payPartyType == PartyType.CUSTOMER
-        if (isCustomer && s.paySelectedCustomerId.isEmpty()) {
+        val isReceivable = s.tab == DebtTab.RECEIVABLES
+        if (isReceivable && s.paySelectedCustomerId.isEmpty()) {
             _state.value = s.copy(payError = "Select a customer"); return
         }
-        if (!isCustomer && s.paySelectedSupplierId.isEmpty()) {
+        if (!isReceivable && s.paySelectedSupplierId.isEmpty()) {
             _state.value = s.copy(payError = "Select a supplier"); return
         }
         val account = s.paySelectedAccount
@@ -348,7 +336,7 @@ class DebtOverviewViewModel(
 
         _state.value = s.copy(isPaying = true, payError = null)
         viewModelScope.launch {
-            val result = if (isCustomer) {
+            val result = if (isReceivable) {
                 recordCreditPaymentUseCase.invoke(
                     customerId = s.paySelectedCustomerId,
                     amount = amount,

@@ -488,6 +488,7 @@ fun AppNavHost() {
                         "history" -> navController.navigate(Routes.HISTORY)
                         "reports" -> navController.navigate(Routes.TRENDS)
                         "profit_loss" -> navController.navigate(Routes.PROFIT_LOSS)
+                        "aging_report" -> navController.navigate(Routes.AGING_REPORT)
                         "debt_overview" -> navController.navigate(Routes.DEBT_OVERVIEW)
                         "customers" -> navController.navigate(Routes.CUSTOMERS)
                         "suppliers" -> navController.navigate(Routes.SUPPLIERS)

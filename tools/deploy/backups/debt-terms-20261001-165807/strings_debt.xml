@@ -5,12 +5,12 @@
     <string name="debt_title">Debt</string>
 
     <!-- Tabs -->
-    <string name="debt_receivables">They owe you</string>
-    <string name="debt_payables">You owe them</string>
+    <string name="debt_receivables">Receivables</string>
+    <string name="debt_payables">Payables</string>
 
     <!-- Summary -->
-    <string name="debt_they_owe_me">They owe you</string>
-    <string name="debt_i_owe_them">You owe them</string>
+    <string name="debt_they_owe_me">They owe me</string>
+    <string name="debt_i_owe_them">I owe them</string>
     <string name="debt_n_customers">%1$d customers</string>
     <string name="debt_n_suppliers">%1$d suppliers</string>
 

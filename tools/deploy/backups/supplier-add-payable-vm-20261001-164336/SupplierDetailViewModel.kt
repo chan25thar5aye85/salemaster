@@ -35,14 +35,6 @@ data class SupplierDetailState(
     val paymentSuccess: Boolean = false,
     val paymentError: String? = null,
 
-    // Add payable dialog (they gave me credit / I owe them more)
-    val showAddPayableDialog: Boolean = false,
-    val addPayableAmount: String = "",
-    val addPayableNotes: String = "",
-    val isRecordingAddPayable: Boolean = false,
-    val addPayableSuccess: Boolean = false,
-    val addPayableError: String? = null,
-
     // Refund dialog (supplier pays us)
     val showRefundDialog: Boolean = false,
     val refundAmount: String = "",
@@ -57,14 +49,6 @@ sealed class SupplierDetailEvent {
     data object LoadSupplier : SupplierDetailEvent()
     data object ClearError : SupplierDetailEvent()
     data object OpenPaymentDialog : SupplierDetailEvent()
-
-    // Add payable events
-    data object OpenAddPayableDialog : SupplierDetailEvent()
-    data object CloseAddPayableDialog : SupplierDetailEvent()
-    data class AddPayableAmountChanged(val value: String) : SupplierDetailEvent()
-    data class AddPayableNotesChanged(val value: String) : SupplierDetailEvent()
-    data object SubmitAddPayable : SupplierDetailEvent()
-    data object ClearAddPayableSuccess : SupplierDetailEvent()
     data object ClosePaymentDialog : SupplierDetailEvent()
     data class PaymentAmountChanged(val value: String) : SupplierDetailEvent()
     data class PaymentNotesChanged(val value: String) : SupplierDetailEvent()
@@ -86,7 +70,6 @@ class SupplierDetailViewModel(
     private val repository: SupplierRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
     private val recordSupplierPaymentUseCase: RecordSupplierPaymentUseCase,
-    private val addSupplierPayableUseCase: com.akari.retailer.features.supplier.domain.usecases.AddSupplierPayableUseCase,
     private val recordSupplierRefundReceivedUseCase: RecordSupplierRefundReceivedUseCase,
     private val getSupplierTransactionsUseCase: GetSupplierTransactionsUseCase,
     private val paymentPreferences: PaymentPreferences,
@@ -111,15 +94,6 @@ class SupplierDetailViewModel(
             SupplierDetailEvent.LoadSupplier -> loadSupplier()
             SupplierDetailEvent.ClearError -> clearError()
             SupplierDetailEvent.OpenPaymentDialog -> openPaymentDialog()
-            SupplierDetailEvent.OpenAddPayableDialog -> openAddPayableDialog()
-            SupplierDetailEvent.CloseAddPayableDialog -> closeAddPayableDialog()
-            is SupplierDetailEvent.AddPayableAmountChanged ->
-                _state.value = _state.value.copy(addPayableAmount = event.value.filter { it.isDigit() })
-            is SupplierDetailEvent.AddPayableNotesChanged ->
-                _state.value = _state.value.copy(addPayableNotes = event.value)
-            SupplierDetailEvent.SubmitAddPayable -> submitAddPayable()
-            SupplierDetailEvent.ClearAddPayableSuccess ->
-                _state.value = _state.value.copy(addPayableSuccess = false)
             SupplierDetailEvent.ClosePaymentDialog -> closePaymentDialog()
             is SupplierDetailEvent.PaymentAmountChanged -> {
                 _state.value = _state.value.copy(
@@ -331,58 +305,6 @@ class SupplierDetailViewModel(
         }
     }
 
-    private fun openAddPayableDialog() {
-        _state.value = _state.value.copy(
-            showAddPayableDialog = true,
-            addPayableAmount = "",
-            addPayableNotes = "",
-            addPayableError = null,
-            addPayableSuccess = false
-        )
-    }
-
-    private fun closeAddPayableDialog() {
-        _state.value = _state.value.copy(
-            showAddPayableDialog = false,
-            addPayableAmount = "",
-            addPayableNotes = "",
-            addPayableError = null
-        )
-    }
-
-    private fun submitAddPayable() {
-        val supplier = _state.value.supplier ?: return
-        val amount = _state.value.addPayableAmount.toIntOrNull() ?: 0
-        if (amount <= 0) {
-            _state.value = _state.value.copy(addPayableError = "Enter a valid amount")
-            return
-        }
-
-        _state.value = _state.value.copy(isRecordingAddPayable = true, addPayableError = null)
-
-        viewModelScope.launch {
-            val result = addSupplierPayableUseCase.invoke(
-                supplierId = supplier.id,
-                amount = amount,
-                description = _state.value.addPayableNotes.trim().ifEmpty { "Manual purchase on credit" }
-            )
-            if (result.isSuccess) {
-                _state.value = _state.value.copy(
-                    isRecordingAddPayable = false,
-                    addPayableSuccess = true,
-                    showAddPayableDialog = false,
-                    addPayableAmount = "",
-                    addPayableNotes = ""
-                )
-            } else {
-                _state.value = _state.value.copy(
-                    isRecordingAddPayable = false,
-                    addPayableError = result.exceptionOrNull()?.message ?: "Failed to add payable"
-                )
-            }
-        }
-    }
-
     private fun clearError() {
         _state.value = _state.value.copy(error = null, paymentError = null)
     }
@@ -392,7 +314,6 @@ class SupplierDetailViewModelFactory(
     private val repository: SupplierRepository,
     private val moneyAccountRepository: MoneyAccountRepository,
     private val recordSupplierPaymentUseCase: RecordSupplierPaymentUseCase,
-    private val addSupplierPayableUseCase: com.akari.retailer.features.supplier.domain.usecases.AddSupplierPayableUseCase,
     private val recordSupplierRefundReceivedUseCase: RecordSupplierRefundReceivedUseCase,
     private val getSupplierTransactionsUseCase: GetSupplierTransactionsUseCase,
     private val paymentPreferences: PaymentPreferences,
@@ -405,7 +326,6 @@ class SupplierDetailViewModelFactory(
                 repository,
                 moneyAccountRepository,
                 recordSupplierPaymentUseCase,
-                addSupplierPayableUseCase,
                 recordSupplierRefundReceivedUseCase,
                 getSupplierTransactionsUseCase,
                 paymentPreferences,

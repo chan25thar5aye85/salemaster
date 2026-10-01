@@ -159,7 +159,7 @@ fun CustomerListScreen(
                     .fillMaxWidth()
                     .padding(bottom = Spacing.medium)
                     .clickable {
-                        navController.navigate(com.akari.retailer.navigation.Routes.DEBT_OVERVIEW)
+                        navController.navigate(com.akari.retailer.navigation.Routes.AGING_REPORT)
                     },
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer

@@ -13,16 +13,6 @@ enum class DebtTab {
 }
 
 /**
- * Whether a dialog is working with a customer or a supplier.
- * Independent of the active tab — a user can add debt for either
- * party type from the same dialog.
- */
-enum class PartyType {
-    CUSTOMER,
-    SUPPLIER
-}
-
-/**
  * A single debtor/creditor row for display.
  */
 data class DebtParty(
@@ -65,25 +55,9 @@ data class DebtOverviewState(
     val selectedCustomerName: String = "",
     val selectedSupplierId: String = "",
     val selectedSupplierName: String = "",
-    val addPartyType: PartyType = PartyType.CUSTOMER,
     val isSaving: Boolean = false,
     val addError: String? = null,
-    val addSuccess: Boolean = false,
-
-    // ── Pay dialog state ──
-    val showPayDialog: Boolean = false,
-    val payAmount: String = "",
-    val payNote: String = "",
-    val paySelectedCustomerId: String = "",
-    val paySelectedCustomerName: String = "",
-    val paySelectedSupplierId: String = "",
-    val paySelectedSupplierName: String = "",
-    val payAccounts: List<com.akari.retailer.features.money.domain.models.MoneyAccount> = emptyList(),
-    val paySelectedAccount: com.akari.retailer.features.money.domain.models.MoneyAccount? = null,
-    val payPartyType: PartyType = PartyType.CUSTOMER,
-    val isPaying: Boolean = false,
-    val payError: String? = null,
-    val paySuccess: Boolean = false
+    val addSuccess: Boolean = false
 ) {
     val activeTotal: Int get() = if (tab == DebtTab.RECEIVABLES) receivableTotal else payableTotal
     val activeParties: List<DebtParty> get() =

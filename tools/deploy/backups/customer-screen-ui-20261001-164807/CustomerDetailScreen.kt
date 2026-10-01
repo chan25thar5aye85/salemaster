@@ -250,75 +250,90 @@ fun CustomerDetailScreen(
                     }
                 }
 
-                // ── Balance card (always visible) ──
+                // ── Credit balance card (bidirectional) ──
                 Spacer(modifier = Modifier.height(Spacing.medium))
                 AppCard {
                     Column(modifier = Modifier.fillMaxWidth()) {
+                        // Header: balance label + value
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "💳 Balance",
+                                text = "💳 ${stringResource(R.string.credit_balance_label)}",
                                 style = AppTypography.title
                             )
                             Text(
                                 text = when {
-                                    customer.creditBalance > 0 -> "+${customer.creditBalance}"
-                                    customer.creditBalance < 0 -> "${customer.creditBalance}"
+                                    customer.owesCredit() -> "+${customer.creditBalance}"
+                                    customer.weOweCustomer() -> "${customer.creditBalance}"
                                     else -> "0"
                                 },
                                 style = AppTypography.header,
                                 color = when {
-                                    customer.creditBalance > 0 -> MaterialTheme.colorScheme.error
-                                    customer.creditBalance < 0 -> Color(0xFF4CAF50)
-                                    else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                    customer.owesCredit() -> MaterialTheme.colorScheme.error
+                                    customer.weOweCustomer() -> Color(0xFF4CAF50)
+                                    else -> MaterialTheme.colorScheme.onSurface
                                 }
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(Spacing.small))
-
-                        Text(
-                            text = when {
-                                customer.creditBalance > 0 -> "They owe you"
-                                customer.creditBalance < 0 -> "You owe them"
-                                else -> "Settled"
-                            },
-                            style = AppTypography.small,
-                            color = when {
-                                customer.creditBalance > 0 -> MaterialTheme.colorScheme.error
-                                customer.creditBalance < 0 -> Color(0xFF4CAF50)
-                                else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            }
-                        )
-
-                        Spacer(modifier = Modifier.height(Spacing.medium))
-
-                        // Three actions — always visible
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-                        ) {
-                            OutlinedButton(
-                                onClick = {
-                                    viewModel.handleEvent(CustomerDetailEvent.OpenCreditDialog)
-                                },
-                                modifier = Modifier.weight(1f),
-                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
-                            ) {
-                                Text("+ Add", fontSize = 13.sp)
-                            }
-                            OutlinedButton(
+                        // Contextual subtext + primary action button
+                        if (customer.owesCredit()) {
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            Text(
+                                text = stringResource(R.string.customer_owes_you, customer.creditBalance),
+                                style = AppTypography.small,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            Button(
                                 onClick = {
                                     viewModel.handleEvent(CustomerDetailEvent.OpenPaymentDialog)
                                 },
-                                modifier = Modifier.weight(1f),
-                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text("− Pay", fontSize = 13.sp)
+                                Text(stringResource(R.string.record_payment))
                             }
+                        } else if (customer.weOweCustomer()) {
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            Text(
+                                text = stringResource(R.string.you_owe_customer, customer.getBalanceAbsolute()),
+                                style = AppTypography.small,
+                                color = Color(0xFF4CAF50)
+                            )
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            Button(
+                                onClick = {
+                                    viewModel.handleEvent(CustomerDetailEvent.OpenRefundDialog)
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF4CAF50),
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text(stringResource(R.string.record_refund))
+                            }
+                        } else {
+                            Spacer(modifier = Modifier.height(Spacing.small))
+                            Text(
+                                text = stringResource(R.string.customer_is_settled),
+                                style = AppTypography.small,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+
+                        // Always-visible: Add Credit
+                        Spacer(modifier = Modifier.height(Spacing.small))
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.handleEvent(CustomerDetailEvent.OpenCreditDialog)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("+  " + stringResource(R.string.add_credit))
                         }
                     }
                 }

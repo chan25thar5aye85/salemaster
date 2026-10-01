@@ -242,7 +242,14 @@ fun DebtOverviewScreen(
     if (state.showAddDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.closeAddDialog() },
-            title = { Text("Add Debt") },
+            title = {
+                Text(
+                    if (state.tab == DebtTab.RECEIVABLES)
+                        stringResource(R.string.debt_add_customer_title)
+                    else
+                        stringResource(R.string.debt_add_supplier_title)
+                )
+            },
             text = {
                 Column(Modifier.fillMaxWidth()) {
                     // Party type toggle
