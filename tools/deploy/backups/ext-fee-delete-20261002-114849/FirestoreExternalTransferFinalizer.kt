@@ -21,34 +21,10 @@ class FirestoreExternalTransferFinalizer(
             val txnRef = txnsCol.document(transactionId)
             val now = System.currentTimeMillis()
 
-            // ── 0. Look for a fee transaction tied to this transfer ──
-            // (queries cannot run inside a transaction, so we pre-fetch).
-            // The fee doc, if it exists, has referenceId = transactionId
-            // and referenceType = "EXTERNAL_TRANSFER_FEE".
-            val feeSnap = try {
-                txnsCol
-                    .whereEqualTo("referenceId", transactionId)
-                    .whereEqualTo("referenceType", "EXTERNAL_TRANSFER_FEE")
-                    .limit(1)
-                    .get()
-                    .await()
-            } catch (e: Exception) {
-                Log.w(TAG, "Fee lookup failed (continuing without reversal): ${e.message}")
-                null
-            }
-            val feeDoc = feeSnap?.documents?.firstOrNull()
-            val feeDocRef = feeDoc?.reference
-            val feeNetAmount = (feeDoc?.getLong("netAmount") ?: 0L).toInt()
-
             db.runTransaction { txn ->
                 // ── 1. READ the transfer doc ──
                 val snap = txn.get(txnRef)
                 if (!snap.exists()) return@runTransaction   // already gone
-
-                // ── 1b. READ the fee doc (if any) so we can write later ──
-                if (feeDocRef != null) {
-                    txn.get(feeDocRef)
-                }
 
                 val data = snap.data ?: return@runTransaction
                 val typeStr = data["type"] as? String ?: return@runTransaction
@@ -131,27 +107,7 @@ class FirestoreExternalTransferFinalizer(
                     "createdAt"            to now
                 ))
 
-                // ── 5a. Reverse the fee (if any) ──
-                // The fee was a separate entry on Cash. To reverse it:
-                //   - subtract the fee's netAmount from Cash
-                //   - delete the fee doc
-                if (feeDocRef != null && feeNetAmount != 0) {
-                    val cashRef = accountsCol.document("default_cash")
-                    txn.get(cashRef)   // read before write
-
-                    // feeNetAmount is the signed delta applied to Cash
-                    // when the fee was recorded. Reversing means applying
-                    // the opposite sign.
-                    txn.update(
-                        cashRef,
-                        "currentBalance", FieldValue.increment(-feeNetAmount.toLong()),
-                        "updatedAt", now
-                    )
-
-                    txn.delete(feeDocRef)
-                }
-
-                // ── 5b. Delete the original transfer doc ──
+                // ── 5. Delete the original transfer doc ──
                 txn.delete(txnRef)
             }.await()
 

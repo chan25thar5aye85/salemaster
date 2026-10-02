@@ -157,7 +157,7 @@ class ExternalTransferViewModel(
                     error = null,
                     externalAccountName = "",
                     amount = "",
-                    fee = "",
+                    fee = "0",
                     feeType = FeeType.FEE_EARNED,
                     description = ""
                 )

@@ -27,8 +27,4 @@ class FirestoreExpenseRepository(
     override fun getExpenseById(expenseId: String): Flow<Expense?> {
         return service.getExpenseById(expenseId)
     }
-
-    override fun getRecentTodayExpenses(limit: Int): Flow<List<Expense>> {
-        return service.getRecentTodayExpenses(limit)
-    }
 }

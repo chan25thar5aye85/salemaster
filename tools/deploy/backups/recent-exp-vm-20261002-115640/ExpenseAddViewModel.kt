@@ -38,8 +38,7 @@ data class ExpenseAddState(
     val saveSuccess: Boolean = false,
     val error: String? = null,
     val lastUsedAccountId: String = "default_cash",
-    val userTouchedAmounts: Boolean = false,
-    val recentExpenses: List<com.akari.retailer.features.expense.domain.models.Expense> = emptyList()
+    val userTouchedAmounts: Boolean = false
 ) {
     fun getTotalAmount(): Int = amount.toIntOrNull() ?: 0
     fun getTotalPaid(): Int = paymentRows.sumOf { it.amount.toIntOrNull() ?: 0 }
@@ -109,7 +108,6 @@ val lastAccountId = "default_cash"
         loadCategories()
         loadAccounts()
         loadSuppliers()
-        loadRecentExpenses()
     }
 
     fun handleEvent(event: ExpenseAddEvent) {
@@ -143,19 +141,6 @@ val lastAccountId = "default_cash"
     }
 
     private var loadSuppliersJob: kotlinx.coroutines.Job? = null
-
-    private var loadRecentExpensesJob: kotlinx.coroutines.Job? = null
-
-    private fun loadRecentExpenses() {
-        loadRecentExpensesJob?.cancel()
-        loadRecentExpensesJob = viewModelScope.launch {
-            try {
-                expenseRepository.getRecentTodayExpenses(5).collect { expenses ->
-                    _state.value = _state.value.copy(recentExpenses = expenses)
-                }
-            } catch (e: Exception) { }
-        }
-    }
 
     private fun loadSuppliers() {
         loadSuppliersJob?.cancel()

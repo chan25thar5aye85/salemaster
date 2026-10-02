@@ -42,12 +42,17 @@ class ExternalTransferUseCase(
                 return Result.failure(Exception("Fee cannot be negative"))
             }
 
-            // ── Compute main account change ────────────────────────
-            // The fee is a SEPARATE transaction that lands in the Cash
-            // account, so it is NOT included in the main account's delta.
+            // ── Compute account change ───────────────────────────────
             val accountChange: Int = when (params.direction) {
-                Direction.OUTGOING -> -params.amount
-                Direction.INCOMING -> params.amount
+                Direction.OUTGOING -> when (params.feeType) {
+                    FeeType.FEE_PAID -> -(params.amount + params.fee)
+                    else -> -params.amount
+                }
+                Direction.INCOMING -> when (params.feeType) {
+                    FeeType.FEE_EARNED -> params.amount + params.fee
+                    FeeType.FEE_PAID -> params.amount - params.fee
+                    FeeType.NONE -> params.amount
+                }
             }
 
             val db = accountRepository.firestore
@@ -61,14 +66,6 @@ class ExternalTransferUseCase(
 
                 // READ
                 val accSnap = txn.get(accRef)
-
-                // Pre-read the cash account so we can write to it later
-                // for the fee leg. Firestore requires all reads before
-                // all writes in a transaction.
-                val cashRef = accountsCol.document("default_cash")
-                if (params.fee > 0 && params.feeType != FeeType.NONE) {
-                    txn.get(cashRef)
-                }
                 if (!accSnap.exists()) {
                     throw IllegalStateException("Account not found")
                 }
@@ -118,46 +115,6 @@ class ExternalTransferUseCase(
                     "date" to now,
                     "createdAt" to now
                 ))
-
-                // ── Fee leg — separate transaction to Cash ────────────
-                // Only when the user entered a fee > 0.
-                // FEE_EARNED: cash increases by fee.
-                // FEE_PAID:   cash decreases by fee.
-                if (params.fee > 0 && params.feeType != FeeType.NONE) {
-                    val feeDelta = when (params.feeType) {
-                        FeeType.FEE_EARNED -> params.fee.toLong()
-                        FeeType.FEE_PAID -> -params.fee.toLong()
-                        FeeType.NONE -> 0L
-                    }
-
-                    if (feeDelta != 0L) {
-                        txn.update(
-                            cashRef,
-                            "currentBalance", FieldValue.increment(feeDelta),
-                            "updatedAt", now
-                        )
-
-                        txn.set(txnsCol.document(), mapOf(
-                            "type" to if (params.feeType == FeeType.FEE_EARNED)
-                                MoneyTransactionType.FEE_IN.name
-                            else
-                                MoneyTransactionType.FEE_OUT.name,
-                            "fromAccountId" to if (params.feeType == FeeType.FEE_PAID) "default_cash" else "",
-                            "toAccountId" to if (params.feeType == FeeType.FEE_EARNED) "default_cash" else "",
-                            "amount" to params.fee,
-                            "fee" to 0,
-                            "feeType" to "NONE",
-                            "netAmount" to feeDelta,
-                            "description" to "External transfer fee — ${params.externalAccountName}",
-                            "referenceId" to (txRef.id),
-                            "referenceType" to "EXTERNAL_TRANSFER_FEE",
-                            "externalAccountName" to params.externalAccountName,
-                            "externalAccountNumber" to "",
-                            "date" to now,
-                            "createdAt" to now
-                        ))
-                    }
-                }
             }.await()
 
             Result.success(Unit)

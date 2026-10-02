@@ -158,7 +158,7 @@ class ExternalTransferViewModel(
                     externalAccountName = "",
                     amount = "",
                     fee = "",
-                    feeType = FeeType.FEE_EARNED,
+                    feeType = FeeType.NONE,
                     description = ""
                 )
             } else {

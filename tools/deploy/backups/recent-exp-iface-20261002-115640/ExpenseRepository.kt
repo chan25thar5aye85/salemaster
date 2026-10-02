@@ -8,8 +8,5 @@ interface ExpenseRepository {
     suspend fun updateExpense(expense: Expense): Result<Unit>
     suspend fun deleteExpense(expenseId: String): Result<Unit>
     fun getExpenses(): Flow<List<Expense>>
-
-    /** Most recent N expenses from today only (resets at midnight). */
-    fun getRecentTodayExpenses(limit: Int = 5): Flow<List<Expense>>
     fun getExpenseById(expenseId: String): Flow<Expense?>
 }

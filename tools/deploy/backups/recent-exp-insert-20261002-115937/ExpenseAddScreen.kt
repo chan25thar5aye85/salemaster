@@ -330,16 +330,6 @@ fun ExpenseAddScreen(
                     Spacer(modifier = Modifier.height(Spacing.medium))
                 }
 
-                // ── Recent Expenses card ──
-                RecentExpensesCard(
-                    expenses = state.recentExpenses,
-                    categories = state.categories,
-                    suppliers = state.suppliers,
-                    onViewAllClick = onViewHistory
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.medium))
-
                 Spacer(modifier = Modifier.height(96.dp))
             }
         }

@@ -10,9 +10,6 @@ interface SaleRepository {
     fun getRecentSales(limit: Int = 10): Flow<List<Sale>>
     /** Larger history window for the Sale History screen. */
     fun getSalesHistory(limit: Int = 500): Flow<List<Sale>>
-
-    /** Most recent N sales from today only (resets at midnight). */
-    fun getRecentTodaySales(limit: Int = 5): Flow<List<Sale>>
     fun getTodaySales(): Flow<List<Sale>>
     fun getSaleById(saleId: String): Flow<Sale?>
     suspend fun deleteSale(saleId: String): Result<Unit>

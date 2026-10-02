@@ -109,13 +109,12 @@ fun ExpenseListScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .offset(y = (-8).dp)             // pull up under the title
                     .padding(bottom = Spacing.small),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(0.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 // Manage categories
-                IconButton(onClick = { navController.navigate(Routes.CATEGORIES) }, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = { navController.navigate(Routes.CATEGORIES) }) {
                     Icon(
                         Icons.Default.Settings,
                         contentDescription = "Manage Categories"
@@ -152,7 +151,7 @@ fun ExpenseListScreen(
                 Spacer(modifier = Modifier.weight(1f))
 
                 // Search
-                IconButton(onClick = { showSearch = !showSearch }, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = { showSearch = !showSearch }) {
                     Icon(
                         Icons.Default.Search,
                         contentDescription = "Search"
@@ -160,7 +159,7 @@ fun ExpenseListScreen(
                 }
 
                 // Analytics
-                IconButton(onClick = { navController.navigate(Routes.EXPENSE_ANALYTICS) }, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = { navController.navigate(Routes.EXPENSE_ANALYTICS) }) {
                     Icon(
                         Icons.Default.Analytics,
                         contentDescription = "Analytics"
@@ -168,7 +167,7 @@ fun ExpenseListScreen(
                 }
 
                 // Add
-                IconButton(onClick = { navController.navigate(Routes.EXPENSE_ADD) }, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = { navController.navigate(Routes.EXPENSE_ADD) }) {
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "Add Expense"

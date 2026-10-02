@@ -20,7 +20,7 @@ data class ExternalTransferState(
     val knownExternalNames: List<String> = emptyList(),
     val amount: String = "",
     val fee: String = "",
-    val feeType: FeeType = FeeType.FEE_EARNED,
+    val feeType: FeeType = FeeType.NONE,
     val description: String = "",
     val lastUsedAccountId: String = "",
     /**
@@ -35,16 +35,23 @@ data class ExternalTransferState(
     fun getAmountInt(): Int = amount.toIntOrNull() ?: 0
     fun getFeeInt(): Int = fee.toIntOrNull() ?: 0
     
-    /**
-     * The change to the SELECTED account. The fee is a separate
-     * transaction that always lands in the Cash account, so it is
-     * NOT included in this number.
-     */
     fun getAccountChange(): Int {
         val amt = getAmountInt()
+        val feeAmt = getFeeInt()
         return when (direction) {
-            ExternalTransferDirection.OUTGOING -> -amt
-            ExternalTransferDirection.INCOMING -> amt
+            ExternalTransferDirection.OUTGOING -> {
+                when (feeType) {
+                    FeeType.FEE_PAID -> -(amt + feeAmt)
+                    else -> -amt
+                }
+            }
+            ExternalTransferDirection.INCOMING -> {
+                when (feeType) {
+                    FeeType.FEE_EARNED -> amt + feeAmt
+                    FeeType.FEE_PAID -> amt - feeAmt
+                    FeeType.NONE -> amt
+                }
+            }
         }
     }
     

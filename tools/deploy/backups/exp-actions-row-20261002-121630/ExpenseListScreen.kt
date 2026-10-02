@@ -12,9 +12,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Analytics
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -100,29 +97,24 @@ fun ExpenseListScreen(
     AppScreen(
         title = stringResource(R.string.expenses),
         showBackButton = true,
-        onBackClick = onBack
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // ── Actions row ──
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .offset(y = (-8).dp)             // pull up under the title
-                    .padding(bottom = Spacing.small),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(0.dp)
-            ) {
-                // Manage categories
-                IconButton(onClick = { navController.navigate(Routes.CATEGORIES) }, modifier = Modifier.size(40.dp)) {
+        onBackClick = onBack,
+        showSearchButton = true,
+        onSearchClick = { showSearch = !showSearch },
+        showAddButton = true,
+        onAddClick = { navController.navigate(Routes.EXPENSE_ADD) },
+        showAnalyticsButton = true,
+        onAnalyticsClick = { navController.navigate(Routes.EXPENSE_ANALYTICS) },
+        filterButtonContent = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Manage categories — small icon next to the filter button
+                IconButton(onClick = { navController.navigate(Routes.CATEGORIES) }) {
                     Icon(
                         Icons.Default.Settings,
-                        contentDescription = "Manage Categories"
+                        contentDescription = "Manage Categories",
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
-                // Time filter (dropdown)
                 TimeFilterButton(
                     filter = state.timeFilter,
                     onPresetChange = { viewModel.handleEvent(ExpenseListEvent.TimeFilterChanged(it)) },
@@ -148,34 +140,12 @@ fun ExpenseListScreen(
                         )
                     }
                 )
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                // Search
-                IconButton(onClick = { showSearch = !showSearch }, modifier = Modifier.size(40.dp)) {
-                    Icon(
-                        Icons.Default.Search,
-                        contentDescription = "Search"
-                    )
-                }
-
-                // Analytics
-                IconButton(onClick = { navController.navigate(Routes.EXPENSE_ANALYTICS) }, modifier = Modifier.size(40.dp)) {
-                    Icon(
-                        Icons.Default.Analytics,
-                        contentDescription = "Analytics"
-                    )
-                }
-
-                // Add
-                IconButton(onClick = { navController.navigate(Routes.EXPENSE_ADD) }, modifier = Modifier.size(40.dp)) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "Add Expense"
-                    )
-                }
             }
-
+        },
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
             // ── Summary card ──
             if (state.allExpenses.isNotEmpty()) {
                 Card(
@@ -362,6 +332,33 @@ fun ExpenseListScreen(
                     }
                 }
                 return@Column
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Spacing.medium),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (state.searchQuery.isNotEmpty()) 
+                        "${state.expenses.size} ${stringResource(R.string.results)}" 
+                    else 
+                        "${state.expenses.size} ${stringResource(R.string.expenses)}",
+                    style = AppTypography.label,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                if (state.searchQuery.isNotEmpty()) {
+                    TextButton(
+                        onClick = {
+                            viewModel.handleEvent(ExpenseListEvent.ClearSearch)
+                            showSearch = false
+                        }
+                    ) {
+                        Text(stringResource(R.string.clear))
+                    }
+                }
             }
 
             LazyColumn(

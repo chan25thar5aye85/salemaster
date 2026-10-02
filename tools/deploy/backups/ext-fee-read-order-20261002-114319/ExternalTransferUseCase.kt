@@ -61,14 +61,6 @@ class ExternalTransferUseCase(
 
                 // READ
                 val accSnap = txn.get(accRef)
-
-                // Pre-read the cash account so we can write to it later
-                // for the fee leg. Firestore requires all reads before
-                // all writes in a transaction.
-                val cashRef = accountsCol.document("default_cash")
-                if (params.fee > 0 && params.feeType != FeeType.NONE) {
-                    txn.get(cashRef)
-                }
                 if (!accSnap.exists()) {
                     throw IllegalStateException("Account not found")
                 }
@@ -124,6 +116,9 @@ class ExternalTransferUseCase(
                 // FEE_EARNED: cash increases by fee.
                 // FEE_PAID:   cash decreases by fee.
                 if (params.fee > 0 && params.feeType != FeeType.NONE) {
+                    val cashRef = accountsCol.document("default_cash")
+                    txn.get(cashRef)   // read before write (transaction rule)
+
                     val feeDelta = when (params.feeType) {
                         FeeType.FEE_EARNED -> params.fee.toLong()
                         FeeType.FEE_PAID -> -params.fee.toLong()

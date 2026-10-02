@@ -64,21 +64,6 @@ class FirestoreSaleRepository(
         )
     }
 
-    override fun getRecentTodaySales(limit: Int): Flow<List<Sale>> {
-        val cal = java.util.Calendar.getInstance().apply {
-            set(java.util.Calendar.HOUR_OF_DAY, 0)
-            set(java.util.Calendar.MINUTE, 0)
-            set(java.util.Calendar.SECOND, 0)
-            set(java.util.Calendar.MILLISECOND, 0)
-        }
-        return queryFlow(
-            col()
-                .whereGreaterThanOrEqualTo("timestamp", cal.timeInMillis)
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(limit.toLong())
-        )
-    }
-
     override fun getSaleById(saleId: String): Flow<Sale?> = callbackFlow {
         val listener = col().document(saleId).addSnapshotListener { snap, error ->
             if (error != null) {

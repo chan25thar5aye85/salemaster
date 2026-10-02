@@ -133,10 +133,7 @@ class SaleEntryViewModel(
             // Sales card until the app restarts.
             while (true) {
                 try {
-                    // Only today's sales appear in the Recent Sales card.
-                    // The query itself filters by today's midnight, so the
-                    // card resets automatically when the day changes.
-                    repository.getTodaySales().collect { sales ->
+                    repository.getRecentSales(10).collect { sales ->
                         _state.value = _state.value.copy(recentSales = sales.take(5))
                     }
                     // Normal completion (rare for a listener) — back off briefly
@@ -157,9 +154,7 @@ class SaleEntryViewModel(
     private fun refreshRecentSalesOnce() {
         viewModelScope.launch {
             try {
-                // getTodaySales() returns only sales since midnight,
-                // which is what the card displays.
-                val sales = repository.getTodaySales().first()
+                val sales = repository.getSales().first()
                 _state.value = _state.value.copy(recentSales = sales.take(5))
             } catch (e: Exception) { }
         }

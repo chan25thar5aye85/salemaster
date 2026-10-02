@@ -271,11 +271,7 @@ fun AppNavHost() {
                 }
                 
                 composable(Routes.EXPENSE_ADD) {
-                    ExpenseAddScreen(
-                        onBack = { navController.popBackStack() },
-                        onExpenseAdded = { navController.popBackStack() },
-                        onViewHistory = { navController.navigate(Routes.EXPENSES) }
-                    )
+                    ExpenseAddScreen(onBack = { navController.popBackStack() }, onExpenseAdded = { navController.popBackStack() })
                 }
                 
                 composable(

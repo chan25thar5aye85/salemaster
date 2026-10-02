@@ -19,8 +19,8 @@ data class ExternalTransferState(
      */
     val knownExternalNames: List<String> = emptyList(),
     val amount: String = "",
-    val fee: String = "",
-    val feeType: FeeType = FeeType.FEE_EARNED,
+    val fee: String = "0",
+    val feeType: FeeType = FeeType.NONE,
     val description: String = "",
     val lastUsedAccountId: String = "",
     /**

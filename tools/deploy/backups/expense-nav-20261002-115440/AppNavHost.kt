@@ -271,11 +271,7 @@ fun AppNavHost() {
                 }
                 
                 composable(Routes.EXPENSE_ADD) {
-                    ExpenseAddScreen(
-                        onBack = { navController.popBackStack() },
-                        onExpenseAdded = { navController.popBackStack() },
-                        onViewHistory = { navController.navigate(Routes.EXPENSES) }
-                    )
+                    ExpenseAddScreen(onBack = { navController.popBackStack() }, onExpenseAdded = { navController.popBackStack() })
                 }
                 
                 composable(
@@ -496,7 +492,7 @@ fun AppNavHost() {
                         "customers" -> navController.navigate(Routes.CUSTOMERS)
                         "suppliers" -> navController.navigate(Routes.SUPPLIERS)
                         "purchase_orders" -> navController.navigate(Routes.PURCHASE_ORDERS)
-                        "expenses" -> navController.navigate(Routes.EXPENSE_ADD)
+                        "expenses" -> navController.navigate(Routes.EXPENSES)
                         "inventory" -> navController.navigate(Routes.INVENTORY)
                         "purchases" -> navController.navigate(Routes.PURCHASES)
                         "money_accounts" -> navController.navigate(Routes.MONEY_ACCOUNTS)
